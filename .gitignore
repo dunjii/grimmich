@@ -1,0 +1,58 @@
+# Personal data and credentials: must never go into the repository
+grimmich.db
+grimmich.db-*
+*.env
+.env*
+*.vor-englisch
+json_alt/
+export/
+anonym/
+anonymize_key.json
+anonym_schluessel.json*
+fotos/
+vorschau/
+ausgabe/
+ausgabe_immich/
+ausgabe_immich_koerper/
+serien_ausgabe/
+*.csv
+serien_manuell.txt
+serien_getrennt.txt
+LIESMICH.txt
+provenance_albums.json
+reload.json
+run_marker.json
+*.json.bak
+estimate_cache*.json
+schaetzung_cache*.json
+gramps_cache.json
+gramps_probe.json
+gramps_event_probe.json
+gramps_ereignis_probe.json
+
+# Test data (from your own collection; do not publish, not even anonymised)
+tests/data/
+tests/daten/
+
+# Program environment and temporary files
+.venv/
+__pycache__/
+*.pyc
+grimmich.pid
+grimmich-start.log
+*.log
+
+# Caches of the AI evaluation
+cache/
+*.npy
+*.npz
+*.pt
+
+# Development tools and intermediate steps: not meant for users, they stay local
+compare_image_quality.py
+compare_calculation.py
+person_bias.py
+features_test.py
+gramps_write_test.py
+gramps_event_probe.py
+tests/ui_*.py
