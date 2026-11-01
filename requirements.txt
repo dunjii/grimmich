@@ -1,0 +1,11 @@
+# Pakete fuer Grimmich (Installation: ./.venv/bin/pip install -r requirements.txt)
+# Fuer die Oberflaeche selbst (Python-Standardbibliothek) wird nichts extra gebraucht.
+# Die folgenden Pakete braucht nur die Foto-Auswertung (KI-Altersschaetzung, Serien):
+numpy
+opencv-python
+pillow
+torch
+transformers
+# wird vom MiVOLO-Modell beim ersten Laden gebraucht (Gesichts- und Personenerkennung)
+ultralytics
+timm

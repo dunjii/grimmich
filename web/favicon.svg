@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Grimmich Logo: Foto mit Eckenhaltern">
+<rect width="200" height="200" rx="40" fill="#1E5A70"/>
+<g transform="rotate(-6 100 100)">
+<rect x="42" y="48" width="116" height="104" rx="3" fill="#F4F0E6"/>
+<circle cx="100" cy="92" r="17" fill="#1E5A70"/>
+<path d="M66 140c0-20 15-31 34-31s34 11 34 31z" fill="#1E5A70"/>
+<path d="M42 48h30L42 78z M158 48h-30l30 30z M42 152h30L42 122z M158 152h-30l30-30z" fill="#D9963B"/>
+</g></svg>
