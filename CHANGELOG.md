@@ -4,6 +4,11 @@ Grimmich (Gramps + Immich) datiert eingescannte Altfotos aus KI-Altersschätzung
 und bringt sie wieder in Immich und Gramps unter. Dieses Protokoll ist aus dem Arbeitsverlauf rekonstruiert,
 die Zuordnung einzelner Punkte zu Tagen ist teils ungefähr.
 
+## 0.9.40 – 2026-11-01 – Invented demo data
+- New `demo_data.py`: makes up a complete small data set (26 people, 140 drawn photos, 24 series, estimates, albums, postcards), so Grimmich can be tried without your own photos, Immich or Gramps. Always the same data (fixed random seed). See README, "Try it with invented data".
+- The interface walkthrough (`tests/ui_walkthrough.py`, development only) can run on it: `GRIMMICH_TEST_DATA=<folder> python3 tests/ui_walkthrough.py` (59 views, no findings).
+- `tests/test_demo_data.py` (6 checks: same every time, every key known everywhere, faces, plausible estimates).
+
 ## 0.9.39 – 2026-11-01 – README: life dates and updating
 - The README says "life dates from Gramps Web" and has a section on updating (`git pull`).
 

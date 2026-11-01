@@ -24,6 +24,16 @@ Language: the interface is available in English and German. Grimmich follows the
 
 To try something next to your normal Grimmich (e.g. a new version): unpack it into a second folder and start it with `GRIMMICH_PORT=8766 GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py`. The second port lets both run at the same time, and `GRIMMICH_READ_ONLY=1` stops the second one from writing to Immich and Gramps.
 
+## Try it with invented data
+
+No photos, Immich or Gramps at hand? `demo_data.py` makes up a small data set (26 people, 140 drawn photos, 24 series, estimates):
+
+1. Make a copy of the Grimmich folder (without `grimmich.db` and `*.env`).
+2. In the copy: `python3 demo_data.py demo` and copy the content of the folder `demo` into the copy (`cp -r demo/. .`).
+3. Start it there with `GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py` and open <http://localhost:8765>.
+
+Everything is invented and the same every time. Nothing can be written to Immich or Gramps (there is none behind it).
+
 ## Updating
 
 If you installed Grimmich from the repository (`git clone`), update with two commands in the Grimmich folder: stop Grimmich, then `git pull`. Your data (`grimmich.db`, `*.env`, caches) is not part of the repository and stays untouched. If you installed from a ZIP file, unpack the new version over the old folder; the data stays as well.

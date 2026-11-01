@@ -24,6 +24,16 @@ Sprache: Die Oberfläche gibt es auf Englisch und Deutsch. Grimmich folgt der Sp
 
 Zum Ausprobieren neben dem normalen Grimmich (z. B. eine neue Fassung): in einen zweiten Ordner entpacken und mit `GRIMMICH_PORT=8766 GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py` starten. Der zweite Port lässt beide gleichzeitig laufen, `GRIMMICH_READ_ONLY=1` verbietet dem zweiten das Schreiben nach Immich und Gramps.
 
+## Mit erfundenen Daten ausprobieren
+
+Keine Fotos, kein Immich und kein Gramps zur Hand? `demo_data.py` erfindet einen kleinen Datensatz (26 Personen, 140 gezeichnete Fotos, 24 Serien, Schätzungen):
+
+1. Kopiere den Grimmich-Ordner (ohne `grimmich.db` und `*.env`).
+2. In der Kopie: `python3 demo_data.py demo`, dann den Inhalt des Ordners `demo` in die Kopie legen (`cp -r demo/. .`).
+3. Dort mit `GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py` starten und <http://localhost:8765> öffnen.
+
+Alles ist erfunden und jedes Mal gleich. Es kann nichts nach Immich oder Gramps geschrieben werden (es gibt dahinter keines).
+
 ## Aktualisieren
 
 Wenn du Grimmich aus dem Repository geholt hast (`git clone`), aktualisierst du im Grimmich-Ordner mit zwei Schritten: Grimmich beenden, dann `git pull`. Deine Daten (`grimmich.db`, `*.env`, Zwischenspeicher) gehören nicht zum Repository und bleiben unberührt. Wenn du Grimmich aus einer ZIP-Datei installiert hast, entpackst du die neue Version über den alten Ordner; die Daten bleiben ebenfalls erhalten.

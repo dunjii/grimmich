@@ -30,6 +30,10 @@ gramps_probe.json
 gramps_event_probe.json
 gramps_ereignis_probe.json
 
+# Demo data made by demo_data.py
+demo/
+demo_data/
+
 # Test data (from your own collection; do not publish, not even anonymised)
 tests/data/
 tests/daten/
