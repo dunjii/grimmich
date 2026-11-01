@@ -5,7 +5,7 @@
 [English](README.md) · **Deutsch**
 
 Grimmich datiert eingescannte Altfotos. Es liest die Fotos und Gesichter aus [Immich](https://immich.app),
-schätzt mit einer KI das Alter der erkannten Personen, rechnet mit den Geburtsdaten aus [Gramps](https://gramps-project.org)
+schätzt mit einer KI das Alter der erkannten Personen, rechnet mit den Lebensdaten aus [Gramps Web](https://gramps-project.org)
 auf ein Aufnahmejahr, fasst zusammengehörige Fotos zu Serien zusammen und schreibt das Ergebnis zurück
 (Aufnahmedatum und Tags in Immich, Fotos, Quellen und Ereignisse in Gramps).
 Alles läuft auf deinem eigenen Rechner. In Immich und Gramps wird nur geschrieben, wenn du es in der Oberfläche
@@ -23,6 +23,10 @@ Ohne Terminal (Linux): `bash launcher/install.sh` legt den Eintrag „Grimmich�
 Sprache: Die Oberfläche gibt es auf Englisch und Deutsch. Grimmich folgt der Sprache des Browsers; umstellen unter dem Zahnrad, „Einzelschritte und Einstellungen“, „Sprache / Language“.
 
 Zum Ausprobieren neben dem normalen Grimmich (z. B. eine neue Fassung): in einen zweiten Ordner entpacken und mit `GRIMMICH_PORT=8766 GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py` starten. Der zweite Port lässt beide gleichzeitig laufen, `GRIMMICH_READ_ONLY=1` verbietet dem zweiten das Schreiben nach Immich und Gramps.
+
+## Aktualisieren
+
+Wenn du Grimmich aus dem Repository geholt hast (`git clone`), aktualisierst du im Grimmich-Ordner mit zwei Schritten: Grimmich beenden, dann `git pull`. Deine Daten (`grimmich.db`, `*.env`, Zwischenspeicher) gehören nicht zum Repository und bleiben unberührt. Wenn du Grimmich aus einer ZIP-Datei installiert hast, entpackst du die neue Version über den alten Ordner; die Daten bleiben ebenfalls erhalten.
 
 ## Wo liegen die Daten?
 

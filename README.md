@@ -5,7 +5,7 @@
 **English** · [Deutsch](README.de.md)
 
 Grimmich dates scanned old family photos. It reads photos and faces from [Immich](https://immich.app), estimates the
-age of recognised people with an AI model, combines that with birth dates from [Gramps](https://gramps-project.org)
+age of recognised people with an AI model, combines that with life dates from [Gramps Web](https://gramps-project.org)
 to a year of the photo, groups related photos into series and writes the result back (capture date and tags in Immich;
 photos, sources and events in Gramps). Everything runs on your own machine. Nothing is written to Immich or Gramps
 unless you explicitly confirm it in the interface (preview, test with 3 photos, then all). The original values are
@@ -23,6 +23,10 @@ Without a terminal (Linux): `bash launcher/install.sh` adds a "Grimmich" entry t
 Language: the interface is available in English and German. Grimmich follows the browser language; change it under the gear icon, "Single steps and settings", "Language".
 
 To try something next to your normal Grimmich (e.g. a new version): unpack it into a second folder and start it with `GRIMMICH_PORT=8766 GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py`. The second port lets both run at the same time, and `GRIMMICH_READ_ONLY=1` stops the second one from writing to Immich and Gramps.
+
+## Updating
+
+If you installed Grimmich from the repository (`git clone`), update with two commands in the Grimmich folder: stop Grimmich, then `git pull`. Your data (`grimmich.db`, `*.env`, caches) is not part of the repository and stays untouched. If you installed from a ZIP file, unpack the new version over the old folder; the data stays as well.
 
 ## Where is the data?
 

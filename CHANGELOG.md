@@ -4,6 +4,9 @@ Grimmich (Gramps + Immich) datiert eingescannte Altfotos aus KI-Altersschätzung
 und bringt sie wieder in Immich und Gramps unter. Dieses Protokoll ist aus dem Arbeitsverlauf rekonstruiert,
 die Zuordnung einzelner Punkte zu Tagen ist teils ungefähr.
 
+## 0.9.39 – 2026-11-01 – README: life dates and updating
+- The README says "life dates from Gramps Web" and has a section on updating (`git pull`).
+
 ## 0.9.38 – 2026-11-01 – Preparation for GitHub
 - Privacy check of the whole project: no passwords, keys, real addresses or names in the code (only example addresses such as `192.168.1.10`). One example name in a comment was replaced.
 - `.gitignore` rewritten in English and brought up to date with the new file names (database, credentials, caches, output folders, your own series files, anonymised copies and their key). Tested with the real file names of an installation.
