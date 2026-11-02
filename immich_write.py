@@ -45,9 +45,10 @@ TAG_ESTIMATED = _NAMES["tag_estimated"]
 TAG_OPEN = _NAMES["tag_open"]
 ESTIMATED_ALL = naming.variants("tag_estimated")   # all spellings that are recognised when reading
 OPEN_ALL = naming.variants("tag_open")
-ART_TAGS = {"postcard": "Ansichtskarte", "greeting_card": "Grußkarte", "document": "Dokument", "other": "Sonstiges (Grimmich)"}
-BLOCK_START = "[Grimmich]"
-BLOCK_ENDE = "[/Grimmich]"
+ART_TAGS = {k: _NAMES["tag_" + k] for k in ("postcard", "greeting_card", "document", "other")}
+ART_ALL = sorted({w for k in ART_TAGS for w in naming.variants("tag_" + k)})   # all spellings, for reading and removing
+BLOCK_START = "[GRM]"   # one block per photo; the marker is language independent and never changes
+BLOCK_END = "[/GRM]"
 DEVIATION_DAYS = 2   # how far the capture date may deviate from the scan date before we assume 'set by yourself'
 
 
@@ -94,44 +95,14 @@ def iso_date(entry_row):
     return f"{int(entry_row['year']):04d}-07-01T12:00:00.000Z"
 
 
-def date_de(entry_row):
-    d = entry_row.get("date") or ""
-    t = d.split("-")
-    if len(t) == 3:
-        return f"{t[2]}.{t[1]}.{t[0]}"
-    if len(t) == 2:
-        return f"{t[1]}.{t[0]}"
-    return f"ca. {entry_row['year']}"
-
-
-UMLAUTS = {"aeltere": "ältere", "Schaetzungen": "Schätzungen", "Schaetzung": "Schätzung", "schaetzung": "schätzung",
-           "waere": "wäre", "geschaetzt": "geschätzt", "Einzelschaetzungen": "Einzelschätzungen", "noch nicht geboren": "noch nicht geboren",
-           "weichen stark ab": "weichen stark ab", "widerspricht": "widerspricht", "Gesichter": "Gesichter"}
-
-
-def umlauts(text):
-    for a, b in UMLAUTS.items():
-        text = text.replace(a, b)
-    return text
-
-
-def note(entry_row):
-    """The short text block for the description. Only estimates get one; otherwise empty."""
-    if not entry_row.get("year"):
-        text = _NAMES["note_open"]
-    else:
-        status = entry_row.get("status", "")
-        if entry_row.get("date") or status in ("manuell", "bestätigt"):
-            return ""
-        text = f"ca. {entry_row['year']}"
-        if entry_row.get("from") and entry_row.get("to") and entry_row["from"] != entry_row["to"]:
-            text += f" ({entry_row['from']}-{entry_row['to']})"
-    return f"{BLOCK_START} {text} {BLOCK_ENDE}"
-
-
-OLD_START, OLD_END = "[Datierung automatisch]", "[/Datierung]"
-PATTERN = re.compile("(?:" + re.escape(BLOCK_START) + r".*?" + re.escape(BLOCK_ENDE) + "|"
-                    + re.escape(OLD_START) + r".*?" + re.escape(OLD_END) + ")", re.S)
+# ---- the block in the description:  [GRM] ~1960 (1952–1968) · S038 · Photo album 3, p. 2, no. 1 [/GRM]
+# parts, in this order: date (~ = estimated, none = fixed, ? = open), series, source. Only the source part is free text.
+SEP = " · "
+OLD_BLOCKS = (("[Grimmich]", "[/Grimmich]"), ("[Datierung automatisch]", "[/Datierung]"))   # earlier versions: still recognised, replaced when written
+PATTERN = re.compile("|".join(re.escape(a) + r".*?" + re.escape(b) for a, b in ((BLOCK_START, BLOCK_END),) + OLD_BLOCKS), re.S)
+PATTERN_Q = re.compile("|".join(re.escape("[" + w + "]") + r".*?" + re.escape("[/" + w + "]") for w in naming.variants("source")), re.S)   # the earlier separate source block
+_DATE_PART = re.compile(r"^(?:\?|~?\d{4}(?:-\d{2}(?:-\d{2})?)?(?: \(\d{4}[–-]\d{4}\))?)$")
+_SERIES_PART = re.compile(r"^S\d{3,}$")
 
 
 def any_of(tags, spellings):
@@ -139,35 +110,83 @@ def any_of(tags, spellings):
 
 
 def has_block(text):
-    return BLOCK_START in (text or "") or OLD_START in (text or "")
+    text = text or ""
+    return any(a in text for a in (BLOCK_START,) + tuple(a for a, _b in OLD_BLOCKS))
 
 
-SOURCE_START, SOURCE_END = "[" + _NAMES["source"] + "]", "[/" + _NAMES["source"] + "]"
-PATTERN_Q = re.compile("|".join(re.escape("[" + w + "]") + r".*?" + re.escape("[/" + w + "]") for w in naming.variants("source")), re.S)
+def block_parts(text):
+    """What the description already says: {"date": ..., "series": ..., "source": ...} (each possibly empty). Reads the new block,
+    and the earlier separate source block."""
+    parts = {"date": "", "series": "", "source": ""}
+    m = re.search(re.escape(BLOCK_START) + r"(.*?)" + re.escape(BLOCK_END), text or "", re.S)
+    if m:
+        tokens = [t.strip() for t in m.group(1).strip().split(SEP.strip())]
+        rest = []
+        for t in tokens:
+            if not rest and not parts["date"] and _DATE_PART.match(t):
+                parts["date"] = t
+            elif not rest and not parts["series"] and _SERIES_PART.match(t):
+                parts["series"] = t
+            elif t:
+                rest.append(t)
+        parts["source"] = SEP.join(rest)
+    else:
+        q = PATTERN_Q.search(text or "")
+        if q:
+            inner = re.sub(r"^\[[^\]]*\]|\[/[^\]]*\]$", "", q.group(0)).strip()
+            parts["source"] = inner
+    return parts
 
 
-def source_block(entry_row):
-    """Where the photo comes from (photo album, page, photo), e.g. '[Quelle] Fotoalbum 3, Seite 2, Foto 1 [/Quelle]' (the marker word is chosen once, see naming.py)."""
-    q = (entry_row.get("source") or "").strip()
-    return f"{SOURCE_START} {q} {SOURCE_END}" if q else ""
+def date_part(entry_row):
+    """'~1960 (1952–1968)' for an estimate, '1951' or '1951-03-12' for a fixed date, '?' for open. '' if there is nothing."""
+    if not entry_row.get("year"):
+        return "?"
+    status = entry_row.get("status", "")
+    if entry_row.get("date") or status in ("manuell", "bestätigt"):
+        return entry_row.get("date") or str(entry_row["year"])
+    text = f"~{entry_row['year']}"
+    if entry_row.get("from") and entry_row.get("to") and entry_row["from"] != entry_row["to"]:
+        text += f" ({entry_row['from']}–{entry_row['to']})"
+    return text
 
 
-def _replace(old, muster, block):
-    if muster.search(old):
-        return muster.sub(lambda _m: block, old, count=1).strip()
+def is_fixed(entry_row):
+    return bool(entry_row.get("year")) and (bool(entry_row.get("date")) or entry_row.get("status", "") in ("manuell", "bestätigt"))
+
+
+def make_block(date_, series_, source_):
+    """Puts the parts together. A fixed date alone (nothing else to say) gets no block: the date in Immich says it."""
+    parts = [x for x in (date_, series_, source_) if x]
+    return f"{BLOCK_START} {SEP.join(parts)} {BLOCK_END}" if parts else ""
+
+
+def note(entry_row, old_text="", keep_date=False):
+    """The block for the description ('' = no block). keep_date: leave the date part of the existing block as it is.
+    The source part: the row's source if source writing is on, else what the description already has."""
+    old = block_parts(old_text)
+    date_ = old["date"] if keep_date else date_part(entry_row)
+    series_ = entry_row.get("series_id") or ""
+    source_ = old["source"] if entry_row.get("sourceUntouched") else (entry_row.get("source") or "").strip()
+    if not keep_date and is_fixed(entry_row) and not (series_ or source_):
+        date_ = ""
+    return make_block(date_, series_, source_)
+
+
+def _replace(old, pattern, block):
+    if pattern.search(old):
+        return pattern.sub(lambda _m: block, old, count=1).strip()
     if not block:
         return old.strip()
     return (old.rstrip() + "\n\n" + block).strip()
 
 
-def new_description(old, block, source_=""):
-    """block: dating block (None = leave untouched). source_: source block ('' = remove)."""
+def new_description(old, block):
+    """Puts the block (or removes it, if empty) and removes the earlier separate source block."""
     old = old or ""
-    if block is not None:
-        old = _replace(old, PATTERN, block)
-    if source_ is None:   # leave the source untouched
-        return old.strip() if block is not None else old
-    return _replace(old, PATTERN_Q, source_)
+    if PATTERN_Q.search(old):
+        old = re.sub(r"\n{3,}", "\n\n", PATTERN_Q.sub("", old)).strip()
+    return _replace(old, PATTERN, block or "")
 
 
 def tag_names(asset):
@@ -224,7 +243,7 @@ def plan(entry_row, asset, written):
     # only the source (photo album, page, photo) into the description: date, tags and dating block stay untouched
     if entry_row.get("onlySource") or entry_row.get("onlyPlace"):
         if entry_row.get("onlySource"):
-            p["new_description"] = new_description(old_text, None, source_block(entry_row))
+            p["new_description"] = new_description(old_text, note(entry_row, old_text, keep_date=True))
         p["only_source"] = True
         if p["new_description"] != old_text or p["new_place"]:
             q_new, o_new = p["new_description"] != old_text, bool(p["new_place"])
@@ -263,8 +282,7 @@ def plan(entry_row, asset, written):
                 p.update(action="skip", reason=reason_)
                 return p
 
-    block = note(entry_row)
-    p["new_description"] = new_description(old_text, block, None if entry_row.get("sourceUntouched") else source_block(entry_row))
+    p["new_description"] = new_description(old_text, note(entry_row, old_text))
     if entry_row.get("year"):
         p["new_date"] = iso_date(entry_row)
         p["date_change"] = old_date_value[:10] != p["new_date"][:10]
@@ -283,7 +301,7 @@ def plan(entry_row, asset, written):
     kind_tag = ART_TAGS.get(entry_row.get("kind") or "")
     if kind_tag:
         p["tags_add"].append(kind_tag)
-    p["tags_remove"] += [t for t in ART_TAGS.values() if t != kind_tag]
+    p["tags_remove"] += [t for t in ART_ALL if t != kind_tag]
     p["tags_add"] = [t for t in p["tags_add"] if t not in tags]
     p["tags_remove"] = [t for t in p["tags_remove"] if t in tags]
     if not p["date_change"] and p["new_description"] == old_text and not p["tags_add"] and not p["tags_remove"] and not p["new_place"]:
@@ -336,7 +354,7 @@ def short(p):
     return {"key": p["key"], "action": p["action"], "reason": p["reason"], "old_date": p["old_date"], "confirm": bool(p.get("confirm")),
             "new_date": p["new_date"][:10], "tags_add": p["tags_add"], "tags_remove": p["tags_remove"],
             "new_place": p["new_place"], "place_name": p["place_name"], "old_place": p["old_place"], "place_reason": p["place_reason"], "place_confirm": p["place_confirm"],
-            "new_note": " ".join(x for x in ([] if p["row"].get("onlySource") else [note(p["row"])]) + ([] if p["row"].get("sourceUntouched") else [source_block(p["row"])]) if x) if p["action"] == "write" else ""}
+            "new_note": note(p["row"], p["description"], keep_date=bool(p["row"].get("onlySource"))) if p["action"] == "write" else ""}
 
 
 def load_rows():
@@ -470,7 +488,7 @@ def back_():
         print(tx("Nothing to undo."))
         return
     print(tx("Restoring {n} photos ...", n=len(target_)))
-    ids = tag_ids(immich, ESTIMATED_ALL + OPEN_ALL + list(ART_TAGS.values()), create=False)
+    ids = tag_ids(immich, ESTIMATED_ALL + OPEN_ALL + ART_ALL, create=False)
     remove_it = {n: [] for n in ids}
     fail = 0
     for k in target_:

@@ -42,14 +42,16 @@ export const writeSig = () => JSON.stringify([onlyConfirmedFlag(), writeAlbum(),
 // Places: a photo with a place is also written for “confirmed only” and for photos with your Immich date, then only the place goes (onlyPlace).
 export function writeRows() {
   const what = writeWhat(), nb = onlyConfirmedFlag(), alb = S.albums.find((a) => a.id === writeAlbum()), inAlbum = alb ? new Set(alb.keys) : null, off = [];
-  adoptionRows().forEach((r) => {
+  const rows = adoptionRows(), inSeries = {};
+  rows.forEach((r) => { if (r.series_id) inSeries[r.series_id] = (inSeries[r.series_id] || 0) + 1; });
+  rows.forEach((r) => {
     if (!r.asset || r.anchor || (inAlbum && !inAlbum.has(r.key))) return;   // anchor album: read only
     if (r.warn && !withWarning()) return;   // Warning (date does not fit birth or death): is not written unless allowed
     const sourceAt = what.source && !!r.source && (!nb || r.fixed), placeVal = what.place ? r.place : null;
     const dateAt = what.date && !r.readOnly && (!nb || r.fixed);
     if (!dateAt && !sourceAt && !placeVal) return;
     off.push({key: r.key, source: sourceAt ? r.source : "", sourceUntouched: !what.source, onlySource: !dateAt && sourceAt, onlyPlace: !dateAt && !sourceAt,
-      place: placeVal, placeForce: r.placeForce, asset: r.asset, names: r.names, year: r.year || 0, date: r.date, from: r.from || 0, to: r.to || 0, status: r.status, series_id: r.series_id,
+      place: placeVal, placeForce: r.placeForce, asset: r.asset, names: r.names, year: r.year || 0, date: r.date, from: r.from || 0, to: r.to || 0, status: r.status, series_id: inSeries[r.series_id] > 1 ? r.series_id : "",   // a series of one photo is no series
       hint: r.hint, manual_date: r.manual_date, force: r.force, kind: r.kind});
   });
   return off;

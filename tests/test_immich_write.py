@@ -51,13 +51,13 @@ class BasicRules(unittest.TestCase):
         self.assertEqual(p["action"], "write")
         self.assertEqual(p["new_date"], "1960-07-01T12:00:00.000Z")
         self.assertIn(s.TAG_ESTIMATED, p["tags_add"])
-        self.assertIn("ca. 1960", p["new_description"])
+        self.assertEqual(p["new_description"], "[GRM] ~1960 (1955–1965) [/GRM]")
 
     def test_volles_datum_ohne_schaetz_tag(self):
         p = s.plan(entry_row(date="1960-05-17", status="manuell"), asset(), {})
         self.assertEqual(p["new_date"], "1960-05-17T12:00:00.000Z")
         self.assertNotIn(s.TAG_ESTIMATED, p["tags_add"])
-        self.assertNotIn("[Grimmich]", p["new_description"])
+        self.assertNotIn("[GRM]", p["new_description"])   # a fixed date alone needs no block
 
     def test_ohne_jahr_wird_offen(self):
         p = s.plan(entry_row(year="", **{"from": "", "to": ""}), asset(), {})
@@ -82,16 +82,64 @@ class BasicRules(unittest.TestCase):
 
     def test_source_block_in_another_language_is_replaced(self):
         for old, gone in (("Text\n\n[Quelle] Album 3 [/Quelle]", "Album 3"), ("Text\n\n[Source] Album 4 [/Source]", "Album 4")):
-            text = s.new_description(old, None, s.source_block({"source": "Album 5"}))
+            text = s.new_description(old, s.note(entry_row(source="Album 5", sourceUntouched=False), old))
             self.assertNotIn(gone, text)
+            self.assertNotIn("[Quelle]", text)
+            self.assertNotIn("[Source]", text)
             self.assertIn("Album 5", text)
             self.assertEqual(text.count("Album"), 1)
+            self.assertTrue(text.startswith("Text"))
 
     def test_art_tag_kommt_und_geht(self):
         p = s.plan(entry_row(kind="postcard"), asset(), {})
-        self.assertIn("Ansichtskarte", p["tags_add"])
-        p = s.plan(entry_row(kind=""), asset(tags=["Ansichtskarte"]), {})
-        self.assertIn("Ansichtskarte", p["tags_remove"])
+        self.assertIn(s.ART_TAGS["postcard"], p["tags_add"])
+        for old_word in ("Ansichtskarte", "Postcard"):
+            p = s.plan(entry_row(kind=""), asset(tags=[old_word]), {})
+            self.assertIn(old_word, p["tags_remove"])
+
+
+class UnifiedBlock(unittest.TestCase):
+    def test_parts_and_format(self):
+        self.assertEqual(s.note(entry_row(series_id="S038")), "[GRM] ~1960 (1955–1965) · S038 [/GRM]")
+        self.assertEqual(s.note(entry_row(date="1951-03-12", status="manuell", series_id="S038")), "[GRM] 1951-03-12 · S038 [/GRM]")
+        self.assertEqual(s.note(entry_row(year=1951, date="", status="manuell", series_id="S038")), "[GRM] 1951 · S038 [/GRM]")
+        self.assertEqual(s.note(entry_row(year="", series_id="")), "[GRM] ? [/GRM]")
+        self.assertEqual(s.note(entry_row(source="Photo album 3, p. 2, no. 1", sourceUntouched=False, series_id="S038")),
+                         "[GRM] ~1960 (1955–1965) · S038 · Photo album 3, p. 2, no. 1 [/GRM]")
+        self.assertEqual(s.note(entry_row(year=1951, status="manuell")), "")   # fixed date alone: no block
+
+    def test_old_blocks_are_replaced(self):
+        for old in ("Text\n\n[Grimmich] ca. 1984 (1974-1993) [/Grimmich]", "Text\n\n[Datierung automatisch]\nGeschätzt: ca. 1960.\n[/Datierung]"):
+            p = s.plan(entry_row(), asset(description=old, tags=[s.TAG_ESTIMATED]), {})
+            self.assertEqual(p["new_description"], "Text\n\n[GRM] ~1960 (1955–1965) [/GRM]")
+
+    def test_old_source_block_moves_into_the_block(self):
+        old = "Text\n\n[Grimmich] ca. 1984 [/Grimmich]\n\n[Quelle] Fotoalbum 3, Seite 2 [/Quelle]"
+        text = s.new_description(old, s.note(entry_row(), old))   # source untouched: kept
+        self.assertIn("[GRM] ~1960 (1955–1965) · Fotoalbum 3, Seite 2 [/GRM]", text)
+        self.assertNotIn("[Quelle]", text)
+
+    def test_source_only_keeps_date_and_series_part(self):
+        old = "[GRM] ~1960 (1955–1965) · S038 [/GRM]"
+        text = s.new_description(old, s.note(entry_row(source="Album 5", sourceUntouched=False, onlySource=True, year=1999, series_id="S038"), old, keep_date=True))
+        self.assertEqual(text, "[GRM] ~1960 (1955–1965) · S038 · Album 5 [/GRM]")
+
+    def test_series_disappears_when_dissolved(self):
+        old = "[GRM] ~1960 (1955–1965) · S038 [/GRM]"
+        self.assertEqual(s.new_description(old, s.note(entry_row(series_id=""), old)), "[GRM] ~1960 (1955–1965) [/GRM]")
+
+    def test_parse_block(self):
+        self.assertEqual(s.block_parts("x [GRM] ~1960 (1955–1965) · S038 · Album 3 · p. 2 [/GRM]"),
+                         {"date": "~1960 (1955–1965)", "series": "S038", "source": "Album 3 · p. 2"})
+        self.assertEqual(s.block_parts("[GRM] ? [/GRM]")["date"], "?")
+        self.assertEqual(s.block_parts("nothing"), {"date": "", "series": "", "source": ""})
+
+    def test_existing_text_is_kept_and_rerun_is_unchanged(self):
+        a = asset(description="My own note")
+        p = s.plan(entry_row(series_id="S038"), a, {})
+        self.assertEqual(p["new_description"], "My own note\n\n[GRM] ~1960 (1955–1965) · S038 [/GRM]")
+        p2 = s.plan(entry_row(series_id="S038"), asset(date_=p["new_date"], description=p["new_description"], tags=[s.TAG_ESTIMATED]), {})
+        self.assertEqual(p2["action"], "unchanged")
 
 
 class ProtectHandData(unittest.TestCase):

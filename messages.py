@@ -7,8 +7,8 @@ t("Text {name}", name=...) returns the text in the current language. Plurals as 
 The language comes from the header X-Language for each request, and from the environment variable GRIMMICH_LANGUAGE for
 background jobs. Without a value English applies.
 
-What Grimmich writes into Immich or Gramps (tags "Datierung geschätzt" / "Datierung offen", [Grimmich] and [Quelle] blocks)
-is deliberately not translated, so it can be found again across languages."""
+What Grimmich writes into Immich or Gramps (the tags such as "Datierung geschätzt" and the language-independent [GRM] block) follows naming.py: the words are chosen once
+and then stay, so photos can be found again across languages."""
 import json
 import os
 import re

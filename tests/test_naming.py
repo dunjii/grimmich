@@ -66,6 +66,14 @@ class TestChoice(Base):
             self.assertIn(naming.GERMAN[key], naming.variants(key))
             self.assertIn(naming.ENGLISH[key], naming.variants(key))
 
+    def test_kind_tags_follow_the_choice_and_older_choices_stay_german(self):
+        os.environ["GRIMMICH_LANGUAGE"] = "en"
+        self.assertEqual(naming.active()["tag_postcard"], "Postcard")
+        # a choice stored by an older version has no kind tags: they were always written in German
+        storage.save(naming.DOCUMENT, {k: naming.ENGLISH[k] for k in naming.OLDER_KEYS})
+        self.assertEqual(naming.active()["tag_postcard"], "Ansichtskarte")
+        self.assertEqual(naming.active()["tag_estimated"], "Dating estimated")
+
 
 if __name__ == "__main__":
     unittest.main()

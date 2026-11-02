@@ -4,6 +4,12 @@ Grimmich (Gramps + Immich) datiert eingescannte Altfotos aus KI-Altersschätzung
 und bringt sie wieder in Immich und Gramps unter. Dieses Protokoll ist aus dem Arbeitsverlauf rekonstruiert,
 die Zuordnung einzelner Punkte zu Tagen ist teils ungefähr.
 
+## 0.9.41 – 2026-11-02 – One block in the description, kind tags per language
+- **One block per photo** in the Immich description: `[GRM] ~1960 (1952–1968) · S038 [/GRM]`. `~` = estimated, no `~` = fixed date, `?` = open; then the series number (searchable in Immich) and, if switched on, the source. A fixed date alone gets no block. The marker is the same in every language and no longer contains words, so nothing in it has to be translated ("ca." is gone; the name of the person and their age are not written, Immich shows them anyway).
+- Earlier blocks (`[Grimmich] ca. …`, `[Datierung automatisch] …`) and the separate source block (`[Quelle]` / `[Source]`) are recognised and replaced when a photo is written the next time; the preview shows how many photos that touches. A series of only one photo gets no number.
+- **Kind tags per language** (`tag_postcard`, `tag_greeting_card`, `tag_document`, `tag_other` in `naming.py` and the `written` section of a language file). An installation that has already written keeps the German names (Ansichtskarte, Grußkarte, Dokument, Sonstiges (Grimmich)); a new installation takes its language (Postcard, Greeting card, Document, Other (Grimmich)). All spellings are recognised when reading.
+- Tests: `UnifiedBlock` (format, old blocks, source moves into the block, series disappears, rerun is unchanged), kind tags in `test_naming.py`.
+
 ## 0.9.40 – 2026-11-01 – Invented demo data
 - New `demo_data.py`: makes up a complete small data set (26 people, 140 drawn photos, 24 series, estimates, albums, postcards), so Grimmich can be tried without your own photos, Immich or Gramps. Always the same data (fixed random seed). See README, "Try it with invented data".
 - The interface walkthrough (`tests/ui_walkthrough.py`, development only) can run on it: `GRIMMICH_TEST_DATA=<folder> python3 tests/ui_walkthrough.py` (59 views, no findings).
