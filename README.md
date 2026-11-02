@@ -51,6 +51,17 @@ Everything is invented and the same every time. Nothing can be written to Immich
 
 If you installed Grimmich from the repository (`git clone`), update with two commands in the Grimmich folder: stop Grimmich, then `git pull`. Your data (`grimmich.db`, `*.env`, caches) is not part of the repository and stays untouched. If you installed from a ZIP file, unpack the new version over the old folder; the data stays as well.
 
+## Docker
+
+Grimmich also runs as a Docker container (for example on a home server next to Immich). The program is in the image, all your data (database, access files, AI models) lives in a folder you choose (`./data` by default, set in `docker-compose.yml`).
+
+1. Get the repository on the server (`git clone`).
+2. In `docker-compose.yml`, change `./data` to a folder on a large disk if you like (the AI models need a few GB).
+3. `docker compose up -d --build` (the first build takes a while and downloads a few GB).
+4. Open `http://<address of the server>:8765`.
+
+To copy your existing data, put `grimmich.db` and the `*.env` files into the data folder before the first start. Settings: `GRIMMICH_LANGUAGE` (en or de), `GRIMMICH_READ_ONLY=1` (nothing is written to Immich or Gramps). Grimmich has no login yet: do not make the port reachable from the internet.
+
 ## Where is the data?
 
 - `grimmich.db`: all working data (one SQLite file). **This is the file to back up** (copy it while Grimmich is stopped).

@@ -4,6 +4,11 @@ Grimmich (Gramps + Immich) datiert eingescannte Altfotos aus KI-Altersschätzung
 und bringt sie wieder in Immich und Gramps unter. Dieses Protokoll ist aus dem Arbeitsverlauf rekonstruiert,
 die Zuordnung einzelner Punkte zu Tagen ist teils ungefähr.
 
+## 0.9.43 – 2026-11-02 – Docker (first version, untested on a server)
+- `Dockerfile`, `docker-compose.yml`, `.dockerignore`. The program is in the image, the data in a volume (`/data`).
+- New settings: `GRIMMICH_DATA` (folder for database, access files, caches; default the program folder, as before) and `GRIMMICH_HOST` (default `127.0.0.1`; `0.0.0.0` in the container). The AI models are cached in the data folder. README: section "Docker".
+- Nothing changes when started the usual way.
+
 ## 0.9.42 – 2026-11-02 – Screenshots, a fix for two texts, more realistic demo data
 - **Fix:** two texts with an umlaut in the name of a placeholder showed `{prüfen}` / `{verfügbar}` literally in the interface (the browser only knows plain letters in placeholder names). Renamed (`{state}`, `{text}`); a test now checks that no placeholder name has a special character.
 - Screenshots in the README (`docs/screenshots/`), taken on the invented demo data.

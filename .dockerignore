@@ -1,0 +1,12 @@
+.git
+.venv
+__pycache__
+*.pyc
+grimmich.db*
+*.env
+data
+demo_data
+tests/data
+json_alt
+export
+serien_ausgabe

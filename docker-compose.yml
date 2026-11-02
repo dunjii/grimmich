@@ -1,0 +1,21 @@
+# Grimmich in Docker. Start:  docker compose up -d --build    Stop:  docker compose down
+# Open http://<address of this computer>:8765 in the browser.
+#
+# Your data (database, access files, AI models) lives in the folder on the left of "volumes". Change it to a folder on
+# a large disk. The first start downloads the AI models (a few GB) into that folder.
+#
+# Grimmich has no login yet: do not make port 8765 reachable from the internet. To limit it to this computer, write
+# "127.0.0.1:8765:8765" instead of "8765:8765".
+services:
+  grimmich:
+    build: .
+    image: grimmich:local
+    container_name: grimmich
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    volumes:
+      - ./data:/data
+    environment:
+      GRIMMICH_LANGUAGE: ${GRIMMICH_LANGUAGE:-en}
+      # GRIMMICH_READ_ONLY: "1"   # nothing is written to Immich or Gramps (for testing)

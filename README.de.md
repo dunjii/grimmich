@@ -51,6 +51,17 @@ Alles ist erfunden und jedes Mal gleich. Es kann nichts nach Immich oder Gramps 
 
 Wenn du Grimmich aus dem Repository geholt hast (`git clone`), aktualisierst du im Grimmich-Ordner mit zwei Schritten: Grimmich beenden, dann `git pull`. Deine Daten (`grimmich.db`, `*.env`, Zwischenspeicher) gehören nicht zum Repository und bleiben unberührt. Wenn du Grimmich aus einer ZIP-Datei installiert hast, entpackst du die neue Version über den alten Ordner; die Daten bleiben ebenfalls erhalten.
 
+## Docker
+
+Grimmich läuft auch als Docker-Container (zum Beispiel auf einem Heimserver neben Immich). Das Programm steckt im Image, alle deine Daten (Datenbank, Zugangsdateien, KI-Modelle) liegen in einem Ordner deiner Wahl (standardmäßig `./data`, einstellbar in `docker-compose.yml`).
+
+1. Das Repository auf den Server holen (`git clone`).
+2. In `docker-compose.yml` den Ordner `./data` auf einen Ordner auf einer großen Festplatte ändern (die KI-Modelle brauchen einige GB).
+3. `docker compose up -d --build` (der erste Bau dauert und lädt einige GB).
+4. `http://<Adresse des Servers>:8765` im Browser öffnen.
+
+Um deine vorhandenen Daten mitzunehmen, lege `grimmich.db` und die `*.env`-Dateien vor dem ersten Start in den Datenordner. Einstellungen: `GRIMMICH_LANGUAGE` (en oder de), `GRIMMICH_READ_ONLY=1` (es wird nichts nach Immich oder Gramps geschrieben). Grimmich hat noch keine Anmeldung: mache den Port nicht aus dem Internet erreichbar.
+
 ## Wo liegen die Daten?
 
 - `grimmich.db`: alle Arbeitsdaten (eine SQLite-Datei). **Das ist die Datei für dein Backup** (bei beendetem Grimmich kopieren).

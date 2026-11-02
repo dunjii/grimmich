@@ -21,8 +21,11 @@ import urllib.request
 from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-os.chdir(HERE)  # all files live in the Grimmich folder, no matter where it is started from
+HERE = os.path.dirname(os.path.abspath(__file__))   # the program (code, web, languages)
+DATA = os.environ.get("GRIMMICH_DATA") or HERE      # the working data (database, access files, caches); in Docker a separate folder
+os.makedirs(DATA, exist_ok=True)
+os.chdir(DATA)  # all data files live there, no matter where Grimmich is started from
+HOST = os.environ.get("GRIMMICH_HOST") or "127.0.0.1"   # in Docker 0.0.0.0, so the port can be reached from outside the container
 
 import calculation  # noqa: E402
 import migration  # noqa: E402
@@ -43,8 +46,8 @@ SERIES_JSON = "series.json"
 PHOTOS_FILE = "photos.json"
 RESULT_CSV = "schaetzung_koerper.csv"
 PHOTO_FOLDER = os.path.join("serien_ausgabe", "fotos")
-SCRIPTS = {"series": "series.py", "estimate": "estimate.py", "names": "names.py", "state": "immich_state.py",
-            "write": "immich_write.py", "provenance": "provenance.py", "gramps": "gramps_write.py"}
+SCRIPTS = {k: os.path.join(HERE, f) for k, f in {"series": "series.py", "estimate": "estimate.py", "names": "names.py", "state": "immich_state.py",
+                                                   "write": "immich_write.py", "provenance": "provenance.py", "gramps": "gramps_write.py"}.items()}
 PIPELINE = ["names", "state", "estimate", "series", "provenance"]
 NON_CRITICAL = {"provenance"}  # errors here do not stop the run
 
@@ -345,7 +348,7 @@ def start_job(name, args):
         if sname not in SCRIPTS:
             return False, tx('unknown job')
         if not os.path.exists(SCRIPTS[sname]):
-            return False, tx('{file_path} is missing in this folder', file_path=SCRIPTS[sname])
+            return False, tx('{file_path} is missing in this folder', file_path=os.path.basename(SCRIPTS[sname]))
     if READ_ONLY and name in ("write", "gramps") and [str(x) for x in args][:1] != ["preview"]:   # the preview only reads
         return False, tx('Write protection: nothing is written to Immich or Gramps in this test environment.')
     language_job = messages.language()
@@ -374,7 +377,7 @@ def start_job(name, args):
                     continue
             JOB.step, JOB.step_name = f"{no}/{len(steps)}", sname
             JOB.step_no, JOB.step_total, JOB.sub = no, len(steps), 0.0
-            JOB.rows.append("> " + " ".join(["python", SCRIPTS[sname]] + [str(a) for a in sargs]))
+            JOB.rows.append("> " + " ".join(["python", os.path.basename(SCRIPTS[sname])] + [str(a) for a in sargs]))
             try:
                 p = subprocess.Popen([sys.executable, "-u", SCRIPTS[sname]] + [str(a) for a in sargs], stdout=subprocess.PIPE,
                                      stderr=subprocess.STDOUT, text=True, bufsize=1, env=dict(os.environ, PYTHONUNBUFFERED="1", GRIMMICH_LANGUAGE=language_job))
@@ -545,7 +548,7 @@ def main():
     except migration.MigrationError as e:
         sys.exit(str(e))
     try:
-        server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+        server = ThreadingHTTPServer((HOST, PORT), Handler)
     except OSError:
         sys.exit(tx("Port {port} is in use. Is Grimmich (or the old interface) already running in another terminal window?", port=PORT))
     print(tx("Grimmich is running: http://localhost:{port}", port=PORT))
