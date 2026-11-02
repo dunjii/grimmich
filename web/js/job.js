@@ -30,7 +30,7 @@ async function afterJob() {
 const STEP_LABELS = {names: tr("Load names"), state: tr("Check changes in Immich"), estimate: tr("Estimate ages"), series: tr("Compare series"), provenance: tr("Read albums"), gramps: tr("To Gramps")};
 export function statusHtml(j, last, labels = STEP_LABELS) {   // "Step 3 of 5: <name>", the last line and a progress bar
   const pct = Math.round((j.progress || 0) * 100);
-  return `${tr("Step {no} of {total}:", {no: j.step_no || 0, total: j.step_total || 0})} <b>${esc(labels[j.step_name] || j.name || "")}</b><br>${esc(last)}
+  return `${tr("Step {no} of {total}:", {no: j.step_no || 0, total: j.step_total || 0})} <b>${esc(labels[j.step_name] || j.name || "")}</b><div class="job-last">${esc(last)}</div>
     <div class="bar" id="jobbar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="width:${pct}%"></i></div>`;
 }
 export function updateDisplay() {   // only progress texts, so that input in the window is not lost

@@ -61,6 +61,39 @@ Grimmich also runs as a Docker container (for example on a home server next to I
 
 To copy your existing data, put `grimmich.db` and the `*.env` files into the data folder before the first start. Settings: `GRIMMICH_LANGUAGE` (en or de), `GRIMMICH_READ_ONLY=1` (nothing is written to Immich or Gramps). Grimmich has no login yet: do not make the port reachable from the internet.
 
+### ZimaOS / CasaOS (without a terminal)
+
+1. Open the App Store, choose the button for a custom installation and switch to the **YAML** tab.
+2. Replace the content with the text below (it uses the ready-made image) and check it in the **Form** tab.
+3. Press **Install**. Open Grimmich with its icon; it listens on port 8765.
+4. To bring your existing data, stop the app, upload `grimmich.db` and your `*.env` files (and, to save recalculating, `estimate_cache_body.json`, `gramps_cache.json`, `schaetzung_koerper.csv`, `serien.csv`, `serien_vorschlaege.csv`) to `AppData/grimmich` with the Files app, then start the app again.
+5. Updates: when a new version is published, ZimaOS offers the update in its interface. Do not update while a job is running in Grimmich.
+
+```yaml
+services:
+  grimmich:
+    image: ghcr.io/dunjii/grimmich:latest
+    container_name: grimmich
+    restart: unless-stopped
+    network_mode: bridge
+    ports:
+      - "8765:8765"
+    volumes:
+      - /DATA/AppData/grimmich:/data
+    environment:
+      GRIMMICH_LANGUAGE: en
+      GRIMMICH_READ_ONLY: "1"   # nothing is written to Immich or Gramps; remove this line when you are ready
+x-casaos:
+  title:
+    custom: Grimmich
+  main: grimmich
+  scheme: http
+  hostname: ""
+  index: /
+  port_map: "8765"
+  icon: https://raw.githubusercontent.com/dunjii/grimmich/main/assets/logo-512.png
+```
+
 ## Where is the data?
 
 - `grimmich.db`: all working data (one SQLite file). **This is the file to back up** (copy it while Grimmich is stopped).

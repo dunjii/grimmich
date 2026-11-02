@@ -314,6 +314,9 @@ def grampsstatus():
 
 # ------------------------------------------------------------------ background jobs
 
+ANSI = re.compile(r"\x1b\[[0-9;]*[A-Za-z]|\[(?:\d{1,2};?)+m")
+
+
 class Job:
     def __init__(self):
         self.name, self.running, self.rc, self.new_ = None, False, None, 0
@@ -324,6 +327,7 @@ class Job:
 
     def add(self, line):
         """A counter line ('  12 / 340') replaces the previous one, so the log stays complete but short."""
+        line = ANSI.sub("", line)   # colour codes of some libraries do not belong in the log
         if self.rows and PROGRESS_LINE.match(line) and PROGRESS_LINE.match(self.rows[-1]):
             self.rows[-1] = line
         else:

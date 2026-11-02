@@ -3,6 +3,13 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.47 – 2026-11-02 – Progress row, log without colour codes, ZimaOS guide
+- The progress of "Refresh" now sits in its own row over the whole width of the card, so the bar keeps its length when the text changes; the text line is shortened with "…" instead of pushing the bar around.
+- Colour codes of libraries (`[31m[1m …`) are removed from the log.
+- README: guide for ZimaOS / CasaOS (custom install with a ready-made text, moving your data, updating).
+- GitHub build: newer versions of the actions (the old ones ran on the retired Node 20).
+- Code comment about the face-box margin no longer refers to another project.
+
 ## 0.9.46 – 2026-11-02 – Docker: missing package
 - **Fix:** the person detector needs `omegaconf`; the Docker image did not contain it, so Ultralytics installed it on the fly at the first run. It is now part of `requirements.txt` and the image build checks it.
 

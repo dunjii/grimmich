@@ -37,7 +37,7 @@ GRAMPS_ENV = "gramps_write.env"
 READ_ENV = "immich.env"
 WRITE_ENV = "immich_write.env"
 MAX_EDGE = 2000
-MARGIN = 0.15        # face boxes: margin around the face (share of the face size), as in Bifrost
+MARGIN = 0.15        # face boxes: margin around the face (share of the face size)
 ATTR_ID = "Immich ID"
 TAG_ROOT = "Gramps"
 
