@@ -7,6 +7,7 @@ and puts the results back into Immich and Gramps. This log is reconstructed from
 - All test names, test comments and the remaining German messages in the code are English now (the German texts live in `languages/de.json`).
 - README: a clear note at the top that Grimmich has no login yet and must not be reachable from the internet.
 - Screenshots: new ones for sorting by appearance and the life line from Gramps (invented data), shown side by side. The demo photos are drawn as small figures that look older with age.
+- Docker: GitHub builds the image (`.github/workflows/docker.yml`, on every `v*` release or by hand) and publishes it as `ghcr.io/dunjii/grimmich`; `docker-compose.yml` uses it.
 - No change in behaviour.
 
 ## 0.9.43 – 2026-11-02 – Docker (first version, untested on a server)

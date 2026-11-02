@@ -56,7 +56,7 @@ Grimmich also runs as a Docker container (for example on a home server next to I
 
 1. Get the repository on the server (`git clone`).
 2. In `docker-compose.yml`, change `./data` to a folder on a large disk if you like (the AI models need a few GB).
-3. `docker compose up -d --build` (the first build takes a while and downloads a few GB).
+3. `docker compose up -d` (downloads the ready-made image from GitHub; to build it yourself instead, use `docker compose up -d --build`).
 4. Open `http://<address of the server>:8765`.
 
 To copy your existing data, put `grimmich.db` and the `*.env` files into the data folder before the first start. Settings: `GRIMMICH_LANGUAGE` (en or de), `GRIMMICH_READ_ONLY=1` (nothing is written to Immich or Gramps). Grimmich has no login yet: do not make the port reachable from the internet.
