@@ -4,6 +4,11 @@ Grimmich (Gramps + Immich) datiert eingescannte Altfotos aus KI-Altersschätzung
 und bringt sie wieder in Immich und Gramps unter. Dieses Protokoll ist aus dem Arbeitsverlauf rekonstruiert,
 die Zuordnung einzelner Punkte zu Tagen ist teils ungefähr.
 
+## 0.9.42 – 2026-11-02 – Screenshots, a fix for two texts, more realistic demo data
+- **Fix:** two texts with an umlaut in the name of a placeholder showed `{prüfen}` / `{verfügbar}` literally in the interface (the browser only knows plain letters in placeholder names). Renamed (`{state}`, `{text}`); a test now checks that no placeholder name has a special character.
+- Screenshots in the README (`docs/screenshots/`), taken on the invented demo data.
+- Demo data: photos are only dated in years in which the people on them were alive and born, and now and then a face is named wrongly (a few warnings, not hundreds).
+
 ## 0.9.41 – 2026-11-02 – One block in the description, kind tags per language
 - **One block per photo** in the Immich description: `[GRM] ~1960 (1952–1968) · S038 [/GRM]`. `~` = estimated, no `~` = fixed date, `?` = open; then the series number (searchable in Immich) and, if switched on, the source. A fixed date alone gets no block. The marker is the same in every language and no longer contains words, so nothing in it has to be translated ("ca." is gone; the name of the person and their age are not written, Immich shows them anyway).
 - Earlier blocks (`[Grimmich] ca. …`, `[Datierung automatisch] …`) and the separate source block (`[Quelle]` / `[Source]`) are recognised and replaced when a photo is written the next time; the preview shows how many photos that touches. A series of only one photo gets no number.

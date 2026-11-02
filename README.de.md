@@ -11,6 +11,19 @@ auf ein Aufnahmejahr, fasst zusammengehörige Fotos zu Serien zusammen und schre
 Alles läuft auf deinem eigenen Rechner. In Immich und Gramps wird nur geschrieben, wenn du es in der Oberfläche
 ausdrücklich bestätigst (Vorschau, Test mit 3 Fotos, dann alle). Vor jeder Änderung sichert Grimmich die Originalwerte.
 
+## Screenshots
+
+Alle Bilder zeigen die erfundenen Demo-Daten (siehe „Mit erfundenen Daten ausprobieren“), keine echten Personen oder Fotos. Die Oberfläche ist hier auf Englisch.
+
+![Arbeitsliste, Zeitleiste einer Person und das gewählte Foto](docs/screenshots/work-list.png)
+*Links die Arbeitsliste, in der Mitte die Zeitleiste einer Person, rechts das gewählte Foto mit seiner Datierung.*
+
+![Serien prüfen](docs/screenshots/series-to-review.png)
+*Serien: Fotos vom selben Anlass werden gemeinsam datiert.*
+
+![Verbindungen und Einstellungen](docs/screenshots/settings.png)
+*Verbindungen und Einstellungen.*
+
 ## Start
 
 1. Python 3.10 oder neuer. Im Ordner von Grimmich: `python3 -m venv .venv`

@@ -83,9 +83,13 @@ def build(folder, pictures=True):
     n_series = 24
     counter = 0
     for s in range(n_series):
-        year = rng.randint(1932, 1998)
+        while True:   # a year in which at least two people were alive and born
+            year = rng.randint(1932, 1998)
+            pool = [p for p in people if year - 85 < p["birth_year"] < year - 1]
+            if len(pool) >= 2:
+                break
         album = ALBUMS[s % 2 if s < 18 else 2 + s % 2]
-        group_people = rng.sample(people, rng.randint(2, 5))
+        group_people = rng.sample(pool, rng.randint(2, min(5, len(pool))))
         keys = []
         for _ in range(rng.randint(3, 7)):
             counter += 1
@@ -93,6 +97,9 @@ def build(folder, pictures=True):
             asset = asset_id(rng)
             key = f"{os.path.splitext(file_)[0]}_{asset[:6]}"
             present = rng.sample(group_people, rng.randint(0, min(3, len(group_people))))
+            wrong = [p for p in people if p["birth"] and p["birth_year"] > year + 2]
+            if present and wrong and rng.random() < 0.06:   # now and then a face that was named wrongly: this gives a few warnings
+                present[0] = rng.choice(wrong)
             size = (640, 480)
             faces, boxes, names = [], [], []
             for i, p in enumerate(present):
@@ -111,7 +118,7 @@ def build(folder, pictures=True):
             state_photos[key] = {"asset": asset, "faces": faces}
             people_of_photo[key] = [p["name"] for p in names]
             if datable:
-                ages[key] = [{"name": p["name"], "birth": float(p["birth"][:4]) + 0.4, "age": round(photo_year - (float(p["birth"][:4]) + 0.4) + rng.uniform(-3, 3), 4)} for p in datable]
+                ages[key] = [{"name": p["name"], "birth": float(p["birth"][:4]) + 0.4, "age": round(max(0.3, photo_year - (float(p["birth"][:4]) + 0.4) + rng.uniform(-3, 3)), 4)} for p in datable]
             records.append({"key": key, "file": file_, "asset": asset, "year": photo_year, "datable": bool(datable), "boxes": boxes, "series": s,
                             "album": album, "estimate": None})
             keys.append(key)

@@ -112,6 +112,22 @@ class LanguageFiles(unittest.TestCase):
         self.assertEqual([k for k in js_keys() if "${" in k], [])
 
 
+class BrowserPlaceholders(unittest.TestCase):
+    def test_placeholder_names_are_plain_ascii(self):
+        """The browser's text replacement only knows [A-Za-z0-9_] in names; a name with an umlaut stays visible as {name} in the interface."""
+        loose = re.compile(r"\{([^{}:|\s]+)(?::[^{}|]*\|[^{}]*)?\}")
+        bad = []
+        for path_ in language_files():
+            for key, value in load(path_).get("texts", {}).items():
+                for text in (key, value):
+                    bad += [(os.path.basename(path_), m.group(1)) for m in loose.finditer(text) if not re.fullmatch(r"[A-Za-z0-9_]+", m.group(1))]
+        for path_ in glob.glob(os.path.join(HERE, "web", "js", "**", "*.js"), recursive=True):
+            with open(path_, encoding="utf-8") as f:
+                for m in re.finditer(r"tr\(\"([^\"]*)\"", f.read()):
+                    bad += [(os.path.relpath(path_, HERE), n.group(1)) for n in loose.finditer(m.group(1)) if not re.fullmatch(r"[A-Za-z0-9_]+", n.group(1))]
+        self.assertEqual(bad, [])
+
+
 class ServerSide(unittest.TestCase):
     def setUp(self):
         import messages

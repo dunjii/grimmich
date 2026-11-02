@@ -90,7 +90,7 @@ export function detailHtml() {
     <div><div class="field-name">${tr("Dating")}</div>
       <div class="dating"><span class="large ${cssClass}">${esc(heading)}</span><span class="quiet">${esc(span)}</span></div>${spanBar(e)}</div>
     ${e.type === "series" ? `<div><div class="field-name">${tr("Series {id}", {id: esc(e.s.id)})}</div>
-      <div class="row">${tr("{n} {n:photo|photos} · {prüfen}", {n: e.keys.length, prüfen: e.s.status === "ok" ? tr("confirmed") : tr("still to check")})}
+      <div class="row">${tr("{n} {n:photo|photos} · {state}", {n: e.keys.length, state: e.s.status === "ok" ? tr("confirmed") : tr("still to check")})}
       <button class="small good" data-a="ok-series" data-sid="${esc(e.s.id)}">${e.s.status === "ok" ? tr("✓ Series confirmed") : tr("✓ Series is correct")}</button>
       <button class="small" data-a="series-show" data-sid="${esc(e.s.id)}">${tr("Manage series")}</button></div></div>` : ""}
     <div><div class="field-name">${tr("People in the photo")}</div>

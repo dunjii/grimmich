@@ -86,7 +86,7 @@ export function hintsArea(e, key) {
     + `<div class="quiet" style="font-size:12px">${isLoading ? tr("Similar photos are still being searched … ") : ""}${card ? tr("For a card the album year is only an upper limit: it was pasted in, the card can be older.") : tr("Hints only: album neighbors are usually from the same year, but similar places or clothing can be from other years.")}</div>`;
   else if (isLoading) content = '<div class="quiet">' + tr("being searched …") + '</div>';
   else if (card) content = '<div class="quiet">' + tr("No album neighbors with a year nearby.") + '</div>';
-  else if (a && a.ok === false) content = `<div class="quiet">${tr("No album neighbors with a year. Similar photos: {verfügbar}", {verfügbar: esc(a.text || tr("not available"))})}</div>`;
+  else if (a && a.ok === false) content = `<div class="quiet">${tr("No album neighbors with a year. Similar photos: {text}", {text: esc(a.text || tr("not available"))})}</div>`;
   else content = `<div class="quiet">${tr("No hints: no photo with a fixed year within {ALBUM_MAX} places in the album and no similar photo from {replace}.", {ALBUM_MAX: ALBUM_MAX, replace: SIMILAR_MIN.toFixed(2).replace(".", ",")})}</div>`;
   return `<div>${head}${content}</div>`;
 }

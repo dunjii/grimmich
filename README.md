@@ -11,6 +11,19 @@ photos, sources and events in Gramps). Everything runs on your own machine. Noth
 unless you explicitly confirm it in the interface (preview, test with 3 photos, then all). The original values are
 backed up before every change.
 
+## Screenshots
+
+All screenshots show the invented demo data (see "Try it with invented data"), no real people or photos.
+
+![Work list, a person's timeline and the selected photo](docs/screenshots/work-list.png)
+*Work list on the left, the timeline of one person in the middle, the selected photo with its dating on the right.*
+
+![Series to review](docs/screenshots/series-to-review.png)
+*Series: photos from the same occasion are dated together.*
+
+![Connections and settings](docs/screenshots/settings.png)
+*Connections and settings.*
+
 ## Getting started
 
 1. Python 3.10 or newer. In the Grimmich folder: `python3 -m venv .venv`
