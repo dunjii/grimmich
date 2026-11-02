@@ -17,14 +17,11 @@ ausdrücklich bestätigst (Vorschau, Test mit 3 Fotos, dann alle). Vor jeder Än
 
 Alle Bilder zeigen die erfundenen Demo-Daten (siehe „Mit erfundenen Daten ausprobieren“), keine echten Personen oder Fotos. Die Oberfläche ist hier auf Englisch.
 
-![Arbeitsliste, Zeitleiste einer Person und das gewählte Foto](docs/screenshots/work-list.png)
-*Links die Arbeitsliste, in der Mitte die Zeitleiste einer Person, rechts das gewählte Foto mit seiner Datierung.*
-
-![Serien prüfen](docs/screenshots/series-to-review.png)
-*Serien: Fotos vom selben Anlass werden gemeinsam datiert.*
-
-![Verbindungen und Einstellungen](docs/screenshots/settings.png)
-*Verbindungen und Einstellungen.*
+<table>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/work-list.png" alt="Arbeitsliste und Zeitleiste"><br><sub>Links die Arbeitsliste, in der Mitte die Zeitleiste einer Person, rechts das gewählte Foto.</sub></td><td width="50%" valign="top"><img src="docs/screenshots/sort-by-appearance.png" alt="Nach Aussehen sortieren"><br><sub>Nach Aussehen sortieren: die Gesichter einer Person von jung nach alt in eine Reihe legen; die Fotos dazwischen werden gleichmäßig datiert.</sub></td></tr>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/gramps-life-line.png" alt="Lebenslinie aus Gramps"><br><sub>Lebenslinie aus Gramps: Geburten, Heirat und Wohnorte als Anker, darunter die Fotos.</sub></td><td width="50%" valign="top"><img src="docs/screenshots/series-to-review.png" alt="Serien prüfen"><br><sub>Serien: Fotos vom selben Anlass werden gemeinsam datiert.</sub></td></tr>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/settings.png" alt="Verbindungen und Einstellungen"><br><sub>Verbindungen und Einstellungen.</sub></td><td width="50%"></td></tr>
+</table>
 
 ## Start
 

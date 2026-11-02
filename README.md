@@ -17,14 +17,11 @@ backed up before every change.
 
 All screenshots show the invented demo data (see "Try it with invented data"), no real people or photos.
 
-![Work list, a person's timeline and the selected photo](docs/screenshots/work-list.png)
-*Work list on the left, the timeline of one person in the middle, the selected photo with its dating on the right.*
-
-![Series to review](docs/screenshots/series-to-review.png)
-*Series: photos from the same occasion are dated together.*
-
-![Connections and settings](docs/screenshots/settings.png)
-*Connections and settings.*
+<table>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/work-list.png" alt="Work list and timeline"><br><sub>Work list on the left, the timeline of one person in the middle, the selected photo on the right.</sub></td><td width="50%" valign="top"><img src="docs/screenshots/sort-by-appearance.png" alt="Sort by appearance"><br><sub>Sort by appearance: put the faces of one person in a row from young to old; the photos in between are dated evenly.</sub></td></tr>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/gramps-life-line.png" alt="Life line from Gramps"><br><sub>Life line from Gramps: births, marriages and residences as anchors, with the photos below.</sub></td><td width="50%" valign="top"><img src="docs/screenshots/series-to-review.png" alt="Series to review"><br><sub>Series: photos from the same occasion are dated together.</sub></td></tr>
+<tr><td width="50%" valign="top"><img src="docs/screenshots/settings.png" alt="Connections and settings"><br><sub>Connections and settings.</sub></td><td width="50%"></td></tr>
+</table>
 
 ## Getting started
 

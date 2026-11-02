@@ -50,29 +50,84 @@ def make_people(rng):
     return unique
 
 
-def draw_photo(path_, key, rng, boxes, year, size=(640, 480)):
-    """A simple drawing: sepia background, head and shoulder shapes where the faces are."""
+def _bezier(p0, p1, p2, p3, n=14):
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        u = 1 - t
+        pts.append((u ** 3 * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t ** 3 * p3[0],
+                    u ** 3 * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t ** 3 * p3[1]))
+    return pts
+
+
+def _figure(d, cx, cy, r, age, rng):
+    """One simple person (head, hair, shoulders), drawn like the figures of the planned game; age changes hair and face."""
+    k = r / 40.0
+    T = lambda x, y: (cx + (x - 100) * k, cy + (y - 115) * k)
+    poly = lambda pts, **kw: d.polygon([T(*p) for p in pts], **kw)
+    child = age < 14
+    skin = rng.choice([(212, 168, 129), (207, 166, 127), (199, 154, 120), (219, 178, 140)])
+    if age < 38:
+        hair = rng.choice([(59, 42, 32), (84, 58, 38), (40, 30, 26), (120, 84, 50)])
+    elif age < 58:
+        hair = rng.choice([(70, 55, 45), (95, 85, 78), (59, 42, 32)])
+    elif age < 70:
+        hair = (150, 143, 135)
+    else:
+        hair = (185, 180, 170)
+    cloth = rng.choice([(107, 91, 74), (78, 74, 68), (92, 84, 110), (118, 80, 70), (70, 90, 84)])
+    line = (154, 118, 88)
+    ink = (59, 42, 32)
+    sw = 0.7 if child else 1.0   # children: narrower shoulders
+    body = _bezier((100 - 80 * sw, 240), (100 - 70 * sw, 190), (70, 175), (100, 175)) + _bezier((100, 175), (130, 175), (100 + 70 * sw, 190), (100 + 80 * sw, 240))
+    poly(body, fill=cloth)
+    d.rectangle([T(88, 150), T(112, 185)], fill=tuple(int(c * 0.9) for c in skin))
+    rx, ry = (36, 44) if child else (40, 50)
+    if rng.random() < 0.5 and not child:   # longer hair behind the head
+        poly(_bezier((56, 112), (50, 170), (60, 178), (74, 176)) + _bezier((74, 176), (80, 140), (120, 140), (126, 176)) + _bezier((126, 176), (140, 178), (150, 170), (144, 112)), fill=hair)
+    d.ellipse([T(100 - rx, 115 - ry), T(100 + rx, 115 + ry)], fill=skin)
+    cap = _bezier((58, 108), (56, 58), (144, 58), (142, 108)) + _bezier((142, 108), (132, 84), (68, 84), (58, 108))
+    poly(cap, fill=hair)
+    eye_y = 120 if child else 116
+    er = (4.2 if child else 3.2) * k
+    for ex in (84, 116):
+        x, y = T(ex, eye_y)
+        d.ellipse([x - er, y - er, x + er, y + er], fill=ink)
+    w = max(1, int(1.5 * k))
+    if age >= 40:   # brows and fine lines
+        for bx in ((72, 94), (106, 128)):
+            d.line([T(bx[0], 106), T((bx[0] + bx[1]) / 2, 101), T(bx[1], 106)], fill=line, width=w)
+    if age >= 58:
+        for bx in ((78, 90), (110, 122)):
+            d.line([T(bx[0], 130), T((bx[0] + bx[1]) / 2, 134), T(bx[1], 130)], fill=line, width=w)
+    my = 148 if child else 143
+    d.line([T(*p) for p in _bezier((88, my - 1), (96, my + 6), (104, my + 6), (112, my - 1))], fill=(138, 90, 72), width=max(2, int(2.5 * k)))
+
+
+def draw_photo(path_, key, rng, boxes, year, size=(640, 480), ages=None):
+    """A simple drawing: sepia background, small figures (head, hair, shoulders) where the faces are."""
     from PIL import Image, ImageDraw, ImageFont
     w, h = size
+    ss = 2   # draw twice as large and shrink: smooth edges
     tone = rng.randint(-12, 12)
-    img = Image.new("RGB", size, (214 + tone, 196 + tone, 160 + tone))
+    img = Image.new("RGB", (w * ss, h * ss), (214 + tone, 196 + tone, 160 + tone))
     d = ImageDraw.Draw(img)
-    for y in range(h):   # soft gradient
-        shade = int(30 * y / h)
-        d.line([(0, y), (w, y)], fill=(214 + tone - shade, 196 + tone - shade, 160 + tone - shade))
-    d.rectangle([8, 8, w - 9, h - 9], outline=(120, 100, 70), width=3)
-    for (x1, y1, x2, y2) in boxes:
-        cx, cy, r = (x1 + x2) // 2, (y1 + y2) // 2, (x2 - x1) // 2
-        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(205, 170, 140), outline=(90, 70, 50), width=2)
-        d.ellipse([cx - r // 2 - r // 4, cy - r // 4, cx - r // 2 + r // 6, cy], fill=(70, 50, 40))
-        d.ellipse([cx + r // 3, cy - r // 4, cx + r // 3 + r // 4, cy], fill=(70, 50, 40))
-        d.pieslice([cx - r * 2, y2 + r // 4, cx + r * 2, y2 + r * 4], 180, 360, fill=(110 + rng.randint(0, 50), 100, 90), outline=(70, 55, 45))
+    for y in range(h * ss):   # soft gradient
+        shade = int(30 * y / (h * ss))
+        d.line([(0, y), (w * ss, y)], fill=(214 + tone - shade, 196 + tone - shade, 160 + tone - shade))
+    for i, (x1, y1, x2, y2) in enumerate(boxes):
+        cx, cy, r = (x1 + x2) * ss // 2, (y1 + y2) * ss // 2, (x2 - x1) * ss // 2
+        age = ages[i] if ages and i < len(ages) else 35
+        _figure(d, cx, cy, r, age, random.Random(f"{key}-{i}"))
+    d.rectangle([8 * ss, 8 * ss, (w - 9) * ss, (h - 9) * ss], outline=(120, 100, 70), width=3 * ss)
+    img = img.resize((w, h), Image.LANCZOS)
+    d = ImageDraw.Draw(img)
     try:
         font = ImageFont.load_default()
     except OSError:
         font = None
     d.text((18, h - 28), f"demo {key} ~{year}", fill=(90, 70, 50), font=font)
-    img.save(path_, "JPEG", quality=82)
+    img.save(path_, "JPEG", quality=84)
 
 
 def build(folder, pictures=True):
@@ -101,13 +156,14 @@ def build(folder, pictures=True):
             if present and wrong and rng.random() < 0.06:   # now and then a face that was named wrongly: this gives a few warnings
                 present[0] = rng.choice(wrong)
             size = (640, 480)
-            faces, boxes, names = [], [], []
+            faces, boxes, names, face_ages = [], [], [], []
             for i, p in enumerate(present):
                 r = rng.randint(28, 46)
                 cx = int((i + 1) * size[0] / (len(present) + 1))
                 cy = rng.randint(150, 230)
                 box = [cx - r, cy - r, cx + r, cy + r]
                 boxes.append(tuple(box))
+                face_ages.append(max(1, year - p["birth_year"]))
                 named = rng.random() < 0.85
                 faces.append({"id": asset_id(rng), "p": p["id"] if named else "", "b": box + [size[0], size[1]]})
                 if named:
@@ -119,7 +175,7 @@ def build(folder, pictures=True):
             people_of_photo[key] = [p["name"] for p in names]
             if datable:
                 ages[key] = [{"name": p["name"], "birth": float(p["birth"][:4]) + 0.4, "age": round(max(0.3, photo_year - (float(p["birth"][:4]) + 0.4) + rng.uniform(-3, 3)), 4)} for p in datable]
-            records.append({"key": key, "file": file_, "asset": asset, "year": photo_year, "datable": bool(datable), "boxes": boxes, "series": s,
+            records.append({"key": key, "file": file_, "asset": asset, "year": photo_year, "datable": bool(datable), "boxes": boxes, "face_ages": face_ages, "series": s,
                             "album": album, "estimate": None})
             keys.append(key)
         series_list.append({"keys": keys, "year": year})
@@ -132,7 +188,7 @@ def build(folder, pictures=True):
         photos.append({"key": key, "file": file_, "id": asset, "faces": 0, "named": 0, "datable": False})
         state_photos[key] = {"asset": asset, "faces": []}
         people_of_photo[key] = []
-        records.append({"key": key, "file": file_, "asset": asset, "year": rng.randint(1900, 1990), "datable": False, "boxes": [], "series": None,
+        records.append({"key": key, "file": file_, "asset": asset, "year": rng.randint(1900, 1990), "datable": False, "boxes": [], "face_ages": [], "series": None,
                         "album": ALBUMS[3], "estimate": None})
     kinds = {r["key"]: {"kind": k} for r, k in zip([r for r in records if r["series"] is None][:4], ["postcard", "postcard", "greeting_card", "document"])}
 
@@ -187,7 +243,7 @@ def build(folder, pictures=True):
         pics = os.path.join(folder, "serien_ausgabe", "fotos")
         os.makedirs(pics, exist_ok=True)
         for r in records:
-            draw_photo(os.path.join(pics, r["key"] + ".jpg"), r["key"], random.Random(r["key"]), r["boxes"], r["year"])
+            draw_photo(os.path.join(pics, r["key"] + ".jpg"), r["key"], random.Random(r["key"]), r["boxes"], r["year"], ages=r["face_ages"])
     return docs
 
 
