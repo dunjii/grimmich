@@ -1,11 +1,12 @@
-# Pakete fuer Grimmich (Installation: ./.venv/bin/pip install -r requirements.txt)
-# Fuer die Oberflaeche selbst (Python-Standardbibliothek) wird nichts extra gebraucht.
-# Die folgenden Pakete braucht nur die Foto-Auswertung (KI-Altersschaetzung, Serien):
+# Packages for Grimmich (install: ./.venv/bin/pip install -r requirements.txt)
+# The interface itself (Python standard library) needs nothing extra.
+# The following packages are only needed for the photo analysis (AI age estimate, series):
 numpy
 opencv-python
 pillow
 torch
+torchvision
 transformers
-# wird vom MiVOLO-Modell beim ersten Laden gebraucht (Gesichts- und Personenerkennung)
+# needed by the MiVOLO model when it is loaded for the first time (face and person detection)
 ultralytics
 timm

@@ -20,10 +20,13 @@ RUN apt-get update \
 
 WORKDIR /app
 
-# PyTorch for the processor only (much smaller than the default package with GPU support)
-RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+# PyTorch for the processor only (much smaller than the default package with GPU support).
+# torch and torchvision must come from the same place, otherwise they do not fit together.
+RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 COPY requirements.txt .
 RUN pip install -r requirements.txt
+# fail the build (not the first start) if the AI libraries do not fit together
+RUN python -c "import torch, torchvision, ultralytics, timm; from transformers import AutoImageProcessor, AutoModelForImageClassification"
 
 COPY . .
 

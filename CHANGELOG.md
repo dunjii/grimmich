@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.45 – 2026-11-02 – Docker: fix for the AI libraries
+- **Fix:** in the Docker image `torchvision` did not match `torch`, so the age estimate stopped with "operator torchvision::nms does not exist". Both are now installed together from the CPU index, `torchvision` is listed in `requirements.txt`, and the image build checks that the AI libraries load.
+
 ## 0.9.44 – 2026-11-02 – Tidying before going public
 - All test names, test comments and the remaining German messages in the code are English now (the German texts live in `languages/de.json`).
 - README: a clear note at the top that Grimmich has no login yet and must not be reachable from the internet.
