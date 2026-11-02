@@ -11,6 +11,8 @@ auf ein Aufnahmejahr, fasst zusammengehörige Fotos zu Serien zusammen und schre
 Alles läuft auf deinem eigenen Rechner. In Immich und Gramps wird nur geschrieben, wenn du es in der Oberfläche
 ausdrücklich bestätigst (Vorschau, Test mit 3 Fotos, dann alle). Vor jeder Änderung sichert Grimmich die Originalwerte.
 
+> **Hinweis:** Grimmich wird noch aktiv entwickelt und hat noch keine Anmeldung. Wer den Port erreicht, kann deine Daten lesen und ändern und, wenn der Schreibzugang eingerichtet ist, auch Immich und Gramps. Betreibe es nur zu Hause oder in einem privaten Netz (zum Beispiel Tailscale) und öffne den Port nie ins Internet.
+
 ## Screenshots
 
 Alle Bilder zeigen die erfundenen Demo-Daten (siehe „Mit erfundenen Daten ausprobieren“), keine echten Personen oder Fotos. Die Oberfläche ist hier auf Englisch.

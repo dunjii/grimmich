@@ -11,6 +11,8 @@ photos, sources and events in Gramps). Everything runs on your own machine. Noth
 unless you explicitly confirm it in the interface (preview, test with 3 photos, then all). The original values are
 backed up before every change.
 
+> **Note:** Grimmich is in active development and has no login yet. Anyone who can reach its port can read and change your data and, with write access set up, your Immich and Gramps. Run it only at home or inside a private network (for example Tailscale), never open its port to the internet.
+
 ## Screenshots
 
 All screenshots show the invented demo data (see "Try it with invented data"), no real people or photos.

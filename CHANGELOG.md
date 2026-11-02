@@ -5,6 +5,7 @@ and puts the results back into Immich and Gramps. This log is reconstructed from
 
 ## 0.9.44 – 2026-11-02 – Tidying before going public
 - All test names, test comments and the remaining German messages in the code are English now (the German texts live in `languages/de.json`).
+- README: a clear note at the top that Grimmich has no login yet and must not be reachable from the internet.
 - No change in behaviour.
 
 ## 0.9.43 – 2026-11-02 – Docker (first version, untested on a server)
