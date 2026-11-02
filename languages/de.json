@@ -996,6 +996,11 @@
   "Step {no} of {total}:": "Schritt {no} von {total}:",
   "All photos that Grimmich changed ({n}) get their original date and original description back. The tags “{tag_estimated}” and “{tag_open}” are removed.": "Alle Fotos, die Grimmich geändert hat ({n}), bekommen ihr ursprüngliches Datum und ihre ursprüngliche Beschreibung zurück. Die Tags „{tag_estimated}“ und „{tag_open}“ werden entfernt.",
   "Capture date, “{tag_estimated}” / “{tag_open}” and the description block": "Aufnahmedatum, „{tag_estimated}“ / „{tag_open}“ und der Beschreibungsblock",
-  "{mit_datum} get a date and the tag “{tag_estimated}”, {offen} the tag “{tag_open}”{bleiben}. Each original is backed up beforehand. {uebersprungen} photo(s) are skipped, {unveraendert} are already up to date{GPS}{ersetzt}{werden}. As of {zeit}.": "{mit_datum} bekommen ein Datum und den Tag „{tag_estimated}“, {offen} den Tag „{tag_open}“{bleiben}. Vorher wird jedes Original gesichert. {uebersprungen} Foto(s) werden übersprungen, {unveraendert} sind schon aktuell{GPS}{ersetzt}{werden}. Stand {zeit}."
+  "{mit_datum} get a date and the tag “{tag_estimated}”, {offen} the tag “{tag_open}”{bleiben}. Each original is backed up beforehand. {uebersprungen} photo(s) are skipped, {unveraendert} are already up to date{GPS}{ersetzt}{werden}. As of {zeit}.": "{mit_datum} bekommen ein Datum und den Tag „{tag_estimated}“, {offen} den Tag „{tag_open}“{bleiben}. Vorher wird jedes Original gesichert. {uebersprungen} Foto(s) werden übersprungen, {unveraendert} sind schon aktuell{GPS}{ersetzt}{werden}. Stand {zeit}.",
+  "Gramps rejected the login (wrong user or password?)": "Gramps hat die Anmeldung abgelehnt (Benutzer oder Passwort falsch?)",
+  "Login to Gramps not possible (answer {code}). Is the address right (without /api at the end)?": "Anmeldung bei Gramps nicht möglich (Antwort {code}). Stimmt die Adresse (ohne /api am Ende)?",
+  "Gramps sent no login token.": "Gramps hat keine Anmelde-Marke geschickt.",
+  "Preview image could not be read": "Vorschaubild konnte nicht gelesen werden",
+  "taken from the series (own faces cannot be dated)": "von der Serie übernommen (eigene Gesichter nicht datierbar)"
  }
 }

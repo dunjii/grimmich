@@ -47,7 +47,7 @@ def load_(path_):
     # reads from the database (grimmich.db) or, if not there, from a file
     data_ = storage.load(path_, None)
     if data_ is None:
-        print(f"  {path_}: nicht vorhanden oder nicht lesbar, uebersprungen")
+        print(f"  {path_}: missing or unreadable, skipped")
     return data_
 
 
@@ -214,7 +214,7 @@ def main():
     print()
     print(f"Personen: {len(set(people_))}, Alben: {len(set(albums))}, Orte: {len(set(places_))}, Fotos: {len(key_)}, IDs: {len(uuids)}, Freitexte: {len(texts)}")
     if problems:
-        print("ACHTUNG: In den Kopien kommt noch Echtes vor (bitte nicht weitergeben, sondern mir melden):")
+        print("WARNING: The copies still contain real data (do not pass them on, report this instead):")
         for d, s in problems.items():
             print(f"  {d}: {', '.join(sorted(s)[:8])}")
     else:

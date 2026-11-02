@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-for name in ("torch", "transformers", "numpy", "cv2", "PIL", "PIL.Image", "ultralytics", "timm"):   # schwere Pakete brauchen die Tests nicht
+for name in ("torch", "transformers", "numpy", "cv2", "PIL", "PIL.Image", "ultralytics", "timm"):   # the tests do not need the heavy packages
     try:
         __import__(name)
     except ImportError:
@@ -29,21 +29,21 @@ def photo(id_, date_="2026-07-03T10:00:00.000Z", scan="2026-10-20", make="", tag
 
 
 class TestHandDate(unittest.TestCase):
-    def test_anker_foto_zaehlt_als_datum(self):
+    def test_anchor_photo_counts_as_a_date(self):
         h = immich_state.hand_date(photo("a", make="Nikon", anchor_=True), "k", {})
         self.assertEqual(h["date"], "2026-07-03")
         self.assertTrue(h["camera"] and h["anchor"])
 
-    def test_kamera_im_arbeitsalbum_zaehlt_nicht(self):
+    def test_camera_in_the_working_album_does_not_count(self):
         self.assertIsNone(immich_state.hand_date(photo("a", make="Nikon"), "k", {}))
 
-    def test_kamera_im_arbeitsalbum_kommt_auf_die_hinweisliste(self):
+    def test_camera_in_the_working_album_goes_on_the_hint_list(self):
         self.assertTrue(immich_state.camera_without_anchor(photo("a", make="Nikon"), "k", {}))
         self.assertFalse(immich_state.camera_without_anchor(photo("a", make="Nikon", anchor_=True), "k", {}))
         self.assertFalse(immich_state.camera_without_anchor(photo("a"), "k", {}))                       # Scan ohne Kamera
         self.assertFalse(immich_state.camera_without_anchor(photo("a", make="Nikon", tags=["Datierung geschätzt"]), "k", {}))   # schon von Grimmich bearbeitet
 
-    def test_von_hand_gesetztes_datum_ohne_kamera_bleibt_anker(self):
+    def test_date_set_by_hand_without_camera_stays_an_anchor(self):
         h = immich_state.hand_date(photo("a"), "k", {})
         self.assertEqual(h["date"], "2026-07-03")
         self.assertNotIn("anker", h)
@@ -58,19 +58,19 @@ class TestLoadAlbums(unittest.TestCase):
         with mock.patch.object(estimate, "important", important), mock.patch.object(estimate, "ALBUM_NAME", work), mock.patch.object(estimate, "ANCHOR_NAME", anchor_):
             return estimate.load_album_photos()
 
-    def test_ohne_ankeralbum_nur_arbeitsalbum(self):
+    def test_without_anchor_album_only_the_working_album(self):
         photos = self.loading("Arbeit", "", {"A1": [{"id": "x"}], "A2": [{"id": "y"}]})
         self.assertEqual([f["id"] for f in photos], ["x"])
 
-    def test_ankerfotos_sind_markiert(self):
+    def test_anchor_photos_are_marked(self):
         photos = self.loading("Arbeit", "Anker", {"A1": [{"id": "x"}], "A2": [{"id": "y"}]})
         self.assertEqual({f["id"]: bool(f.get("_anker")) for f in photos}, {"x": False, "y": True})
 
-    def test_foto_in_beiden_alben_zaehlt_als_arbeitsfoto(self):
+    def test_photo_in_both_albums_counts_as_working_photo(self):
         photos = self.loading("Arbeit", "Anker", {"A1": [{"id": "x"}], "A2": [{"id": "x"}, {"id": "y"}]})
         self.assertEqual({f["id"]: bool(f.get("_anker")) for f in photos}, {"x": False, "y": True})
 
-    def test_unbekanntes_ankeralbum_wird_ignoriert(self):
+    def test_unknown_anchor_album_is_ignored(self):
         photos = self.loading("Arbeit", "Gibt es nicht", {"A1": [{"id": "x"}]})
         self.assertEqual([f["id"] for f in photos], ["x"])
 
@@ -82,18 +82,18 @@ class TestWriteProtection(unittest.TestCase):
         z.update(kw)
         return z
 
-    def test_ankerzeile_wird_nie_geschrieben(self):
+    def test_anchor_row_is_never_written(self):
         a = photo("A", scan="2026-07-03")
         p = immich_write.plan(self.entry_row(anchor=True), a, {})
         self.assertEqual(p["action"], "skip")
 
-    def test_kamerafoto_im_arbeitsalbum_wird_normal_geschrieben(self):
-        # Arbeitsalbum = alles unsicher: Kamera-Daten gelten dort nicht (echte Digitalfotos gehoeren ins Ankeralbum)
+    def test_camera_photo_in_the_working_album_is_written_normally(self):
+        # working album = everything uncertain: camera data does not count there (real digital photos belong in the anchor album)
         a = photo("A", make="Nikon", scan="2026-07-03")
         p = immich_write.plan(self.entry_row(), a, {})
         self.assertEqual(p["action"], "write")
 
-    def test_scan_ohne_kamera_wird_normal_geschrieben(self):
+    def test_scan_without_camera_is_written_normally(self):
         a = photo("A", scan="2026-07-03")
         p = immich_write.plan(self.entry_row(), a, {})
         self.assertEqual(p["action"], "write")
@@ -109,17 +109,17 @@ class TestAccess(unittest.TestCase):
         os.chdir(self.old)
         self.tmp.cleanup()
 
-    def test_neu_ein_zugang(self):
+    def test_new_one_access(self):
         self.assertFalse(credentials.separate("immich"))
         self.assertEqual(credentials.write_env_name("immich"), "immich.env")
 
-    def test_altinstallation_mit_schreibdatei_bleibt_getrennt(self):
+    def test_old_installation_with_write_file_stays_separate(self):
         with open("immich_write.env", "w") as f:
             f.write("IMMICH_API_KEY=x\n")
         self.assertTrue(credentials.separate("immich"))
         self.assertEqual(credentials.write_env_name("immich"), "immich_write.env")
 
-    def test_schalter_aus_behaelt_den_gespeicherten_schluessel(self):
+    def test_switch_off_keeps_the_saved_key(self):
         connections.store("immich", {"url": "http://x", "read": "LESEN", "separate": "1", "write_access": "SCHREIBEN"})
         self.assertEqual(connections.status()["immich"]["separate"], True)
         connections.store("immich", {"separate": "0"})
@@ -130,18 +130,18 @@ class TestAccess(unittest.TestCase):
         connections.store("immich", {"separate": "1"})
         self.assertEqual(connections.read_env("immich_write.env")["IMMICH_API_KEY"], "SCHREIBEN")
 
-    def test_ein_zugang_schreibt_keinen_zweiten_schluessel(self):
+    def test_one_access_writes_no_second_key(self):
         connections.store("immich", {"url": "http://x", "read": "LESEN", "separate": "0", "write_access": "UNGEBRAUCHT"})
         self.assertFalse(os.path.exists("immich_write.env"))
-        self.assertTrue(connections.status()["immich"]["write_access"])   # der eine Schluessel gilt auch zum Schreiben
+        self.assertTrue(connections.status()["immich"]["write_access"])   # the one key also works for writing
 
-    def test_ankeralbum_speichern_und_entfernen(self):
+    def test_save_and_remove_anchor_album(self):
         connections.store("immich", {"url": "http://x", "read": "L", "anchor": "Anker-Fotos"})
         self.assertEqual(connections.status()["immich"]["anchor"], "Anker-Fotos")
         connections.store("immich", {"anchor": ""})
         self.assertEqual(connections.status()["immich"]["anchor"], "")
 
-    def test_gramps_ein_benutzer_fuer_beides(self):
+    def test_gramps_one_user_for_both(self):
         connections.store("gramps", {"url": "http://g", "user": "u", "password": "p", "separate": "0"})
         self.assertEqual(credentials.write_env_name("gramps"), "gramps.env")
         connections.store("gramps_schreiben", {"url": "http://andere", "user": "w", "password": "q", "citation_image": "0"})

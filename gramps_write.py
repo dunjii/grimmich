@@ -82,7 +82,7 @@ class Gramps:
         except urllib.error.HTTPError as e:
             resp, code = e.read(), e.code
         except (urllib.error.URLError, OSError) as e:
-            raise GrampsError(f"Keine Verbindung zu {self.url} ({getattr(e, 'reason', e)}).")
+            raise GrampsError(f"No connection to {self.url} ({getattr(e, 'reason', e)}).")
         if code == 401 and new_:
             self.token = None
             return self.raw(methode, path_, data_, head, None, params, new_=False)
@@ -95,18 +95,19 @@ class Gramps:
                                                                headers={"Content-Type": "application/json"}), timeout=60) as r:
                 resp = json.loads(r.read())
         except urllib.error.HTTPError as e:
-            raise GrampsError("Anmeldung bei Gramps abgelehnt (Benutzer oder Passwort falsch?)" if e.code in (401, 403)
-                               else f"Anmeldung bei Gramps nicht moeglich (Antwort {e.code}). Stimmt die Adresse (ohne /api am Ende)?")
+            code = e.code
+            raise GrampsError("Gramps rejected the login (wrong user or password?)" if e.code in (401, 403)
+                               else f"Login to Gramps not possible (answer {code}). Is the address right (without /api at the end)?")
         except (urllib.error.URLError, OSError, ValueError) as e:
-            raise GrampsError(f"Keine Verbindung zu {self.url} ({getattr(e, 'reason', e)}).")
+            raise GrampsError(f"No connection to {self.url} ({getattr(e, 'reason', e)}).")
         self.token = resp.get("access_token") or resp.get("access")
         if not self.token:
-            raise GrampsError("Gramps hat keine Anmelde-Marke geschickt.")
+            raise GrampsError("Gramps sent no login token.")
 
     def json(self, methode, path_, body=None, params=None):
         code, resp = self.raw(methode, path_, body=body, params=params)
         if code >= 400:
-            raise GrampsError(f"{methode} {path_}: Fehler {code}: {resp[:300].decode('utf-8', 'replace')}")
+            raise GrampsError(f"{methode} {path_}: error {code}: {resp[:300].decode('utf-8', 'replace')}")
         return json.loads(resp) if resp.strip() else None
 
     def items_list(self, path_, keys):
@@ -209,7 +210,7 @@ def gramps_datum(d):
     if kind_name == "bereich" and d.get("from") and d.get("to") and d["from"] != d["to"]:
         v, b = int(d["from"]), int(d["to"])
         return ({"_class": "Date", "dateval": [0, 0, v, False, 0, 0, b, False], "modifier": 4, "quality": 1, "text": ""},
-                f"geschaetzt zwischen {v} und {b}")
+                f"estimated between {v} and {b}")
     if kind_name == "ca":
         return ({"_class": "Date", "dateval": [0, 0, j, False], "modifier": 3, "quality": 1, "text": ""}, f"ca. {j}")
     return ({"_class": "Date", "dateval": [0, 0, j, False], "modifier": 0, "quality": 0, "text": ""}, str(j))
@@ -251,7 +252,7 @@ def plan(items, state, written):
         for p in it.get("people") or []:
             (z["people_ok"] if p.get("gid") in people_ else z["people_missing"]).append(p["name"])
         if z["people_missing"] and z["action"] == "new":
-            z["reason"] = "In Gramps nicht gefunden (Verknuepfung mit dem Foto entfaellt): " + ", ".join(z["people_missing"])
+            z["reason"] = "Not found in Gramps (no link to the photo): " + ", ".join(z["people_missing"])
         rows.append(z)
     n = lambda a: sum(1 for z in rows if z["action"] == a)
     return rows, {"new": n("new"), "present": n("present"), "sources_new": sum(1 for z in rows if z["new_source"]),
@@ -305,7 +306,7 @@ def write_one(g, it, state, written, sources_new, immich_read, immich_write_, ta
     print(tx("  Image: {w}x{h} ({source}), {kb} KB", w=w, h=h, source=source_image, kb=len(data_) // 1024))
     code, resp = g.raw("POST", "/media/", data_=data_, head={"Content-Type": "image/jpeg"})
     if code >= 400:
-        raise GrampsError(f"Hochladen abgelehnt (Fehler {code}): {resp[:200].decode('utf-8', 'replace')}")
+        raise GrampsError(f"Upload rejected (error {code}): {resp[:200].decode('utf-8', 'replace')}")
     new_ = new_entry(json.loads(resp))
     rec.update(media=new_["handle"], gid=new_.get("gramps_id", ""))
     save_record(written, key, rec)

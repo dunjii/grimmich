@@ -37,38 +37,38 @@ class Base(unittest.TestCase):
 
 
 class TestBasicFunctions(Base):
-    def test_schreiben_und_lesen(self):
+    def test_write_and_read(self):
         d = {"photos": {"F1": {"year": 1962, "name": "Müller ä ö ü ß"}}, "liste": [1, 2, None]}
         storage.save("corrections.json", d)
         self.assertEqual(storage.load("corrections.json", None), d)
         self.assertTrue(storage.present("corrections.json"))
 
-    def test_fehlt_gibt_standard(self):
+    def test_missing_gives_default(self):
         self.assertEqual(storage.load("kinds.json", {"x": 1}), {"x": 1})
         self.assertFalse(storage.present("kinds.json"))
 
-    def test_ueberschreiben(self):
+    def test_overwrite(self):
         storage.save("kinds.json", {"a": 1})
         storage.save("kinds.json", {"b": 2})
         self.assertEqual(storage.load("kinds.json", None), {"b": 2})
 
-    def test_entfernen(self):
+    def test_remove(self):
         storage.save("reload.json", {"assets": ["x"]})
         storage.remove("reload.json")
         self.assertFalse(storage.present("reload.json"))
         storage.remove("reload.json")   # zweites Mal macht keinen Fehler
 
-    def test_pfad_mit_ordner_zaehlt_nur_der_name(self):
+    def test_path_with_folder_only_the_name_counts(self):
         storage.save("kinds.json", {"a": 1})
         self.assertEqual(storage.load("./kinds.json", None), {"a": 1})
 
-    def test_andere_dateien_bleiben_normale_dateien(self):
+    def test_other_files_stay_normal_files(self):
         storage.save("estimate_cache.json", {"c": 1})
         self.assertTrue(os.path.exists("estimate_cache.json"))
         self.assertEqual(storage.load("estimate_cache.json", None), {"c": 1})
         self.assertNotIn("estimate_cache.json", storage.all_names())
 
-    def test_gleichzeitiges_schreiben_aus_mehreren_threads(self):
+    def test_simultaneous_writing_from_several_threads(self):
         storage.save("assignment.json", {})
         errors = []
 
@@ -87,7 +87,7 @@ class TestBasicFunctions(Base):
 
 
 class TestTakeover(Base):
-    def test_dateien_werden_uebernommen_und_weggelegt(self):
+    def test_files_are_taken_over_and_put_away(self):
         self.json("kinds.json", {"F1": "karte"})
         self.json("corrections.json", {"F2": {"year": 1970}})
         self.assertEqual(sorted(storage.migriere()), ["corrections.json", "kinds.json"])
@@ -95,7 +95,7 @@ class TestTakeover(Base):
         self.assertFalse(os.path.exists("kinds.json"))
         self.assertTrue(os.path.exists(os.path.join("json_alt", "kinds.json")))   # Sicherung bleibt
 
-    def test_zweiter_start_aendert_nichts(self):
+    def test_second_start_changes_nothing(self):
         self.json("kinds.json", {"F1": "karte"})
         storage.migriere()
         storage.save("kinds.json", {"F1": "document"})
@@ -103,7 +103,7 @@ class TestTakeover(Base):
         self.assertEqual(storage.migriere(), [])
         self.assertEqual(storage.load("kinds.json", None), {"F1": "document"})
 
-    def test_neuer_stand_in_datenbank_wird_nicht_von_alter_datei_ueberschrieben(self):
+    def test_newer_state_in_database_is_not_overwritten_by_old_file(self):
         storage.save("kinds.json", {"new": 1})
         self.json("kinds.json", {"old": 1})   # alte Datei taucht wieder auf (z. B. aus einem Backup zurueckkopiert)
         storage._migrated.clear()
@@ -111,7 +111,7 @@ class TestTakeover(Base):
         self.assertEqual(storage.load("kinds.json", None), {"new": 1})
         self.assertTrue(os.path.exists(os.path.join("json_alt", "kinds.json")))
 
-    def test_fruehere_sicherung_wird_nie_ueberschrieben(self):
+    def test_earlier_backup_is_never_overwritten(self):
         self.json("kinds.json", {"v": 1})
         storage.migriere()
         storage.save("kinds.json", {"v": 2})
@@ -122,7 +122,7 @@ class TestTakeover(Base):
             self.assertEqual(json.load(f), {"v": 1})
         self.assertEqual(len(os.listdir("json_alt")), 2)
 
-    def test_kaputte_datei_bleibt_liegen(self):
+    def test_broken_file_stays_where_it_is(self):
         with open("kinds.json", "w", encoding="utf-8") as f:
             f.write("{kaputt")
         self.json("corrections.json", {"ok": 1})
@@ -131,11 +131,11 @@ class TestTakeover(Base):
         self.assertFalse(storage.present("kinds.json"))
         self.assertEqual(storage.load("corrections.json", None), {"ok": 1})
 
-    def test_lesen_loest_die_uebernahme_von_selbst_aus(self):
+    def test_reading_triggers_the_takeover_by_itself(self):
         self.json("inbox.json", {"seen": ["a"]})
         self.assertEqual(storage.load("inbox.json", None), {"seen": ["a"]})   # ohne extra migriere()
 
-    def test_export_gibt_dieselben_daten_zurueck(self):
+    def test_export_returns_the_same_data(self):
         self.json("kinds.json", {"ä": "ö"})
         storage.migriere()
         self.assertEqual(storage.export("ex"), 1)
@@ -145,7 +145,7 @@ class TestTakeover(Base):
 
 @unittest.skipUnless(os.path.isdir(DATA) and os.listdir(DATA), "keine anonymisierten Testdaten")
 class TestRealData(Base):
-    def test_alle_testdaten_unveraendert_nach_der_uebernahme(self):
+    def test_all_test_data_unchanged_after_the_takeover(self):
         before = {}
         for n in storage.NAMES:
             q = os.path.join(DATA, n)
@@ -158,7 +158,7 @@ class TestRealData(Base):
         for n, d in before.items():
             self.assertEqual(storage.load(n, "FEHLT"), d, n)
             self.assertFalse(os.path.exists(n), n)
-        # und nach Export und erneuter Uebernahme in einer frischen Datenbank immer noch dasselbe
+        # and after export and a new takeover into a fresh database still the same
         storage.export("ex")
         os.remove(storage.DB_FILE_NAME)
         for ext in ("-wal", "-shm"):

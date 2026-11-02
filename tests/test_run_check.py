@@ -45,11 +45,11 @@ class Base(unittest.TestCase):
 
 
 class TestFingerprint(Base):
-    def test_gleich_bei_gleichem_stand(self):
+    def test_same_when_state_is_the_same(self):
         self.assertEqual(run_check.fingerprint(), run_check.fingerprint())
         self.assertIsNotNone(run_check.fingerprint())
 
-    def test_aendert_sich_bei_neuem_foto_oder_gesicht_oder_namen(self):
+    def test_changes_with_new_photo_or_face_or_names(self):
         fp = run_check.fingerprint()
         st = storage.load("immich_state.json", None)
         st["photos"]["F2"] = {"asset": "a2", "faces": []}
@@ -64,7 +64,7 @@ class TestFingerprint(Base):
         storage.save("immich_state.json", st)
         self.assertNotEqual(fp, run_check.fingerprint())
 
-    def test_bestaetigte_serie_zaehlt_offene_nicht(self):
+    def test_confirmed_series_counts_open_does_not(self):
         fp = run_check.fingerprint()
         a = storage.load("series_work.json", None)
         a["series"][1]["photos"].append("F5")   # offene Serie veraendert: egal
@@ -74,30 +74,30 @@ class TestFingerprint(Base):
         storage.save("series_work.json", a)
         self.assertNotEqual(fp, run_check.fingerprint())
 
-    def test_art_aenderung_zaehlt(self):
+    def test_kind_change_counts(self):
         fp = run_check.fingerprint()
         storage.save("kinds.json", {"F1": "karte"})
         self.assertNotEqual(fp, run_check.fingerprint())
 
-    def test_textdateien_zaehlen(self):
+    def test_text_files_count(self):
         fp = run_check.fingerprint()
         with open("serien_manuell.txt", "w", encoding="utf-8") as f:
             f.write("F1 F2\n")
         self.assertNotEqual(fp, run_check.fingerprint())
 
-    def test_foto_mit_neuem_bild_erzwingt_rechnen(self):
+    def test_photo_with_new_image_forces_calculation(self):
         storage.save("reload.json", {"assets": ["a1"]})
         self.assertIsNone(run_check.fingerprint())
 
-    def test_fehlende_ergebnisse_erzwingen_rechnen(self):
+    def test_missing_results_force_calculation(self):
         os.remove("schaetzung_koerper.csv")
         self.assertIsNone(run_check.fingerprint())
 
-    def test_noch_nie_gerechnet(self):
+    def test_never_calculated(self):
         storage.remove("age_per_photo.json")
         self.assertIsNone(run_check.fingerprint())
 
-    def test_marker_merken_und_vergessen(self):
+    def test_remember_and_forget_marker(self):
         self.assertIsNone(run_check.old())
         run_check.remember("abc")
         self.assertEqual(run_check.old(), "abc")
@@ -118,7 +118,7 @@ class TestPipeline(Base):
             self.scripts[n] = p
         self.old_scripts = dict(grimmich.SCRIPTS)
         grimmich.SCRIPTS.update(self.scripts)
-        # die Platzhalter-Skripte 'estimate' und 'series' ersetzen die Ergebnisdateien nicht: sie sind schon da
+        # the placeholder scripts 'estimate' and 'series' do not replace the result files: they are already there
 
     def tearDown(self):
         grimmich.SCRIPTS.clear()
@@ -143,40 +143,40 @@ class TestPipeline(Base):
         with open("lauflog.txt", encoding="utf-8") as f:
             return f.read().split()
 
-    def test_erster_lauf_macht_alles_zweiter_ueberspringt_die_schweren_schritte(self):
+    def test_first_run_does_everything_second_skips_the_heavy_steps(self):
         self.assertEqual(self.run_(), ["names", "state", "estimate", "series", "provenance"])
         self.assertEqual(self.run_(), ["names", "state", "provenance"])
         self.assertTrue(any("skipped" in z for z in grimmich.JOB.rows))
-        self.assertEqual(self.run_(), ["names", "state", "provenance"])   # und das bleibt so
+        self.assertEqual(self.run_(), ["names", "state", "provenance"])   # and it stays that way
 
-    def test_aenderung_in_immich_loest_alles_aus(self):
+    def test_change_in_immich_triggers_everything(self):
         self.run_()
         os.environ["FAKE_RC_STAND"] = "0"
         st = storage.load("immich_state.json", None)
-        st["people"]["p1"]["name"] = "Anna Maria"   # im echten Ablauf schreibt das der Schritt 'state'
+        st["people"]["p1"]["name"] = "Anna Maria"   # in the real run the 'state' step writes this
         storage.save("immich_state.json", st)
         self.assertEqual(self.run_(), ["names", "state", "estimate", "series", "provenance"])
         self.assertEqual(self.run_(), ["names", "state", "provenance"])
 
-    def test_neu_bestaetigte_serie_loest_alles_aus(self):
+    def test_newly_confirmed_series_triggers_everything(self):
         self.run_()
         a = storage.load("series_work.json", None)
         a["series"][1]["status"] = "ok"
         storage.save("series_work.json", a)
         self.assertEqual(self.run_(), ["names", "state", "estimate", "series", "provenance"])
 
-    def test_fehlgeschlagener_lauf_wird_nicht_uebersprungen(self):
+    def test_failed_run_is_not_skipped(self):
         os.environ["FAKE_RC_SERIES"] = "1"
         self.run_()   # serien schlaegt fehl
         del os.environ["FAKE_RC_SERIES"]
         self.assertEqual(self.run_(), ["names", "state", "estimate", "series", "provenance"])
 
-    def test_einzelschritt_setzt_den_fingerabdruck_zurueck(self):
+    def test_single_step_resets_the_fingerprint(self):
         self.run_()
         self.assertEqual(self.run_("estimate"), ["estimate"])
         self.assertEqual(self.run_(), ["names", "state", "estimate", "series", "provenance"])
 
-    def test_herkunft_laeuft_immer(self):
+    def test_provenance_always_runs(self):
         self.run_()
         self.assertIn("provenance", self.run_())
 

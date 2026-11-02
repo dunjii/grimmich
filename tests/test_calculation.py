@@ -17,56 +17,56 @@ def person(name="P", birth=1950.5, age_value=30.0):
 
 
 class Basics(unittest.TestCase):
-    def test_sigma_waechst_mit_dem_alter(self):
+    def test_sigma_grows_with_age(self):
         values_ = [r.sigma(a) for a in (2, 8, 15, 25, 45, 70)]
         self.assertEqual(values_, sorted(values_))
 
-    def test_einfaches_foto(self):
+    def test_simple_photo(self):
         e = r.series_result(["F1"], {"F1": [person(birth=1950.5, age_value=30)]})
         self.assertAlmostEqual(e["year"], 1980.5, places=3)
         self.assertLessEqual(e["from"], 1980)
         self.assertGreaterEqual(e["to"], 1981)
 
-    def test_person_ohne_geburtsdatum_wird_nicht_zum_datieren_benutzt(self):
+    def test_person_without_birth_date_is_not_used_for_dating(self):
         self.assertIsNone(r.series_result(["F1"], {"F1": [{"name": "P", "birth": None, "age": 40}]}))
         self.assertEqual(r.values_from_info([{"name": "P", "birth": None, "age": 40}]), [])
 
-    def test_kein_alter_wird_uebersprungen(self):
+    def test_no_age_is_skipped(self):
         self.assertIsNone(r.series_result(["F1"], {"F1": [{"name": "P", "birth": 1950, "age": None}]}))
 
-    def test_nie_nach_heute(self):
+    def test_never_after_today(self):
         e = r.series_result(["F1"], {"F1": [person(birth=TODAY - 5.0, age_value=40)]})
         self.assertLessEqual(e["year"], r.day_now() + 1e-6)
         self.assertLessEqual(e["to"], TODAY)
         self.assertIn("future", e["hint"])
 
-    def test_nie_vor_der_geburt(self):
+    def test_never_before_birth(self):
         e = r.series_result(["F1"], {"F1": [person(birth=1990.2, age_value=1)]})
         self.assertGreaterEqual(e["from"], 1990)
 
-    def test_mehrere_gleiche_personen_machen_sicherer(self):
+    def test_several_of_the_same_person_make_it_more_certain(self):
         first = r.series_result(["F1"], {"F1": [person()]})
         three = r.series_result(["F1", "F2", "F3"], {k: [person()] for k in ("F1", "F2", "F3")})
         self.assertLessEqual(three["to"] - three["from"], first["to"] - first["from"])
 
-    def test_widerspruch_wird_gemeldet(self):
-        info = {"F1": [person("A", 1950, 30), person("B", 1900, 30)]}   # eine Person 50 Jahre "frueher"
+    def test_contradiction_is_reported(self):
+        info = {"F1": [person("A", 1950, 30), person("B", 1900, 30)]}   # one person 50 years "earlier"
         e = r.series_result(["F1"], info)
         self.assertIn("contradict", e["hint"])
 
-    def test_serie_mit_stark_abweichenden_fotos(self):
+    def test_series_with_strongly_differing_photos(self):
         info = {"F1": [person(birth=1950, age_value=10)], "F2": [person(birth=1950, age_value=40)]}
         e = r.series_result(["F1", "F2"], info)
         self.assertIn("differ strongly", e["hint"])
 
-    def test_dezimaljahr(self):
+    def test_decimal_year(self):
         self.assertAlmostEqual(r.decimal_year_value("1938-07-01"), 1938.5, places=1)
         self.assertIsNone(r.decimal_year_value("kein datum"))
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(DATA, "age_per_photo.json")), "keine anonymisierten Testdaten")
 class WithRealData(unittest.TestCase):
-    def test_alle_fotos_geben_stimmige_ergebnisse(self):
+    def test_all_photos_give_consistent_results(self):
         with open(os.path.join(DATA, "age_per_photo.json"), encoding="utf-8") as f:
             info = json.load(f)
         n = 0

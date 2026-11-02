@@ -46,25 +46,25 @@ def apply(p, a):
 
 
 class BasicRules(unittest.TestCase):
-    def test_nur_jahr_wird_geschaetzt_markiert(self):
+    def test_year_only_is_marked_as_estimated(self):
         p = s.plan(entry_row(), asset(), {})
         self.assertEqual(p["action"], "write")
         self.assertEqual(p["new_date"], "1960-07-01T12:00:00.000Z")
         self.assertIn(s.TAG_ESTIMATED, p["tags_add"])
         self.assertEqual(p["new_description"], "[GRM] ~1960 (1955–1965) [/GRM]")
 
-    def test_volles_datum_ohne_schaetz_tag(self):
+    def test_full_date_without_estimate_tag(self):
         p = s.plan(entry_row(date="1960-05-17", status="manuell"), asset(), {})
         self.assertEqual(p["new_date"], "1960-05-17T12:00:00.000Z")
         self.assertNotIn(s.TAG_ESTIMATED, p["tags_add"])
         self.assertNotIn("[GRM]", p["new_description"])   # a fixed date alone needs no block
 
-    def test_ohne_jahr_wird_offen(self):
+    def test_without_year_it_is_open(self):
         p = s.plan(entry_row(year="", **{"from": "", "to": ""}), asset(), {})
         self.assertEqual(p["new_date"], "")
         self.assertIn(s.TAG_OPEN, p["tags_add"])
 
-    def test_geschaetzt_wird_zu_exakt(self):
+    def test_estimated_becomes_exact(self):
         a = asset(tags=[s.TAG_ESTIMATED])
         p = s.plan(entry_row(date="1960-05-17", status="manuell"), a, {})
         self.assertIn(s.TAG_ESTIMATED, p["tags_remove"])
@@ -90,7 +90,7 @@ class BasicRules(unittest.TestCase):
             self.assertEqual(text.count("Album"), 1)
             self.assertTrue(text.startswith("Text"))
 
-    def test_art_tag_kommt_und_geht(self):
+    def test_kind_tag_comes_and_goes(self):
         p = s.plan(entry_row(kind="postcard"), asset(), {})
         self.assertIn(s.ART_TAGS["postcard"], p["tags_add"])
         for old_word in ("Ansichtskarte", "Postcard"):
@@ -143,23 +143,23 @@ class UnifiedBlock(unittest.TestCase):
 
 
 class ProtectHandData(unittest.TestCase):
-    def test_von_hand_gesetztes_datum_wird_nicht_ueberschrieben(self):
+    def test_date_set_by_hand_is_not_overwritten(self):
         a = asset(date_="1987-03-02T12:00:00.000Z", scan="2026-04-13")
         p = s.plan(entry_row(), a, {})
         self.assertEqual(p["action"], "skip")
 
-    def test_mit_bestaetigung_wird_ueberschrieben(self):
+    def test_with_confirmation_it_is_overwritten(self):
         a = asset(date_="1987-03-02T12:00:00.000Z", scan="2026-04-13")
         p = s.plan(entry_row(force=True), a, {})
         self.assertEqual(p["action"], "write")
 
-    def test_datum_nach_unserem_schreiben_geaendert(self):
+    def test_date_changed_after_our_write(self):
         fr = {"F0001": {"asset": "ID-0001", "date": "1960-07-01T12:00:00.000Z"}}
         a = asset(date_="1971-01-01T12:00:00.000Z", tags=[s.TAG_ESTIMATED])
         p = s.plan(entry_row(), a, fr)
         self.assertEqual(p["action"], "skip")
 
-    def test_digitalfoto_im_arbeitsalbum_wird_normal_geschrieben(self):
+    def test_digital_photo_in_the_working_album_is_written_normally(self):
         a = asset(date_="2026-04-14T10:00:00.000Z", scan="2026-04-13")
         self.assertEqual(s.plan(entry_row(), a, {})["action"], "write")
         a["exifInfo"].update(make="NIKON", model="Z6", dateTimeOriginal="1999-05-05T10:00:00.000Z")
@@ -167,17 +167,17 @@ class ProtectHandData(unittest.TestCase):
         self.assertEqual(p["action"], "write")
         self.assertTrue(p["date_change"])
 
-    def test_ohne_kameradaten_bleibt_hand_datum_geschuetzt(self):
+    def test_without_camera_data_hand_date_stays_protected(self):
         a = asset(date_="1999-05-05T10:00:00.000Z", scan="2026-04-13")
         self.assertEqual(s.plan(entry_row(), a, {})["action"], "skip")
 
-    def test_scan_datum_innerhalb_toleranz_gilt_nicht_als_hand(self):
+    def test_scan_date_within_tolerance_is_not_by_hand(self):
         a = asset(date_="2026-04-14T10:00:00.000Z", scan="2026-04-13")
         self.assertEqual(s.plan(entry_row(), a, {})["action"], "write")
 
 
 class OnlySourceAndPlace(unittest.TestCase):
-    def test_nur_quelle_laesst_datum_in_ruhe(self):
+    def test_source_only_leaves_the_date_alone(self):
         z = entry_row(onlySource=True, sourceUntouched=False, source="Fotoalbum 3, Seite 2, Foto 1")
         a = asset(date_="2011-08-07T10:00:00.000Z", scan="2011-08-07")
         p = s.plan(z, a, {})
@@ -187,13 +187,13 @@ class OnlySourceAndPlace(unittest.TestCase):
         self.assertIn("Fotoalbum 3", p["new_description"])
         self.assertEqual(p["tags_add"], [])
 
-    def test_nur_quelle_zweiter_lauf_unveraendert(self):
+    def test_source_only_second_run_unchanged(self):
         z = entry_row(onlySource=True, sourceUntouched=False, source="Fotoalbum 3, Seite 2, Foto 1")
         a = asset(date_="2011-08-07T10:00:00.000Z", scan="2011-08-07")
         a2 = apply(s.plan(z, a, {}), a)
         self.assertEqual(s.plan(z, a2, {})["action"], "unchanged")
 
-    def test_ort_nur_wenn_immich_keinen_hat(self):
+    def test_place_only_if_immich_has_none(self):
         z = entry_row(onlyPlace=True, place={"lat": 51.7, "lon": 11.1, "name": "Ort 1"})
         p = s.plan(z, asset(), {})
         self.assertEqual(p["action"], "write")
@@ -203,7 +203,7 @@ class OnlySourceAndPlace(unittest.TestCase):
         z["placeForce"] = True
         self.assertEqual(s.plan(z, a, {})["new_place"], (51.7, 11.1))
 
-    def test_gleicher_ort_ist_unveraendert(self):
+    def test_same_place_is_unchanged(self):
         z = entry_row(onlyPlace=True, place={"lat": 51.7, "lon": 11.1, "name": "Ort 1"})
         self.assertEqual(s.plan(z, asset(lat=51.7004, lon=11.1004), {})["action"], "unchanged")
 
@@ -219,23 +219,23 @@ class Repeatability(unittest.TestCase):
         p2 = s.plan(z, a2, fr2)
         self.assertEqual(p2["action"], "unchanged", p2["reason"])
 
-    def test_schaetzung(self):
+    def test_estimate(self):
         self.check(entry_row(), asset())
 
-    def test_exakt(self):
+    def test_exact_date(self):
         self.check(entry_row(date="1960-05-17", status="manuell"), asset())
 
-    def test_offen(self):
+    def test_open(self):
         self.check(entry_row(year="", **{"from": "", "to": ""}), asset())
 
-    def test_mit_art_und_ort(self):
+    def test_with_kind_and_place(self):
         self.check(entry_row(kind="greeting_card", place={"lat": 51.7, "lon": 11.1, "name": "Ort 1"}), asset())
 
 
 @unittest.skipUnless(os.path.exists(os.path.join(DATA, "adoption.json")) and os.path.exists(os.path.join(DATA, "dating_backup.json")),
                      "keine anonymisierten Testdaten in tests/data")
 class WithRealData(unittest.TestCase):
-    """Fuer jedes Foto der Uebernahme: Zustand VOR dem Schreiben aus der Sicherung nachbauen und pruefen."""
+    """For every photo of the takeover: rebuild the state BEFORE writing from the backup and check it."""
 
     @classmethod
     def setUpClass(cls):
@@ -250,7 +250,7 @@ class WithRealData(unittest.TestCase):
                              **({"latitude": sv["latitude"], "longitude": sv["longitude"]} if sv.get("latitude") is not None else {})},
                 "fileCreatedAt": "", "tags": [{"value": t} for t in sv["tags"]]}
 
-    def test_alle_zeilen_planbar_und_wiederholbar(self):
+    def test_all_rows_plannable_and_repeatable(self):
         n = 0
         for z in self.rows:
             if z["key"] not in self.sure:
@@ -267,7 +267,7 @@ class WithRealData(unittest.TestCase):
             n += 1
         self.assertGreater(n, 100)
 
-    def test_nur_quelle_zeilen_aendern_kein_datum(self):
+    def test_source_only_rows_change_no_date(self):
         for z in self.rows:
             if z.get("onlySource") or z.get("onlyPlace"):
                 a = self.previous(z)

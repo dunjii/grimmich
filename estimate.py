@@ -326,7 +326,7 @@ def load_image(asset_id):
     )
     image = cv2.imdecode(np.frombuffer(data_, np.uint8), cv2.IMREAD_COLOR)
     if image is None:
-        raise ApiError("Vorschaubild konnte nicht gelesen werden")
+        raise ApiError("Preview image could not be read")
     return image
 
 
@@ -347,7 +347,7 @@ def box_in_pixeln(face, image):
     iw = face.get("imageWidth") or w
     ih = face.get("imageHeight") or h
     if abs(iw / ih - w / h) > 0.03 * (w / h):
-        raise FrameError("Rahmen passen nicht zum Bild (anderes Seitenverhaeltnis)")
+        raise FrameError("Frames do not fit the image (different aspect ratio)")
     sx, sy = w / iw, h / ih
     x1, y1, x2, y2 = x1 * sx, y1 * sy, x2 * sx, y2 * sy
     if x2 <= x1 or y2 <= y1 or x1 < -0.03 * w or y1 < -0.03 * h \
@@ -537,7 +537,7 @@ def apply_series(rows, photos, series):
                 "to": res["to"],
                 "count": amount,
                 "hint": "; ".join(hints),
-                "details": old["details"] if old else "von der Serie uebernommen (eigene Gesichter nicht datierbar)",
+                "details": old["details"] if old else "taken from the series (own faces cannot be dated)",
                 "outliers": "",
                 "suggestion": "",
                 "current": (photo.get("localDateTime") or photo.get("fileCreatedAt") or "")[:10],

@@ -54,24 +54,24 @@ class Base(unittest.TestCase):
 
 
 class TestTables(unittest.TestCase):
-    def test_tabellen_sind_eindeutig(self):
+    def test_tables_are_unambiguous(self):
         # raises when two old names would become the same new name
         migration._invert(rename_map.FIELDS)
         migration._invert(rename_map.DOCUMENTS)
         for values_ in rename_map.VALUES.values():
             migration._invert(values_)
 
-    def test_hin_und_zurueck_ist_gleich(self):
+    def test_there_and_back_is_the_same(self):
         data_ = {"fotos": [{"jahr": 1, "quelle": "entwurf", "art": "grusskarte"}], "x": {"von": 1, "bis": 2}}
         self.assertEqual(migration.to_german(migration.to_english(data_)), data_)
 
-    def test_keine_alten_namen_im_ergebnis(self):
+    def test_no_old_names_in_the_result(self):
         new_ = migration.to_english({"jahr": 1, "ort": {"lat": 1}, "personen": ["A"]})
         self.assertEqual(new_, {"year": 1, "place": {"lat": 1}, "people": ["A"]})
 
 
 class TestSwitch(Base):
-    def test_umstellung_ueber_storage(self):
+    def test_switch_through_storage(self):
         old_database()
         k = storage.load("corrections.json", None)
         self.assertEqual(k["fotos_F1"], {"year": 1960, "from": 1958, "to": 1962, "source": "confirmed", "own": True})
@@ -87,7 +87,7 @@ class TestSwitch(Base):
         # status in the adoption document is text that is written to the photos: it stays as it was
         self.assertEqual(storage.load("adoption.json", None)["rows"][0]["status"], "manuell")
 
-    def test_kopie_wird_angelegt_und_enthaelt_die_alten_daten(self):
+    def test_copy_is_made_and_holds_the_old_data(self):
         old_database()
         storage.load("corrections.json", None)
         self.assertTrue(os.path.exists(migration.BACKUP_FILE))
@@ -96,12 +96,12 @@ class TestSwitch(Base):
         db.close()
         self.assertEqual(n, len(OLD))
 
-    def test_bericht_sagt_alles_identisch(self):
+    def test_report_says_all_identical(self):
         old_database()
         storage.load("corrections.json", None)
         self.assertEqual(migration.report(), 0)
 
-    def test_zweimal_ist_wie_einmal(self):
+    def test_twice_is_like_once(self):
         old_database()
         storage.load("corrections.json", None)
         before = storage.load("series_work.json", None)
@@ -114,14 +114,14 @@ class TestSwitch(Base):
         self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='dokumente'").fetchone())
         db.close()
 
-    def test_geaenderte_daten_nach_der_umstellung_bleiben(self):
+    def test_data_changed_after_the_switch_stays(self):
         old_database()
         storage.save("corrections.json", {"mine": 1})
         migration._done.clear()
         storage._migrated.clear()
         self.assertEqual(storage.load("corrections.json", None), {"mine": 1})
 
-    def test_kaputtes_dokument_aendert_nichts(self):
+    def test_broken_document_changes_nothing(self):
         old_database()
         db = sqlite3.connect("grimmich.db")
         db.execute("UPDATE dokumente SET inhalt = '{kaputt' WHERE name = 'arten.json'")
@@ -134,12 +134,12 @@ class TestSwitch(Base):
         self.assertIsNone(db.execute("SELECT 1 FROM sqlite_master WHERE name='documents'").fetchone())
         db.close()
 
-    def test_neue_datenbank_braucht_keine_umstellung(self):
+    def test_new_database_needs_no_switch(self):
         storage.save("corrections.json", {"a": {"year": 1}})
         self.assertFalse(os.path.exists(migration.BACKUP_FILE))
         self.assertEqual(storage.load("corrections.json", None), {"a": {"year": 1}})
 
-    def test_zwischenspeicher_dateien_bekommen_neue_namen(self):
+    def test_cache_files_get_new_names(self):
         old_database()
         with open("schaetzung_cache.json", "w", encoding="utf-8") as f:
             json.dump({"F1": {"gesichter": [1], "jahr": 1950}}, f)
@@ -151,7 +151,7 @@ class TestSwitch(Base):
 
 
 class TestEnv(Base):
-    def test_zugangsdateien_bekommen_neue_namen(self):
+    def test_access_files_get_new_names(self):
         for n, text in (("immich.env", "IMMICH_URL=http://x\nIMMICH_ANKERALBUM=Anker\nSCHREIB_GETRENNT=1\n# IMMICH_AKTIV kommentar\n"),
                         ("gramps_schreiben.env", "GRAMPS_USER=u\nGRAMPS_PASSWORT=geheim\n")):
             with open(n, "w", encoding="utf-8") as f:
