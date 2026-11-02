@@ -50,6 +50,10 @@ If you installed Grimmich from the repository (`git clone`), update with two com
 
 `./.venv/bin/python -m unittest discover -s tests -v`
 
+## Credits
+
+Grimmich was designed and tested by dunjii and written together with [Claude](https://claude.ai) (Anthropic's AI assistant). Claude wrote most of the code in conversation with dunjii, who decided what Grimmich should do, tried every version on a real family photo collection and corrected it. Commits written with Claude carry a `Co-Authored-By: Claude` line.
+
 ## License
 
 Grimmich is licensed under the **GNU Affero General Public License, version 3 (AGPL-3.0)**. Copyright 2026 dunjii

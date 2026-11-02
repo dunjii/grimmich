@@ -50,6 +50,10 @@ Wenn du Grimmich aus dem Repository geholt hast (`git clone`), aktualisierst du 
 
 `./.venv/bin/python -m unittest discover -s tests -v`
 
+## Mitwirkende
+
+Grimmich wurde von dunjii entworfen und getestet und zusammen mit [Claude](https://claude.ai) (dem KI-Assistenten von Anthropic) geschrieben. Claude hat den größten Teil des Codes im Gespräch mit dunjii geschrieben. Dunjii hat entschieden, was Grimmich tun soll, jede Version an einer echten Familienfoto-Sammlung ausprobiert und verbessert. Commits, die mit Claude entstanden sind, tragen die Zeile `Co-Authored-By: Claude`.
+
 ## Lizenz
 
 Grimmich steht unter der **GNU Affero General Public License, Version 3 (AGPL-3.0)**. Copyright 2026 dunjii
