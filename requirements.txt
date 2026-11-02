@@ -9,4 +9,6 @@ torchvision
 transformers
 # needed by the MiVOLO model when it is loaded for the first time (face and person detection)
 ultralytics
+# needed by the face and person detector model (otherwise ultralytics installs it by itself at the first run)
+omegaconf
 timm

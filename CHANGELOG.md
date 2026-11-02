@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.46 – 2026-11-02 – Docker: missing package
+- **Fix:** the person detector needs `omegaconf`; the Docker image did not contain it, so Ultralytics installed it on the fly at the first run. It is now part of `requirements.txt` and the image build checks it.
+
 ## 0.9.45 – 2026-11-02 – Docker: fix for the AI libraries
 - **Fix:** in the Docker image `torchvision` did not match `torch`, so the age estimate stopped with "operator torchvision::nms does not exist". Both are now installed together from the CPU index, `torchvision` is listed in `requirements.txt`, and the image build checks that the AI libraries load.
 

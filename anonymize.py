@@ -219,7 +219,7 @@ def main():
             print(f"  {d}: {', '.join(sorted(s)[:8])}")
     else:
         print("Pruefung bestanden: kein echter Name, Fotoschluessel oder ID steht mehr in den Kopien.")
-    print(f"\nFertig. Die anonymen Kopien liegen im Ordner '{OFF}'. Der Schluessel '{KEY_CONST}' bleibt bei dir.")
+    print(f"\nDone. The anonymous copies are in the folder '{OFF}'. The key '{KEY_CONST}' stays with you.")
 
 
 if __name__ == "__main__":

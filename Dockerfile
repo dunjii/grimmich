@@ -26,7 +26,7 @@ RUN pip install torch torchvision --index-url https://download.pytorch.org/whl/c
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 # fail the build (not the first start) if the AI libraries do not fit together
-RUN python -c "import torch, torchvision, ultralytics, timm; from transformers import AutoImageProcessor, AutoModelForImageClassification"
+RUN python -c "import torch, torchvision, ultralytics, timm, omegaconf; from transformers import AutoImageProcessor, AutoModelForImageClassification"
 
 COPY . .
 
