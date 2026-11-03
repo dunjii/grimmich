@@ -1009,11 +1009,10 @@
   "Skip": "Überspringen",
   "Undo last decision": "Letzte Entscheidung zurücknehmen",
   "{n} {n:decision|decisions} so far": "{n} {n:Entscheidung|Entscheidungen} bisher",
-  "The full Grimmich interface is made for large screens. Here is a small game instead: it helps to sort the photos by age.": "Die volle Grimmich-Oberfläche ist für große Bildschirme gemacht. Hier stattdessen ein kleines Spiel: Es hilft, die Fotos nach Alter zu sortieren.",
-  "Open the full interface anyway": "Volle Oberfläche trotzdem öffnen",
   "Back to Grimmich": "Zurück zu Grimmich",
   "Nothing is written to Immich or Gramps. Your decisions stay in Grimmich.": "Es wird nichts nach Immich oder Gramps geschrieben. Deine Entscheidungen bleiben in Grimmich.",
   "All pairs decided. Nice!": "Alle Paare entschieden. Prima!",
-  "Not enough photos of named people yet. Please click “Refresh” first.": "Noch nicht genug Fotos benannter Personen. Bitte zuerst „Aktualisieren“ klicken."
+  "Not enough photos of named people yet. Please click “Refresh” first.": "Noch nicht genug Fotos benannter Personen. Bitte zuerst „Aktualisieren“ klicken.",
+  "The full interface is made for large screens.": "Die volle Oberfläche ist für große Bildschirme gemacht."
  }
 }

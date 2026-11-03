@@ -341,14 +341,14 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .card > #jobstatus:empty { display: none; }
 .job-last { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-/* Game “Who is older?” */
-.game { align-items: center; text-align: center; }
-.game-q { max-width: 36ch; }
-.game-pair { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
-.game-photo { padding: 0; border: 3px solid var(--rand); border-radius: 14px; background: var(--karte); cursor: pointer; overflow: hidden; line-height: 0; }
+/* Game “Who is older?”: takes the whole browser window */
+.game-full { position: fixed; inset: 0; z-index: 45; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; background: var(--papier); }
+.game-bar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; } .game-bar .space { flex: 1; }
+.game-q { text-align: center; font-family: var(--serif); font-size: 20px; font-weight: 600; }
+.game-pair { flex: 1; min-height: 0; display: flex; gap: 10px; }
+@media (orientation: portrait) { .game-pair { flex-direction: column; } }
+.game-cell { flex: 1; min-width: 0; min-height: 0; container-type: size; display: flex; justify-content: center; align-items: center; }
+.game-photo { width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); padding: 0; border: 3px solid var(--rand); border-radius: 14px; background-color: #cdbfa6; background-repeat: no-repeat; cursor: pointer; }
 .game-photo:hover, .game-photo:focus-visible { border-color: var(--akzent); }
-.game-face { display: block; width: 220px; height: 220px; background-color: #cdbfa6; background-repeat: no-repeat; }
-.game-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-.game-note { max-width: 520px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
-.game-foot { max-width: 520px; }
-@media (max-width: 520px) { .game-face { width: 150px; height: 150px; } .game-pair { gap: 10px; } }
+.game-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.game-foot { text-align: center; font-size: 12px; } .game-empty { margin: auto; }

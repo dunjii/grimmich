@@ -1,10 +1,9 @@
 // Game "Who is older?": two photos of the same person, you pick the older one.
 // The decisions stay in Grimmich (game_votes.json); nothing is written to Immich or Gramps.
 import {S, ui, draw, saveGame} from "../state.js";
-import {esc, cropStyle, image, recall, remember} from "../util.js";
+import {esc, image, recall, remember} from "../util.js";
 import {tr} from "../language.js";
 
-const FACE = 220;   // the 150 px version on small screens is only scaled by CSS
 const narrow = () => window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
 const pairId = (a, b) => [a, b].sort().join("|");
 const ageOf = (key, name) => { const x = (S.age[key] || []).find((z) => z.name === name); return x && typeof x.alter === "number" ? x.alter : null; };
@@ -28,27 +27,34 @@ function pickPair() {
   return null;
 }
 
+// Face with more surroundings, scaled by CSS so it fills the space it gets (sharper than a close-up).
+function faceStyle(key, b) {
+  const W = b[4], H = b[5], bw = Math.max(1, b[2] - b[0]), bh = Math.max(1, b[3] - b[1]);
+  const side = Math.min(Math.max(Math.max(bw, bh) * 2.6, 20), W, H);
+  const x0 = Math.max(0, Math.min((b[0] + b[2]) / 2 - side / 2, W - side)), y0 = Math.max(0, Math.min((b[1] + b[3]) / 2 - side / 2, H - side));
+  const px = W > side ? (x0 / (W - side)) * 100 : 0, py = H > side ? (y0 / (H - side)) * 100 : 0;
+  return `background-image:url(${image(key)});background-size:${((W / side) * 100).toFixed(2)}% auto;background-position:${px.toFixed(2)}% ${py.toFixed(2)}%;`;
+}
 const face = (pair, side) => {
   const f = pair[side];
-  return `<button class="game-photo" data-a="game-pick" data-w="${side}" title="${tr("This one is older")}">
-    <span class="game-face" style="${f.box ? cropStyle(f.key, f.box, FACE) : `background-image:url(${image(f.key)});background-size:cover;`}"></span></button>`;
+  return `<div class="game-cell"><button class="game-photo" data-a="game-pick" data-w="${side}" title="${tr("This one is older")}"
+    style="${f.box ? faceStyle(f.key, f.box) : `background-image:url(${image(f.key)});background-size:cover;`}"></button></div>`;
 };
 
+// The game takes the whole browser window (see .game-full in style.css).
 export function gameHtml() {
   if (ui.game === undefined || ui.game === null) ui.game = pickPair();
   const pair = ui.game, n = S.game.votes.length;
-  const notice = narrow() && !recall("fullView", false)
-    ? `<div class="box info game-note">${tr("The full Grimmich interface is made for large screens. Here is a small game instead: it helps to sort the photos by age.")}
-        <div><button data-a="game-leave">${tr("Open the full interface anyway")}</button></div></div>` : "";
+  const note = narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
   const body = pair
-    ? `<h2 class="game-q">${tr("Which photo shows {name} older?", {name: esc(pair.name)})}</h2>
+    ? `<div class="game-q">${tr("Which photo shows {name} older?", {name: esc(pair.name)})}</div>
        <div class="game-pair">${face(pair, "a")}${face(pair, "b")}</div>
        <div class="game-buttons"><button data-a="game-pick" data-w="same">${tr("Same age / cannot tell")}</button><button data-a="game-skip">${tr("Skip")}</button>
          <button data-a="game-undo" ${n ? "" : "disabled"}>${tr("Undo last decision")}</button></div>`
-    : `<div class="empty">${people().length ? tr("All pairs decided. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
-  return `<div class="page-head"><h2>${tr("Who is older?")}</h2><span class="quiet">${tr("{n} {n:decision|decisions} so far", {n})}</span><span class="space"></span>
-      <button data-a="game-leave">${tr("Back to Grimmich")}</button></div>
-    <div class="write-page game">${notice}${body}<div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your decisions stay in Grimmich.")}</div></div>`;
+    : `<div class="empty game-empty">${people().length ? tr("All pairs decided. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
+  return `<div class="game-full"><div class="game-bar"><b>${tr("Who is older?")}</b><span class="quiet">${tr("{n} {n:decision|decisions} so far", {n})}</span>${note}<span class="space"></span>
+      <button data-a="game-leave">${tr("Back to Grimmich")}</button></div>${body}
+    <div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your decisions stay in Grimmich.")}</div></div>`;
 }
 
 export const actions = {

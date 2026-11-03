@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.50 – 2026-11-03 – Game fills the whole window
+- "Who is older?" now takes the whole browser window (no header, two large photos, buttons at the bottom; side by side on wide screens, stacked on phones). The faces are shown with more of their surroundings, so they are sharper than before. The notice for small screens became a short line.
+
 ## 0.9.49 – 2026-11-03 – Game "Who is older?", phone notice
 - New page "Who is older?" (button in the header): Grimmich shows two photos of the same named person, you tap the older one (or "same age / cannot tell", "skip", "undo"; on the desktop also the arrow keys). Pairs with similar estimated ages come first. The decisions are only saved in Grimmich (`game_votes`); nothing is written to Immich or Gramps.
 - On a small screen (phone) Grimmich now shows a notice that the full interface is made for large screens and starts with the game; a button opens the full interface anyway.
