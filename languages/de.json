@@ -1047,9 +1047,19 @@
   "Places you gave": "Orte, die du angegeben hast",
   "Nothing here yet.": "Noch nichts.",
   "Only the first {n} are shown.": "Nur die ersten {n} werden gezeigt.",
-  "These answers are only collected. They change nothing in the dating.": "Diese Antworten werden nur gesammelt. Sie ändern nichts an der Datierung.",
   "Previous photo": "Vorheriges Foto",
   "Next photo": "Nächstes Foto",
-  "{n} {n:year|years}": "{n} {n:Jahr|Jahre}"
+  "{n} {n:year|years}": "{n} {n:Jahr|Jahre}",
+  "Your answers narrow the estimates (shown as “refined”). Nothing is written to Immich or Gramps.": "Deine Antworten grenzen die Schätzungen ein (als „verfeinert“ markiert). Nichts wird in Immich oder Gramps geschrieben.",
+  "Was this photo taken before or after the one from {year}?": "Wurde dieses Foto vor oder nach dem Foto von {year} aufgenommen?",
+  "Earlier": "Früher",
+  "Later": "Später",
+  "About the same time": "Etwa gleichzeitig",
+  "Put the photos of {name} in order, youngest first.": "Bring die Fotos von {name} in die Reihenfolge, jüngstes zuerst.",
+  "Start again": "Neu anfangen",
+  "In which decade was this photo taken?": "In welchem Jahrzehnt wurde dieses Foto aufgenommen?",
+  "Refined by your answers in the game. The AI alone said: ca. {year} ({from}–{to}).": "Durch deine Antworten im Spiel verfeinert. Die KI allein sagte: ca. {year} ({from}–{to}).",
+  "Before or after a dated photo?": "Vor oder nach einem datierten Foto?",
+  "Sort photos by age": "Fotos nach Alter sortieren"
  }
 }

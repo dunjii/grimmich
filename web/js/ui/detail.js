@@ -75,6 +75,7 @@ export function detailHtml() {
     ${titleButton(e, key)}
     ${e.keys.some(notInAlbum) ? `<div class="box info">${(() => { const n = e.keys.filter(notInAlbum).length; return tr("<b>{wer} no longer in the working or anchor album</b> (faded in the strip above). {n:It is|They are} not written. Under “Manage series” you can remove {n:it|them} from the series.", {n, wer: n === 1 ? tr("One photo is") : tr("{n} photos are", {n})}); })()}</div>` : ""}
     ${w.length ? `<div class="box warn"><b>${w.length === 1 ? esc(w[0].type) : tr("{n} warnings", {n: w.length})}${w[0].hard ? "" : tr(" (estimated only)")}.</b> ${w.map((x) => esc(x.text)).join(" ")}</div>` : ""}
+    ${e.refined && e.estimate && !e.confirmedFlag && !e.draftFlag ? `<div class="box info">${tr("Refined by your answers in the game. The AI alone said: ca. {year} ({from}–{to}).", {year: e.estimate.year, from: e.estimate.from, to: e.estimate.to})}</div>` : ""}
     ${e.hint && !w.length ? `<div class="box ${hKind === "no" ? "warn" : "info"}">${esc(hintText(e.hint))}</div>` : ""}
     ${changed.length ? `<div class="box warn"><b>${tr("Changed in Immich.")}</b> ${esc(S.changed[changed[0]].texts.join(" "))}
       <div><button class="small" data-a="seen" data-key="${esc(changed[0])}">${tr("Seen")}</button></div></div>` : ""}

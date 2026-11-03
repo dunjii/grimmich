@@ -3,6 +3,7 @@
 import {S, mark} from "./state.js";
 import {median, dateShort} from "./util.js";
 import {tr} from "./language.js";
+import {narrowed, ordered} from "./refine.js";
 
 // ------------------------------------------------------------------ Serien
 let smVer = -1, smCache = {};
@@ -165,7 +166,11 @@ function buildUnits() {
         e.hint = [...new Set(zs.map((z) => z.hint).filter(Boolean))].join("; ");
       }
     }
-    if (e.estimate) { e.year = e.estimate.year; e.decimal_year = e.estimate.decimal_year || e.estimate.year; e.from = e.estimate.from; e.to = e.estimate.to; }
+    if (e.estimate) {
+      e.year = e.estimate.year; e.decimal_year = e.estimate.decimal_year || e.estimate.year; e.from = e.estimate.from; e.to = e.estimate.to;
+      const n = narrowed(e.estimate, keys);   // your answers in the game narrow the span (before / after an anchor, decade)
+      if (n) { Object.assign(e, {year: n.year, decimal_year: n.decimal_year, from: n.from, to: n.to}); e.refined = true; }
+    }
     const k0 = S.corr[keys[0]], hd = keys.map((k) => immichDate(k)).find(Boolean);
     if (hd) { e.immichDate = hd.date; if (hd.camera) e.camera = true; }
     if (k0 && k0.source === "ignoriert") e.immichIgnored = true;
@@ -178,6 +183,7 @@ function buildUnits() {
       if (k0.source === "draft") e.draftFlag = true;
       else { e.confirmedFlag = true; e.manualFlag = k0.source !== "confirmed"; }
     }
+    if (e.confirmedFlag || e.draftFlag) e.refined = false;
     return e;
   };
   const unitsList = [];
@@ -193,6 +199,9 @@ function buildUnits() {
     if (kk.length === s.photos.length) { u.kind = kindOf(kk[0]); cardEstimate(u); cards.push(u); } else unitsList.push(u);   // cards only: belongs to “Cards and documents”
   });
   singleKeys().forEach((k) => unitsList.push({uid: "f:" + k, type: "photo", keys: [k], ...data([k], undefined)}));
+  const before = new Map(unitsList.map((u) => [u, [u.year, u.from, u.to]]));
+  ordered(unitsList);   // your order answers (older / sorting) move estimates that contradict them
+  unitsList.forEach((u) => { const b = before.get(u); if (b && (u.year !== b[0] || u.from !== b[1] || u.to !== b[2])) u.refined = true; });
   const m = seriesMap();   // single cards and documents: their own units without AI estimate
   Object.keys(S.photos).filter((k) => kindOf(k) && !m[k]).sort().forEach((k) => { const u = {uid: "f:" + k, type: "photo", keys: [k], kind: kindOf(k), ...data([k], null)}; cardEstimate(u); cards.push(u); });
   return {unitsList, cards};

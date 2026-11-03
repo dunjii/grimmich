@@ -3,6 +3,11 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.56 – 2026-11-03 – Game answers now refine the estimates; new question types
+- Your answers in the game now flow into the estimates (as suggestions only, nothing is written to Immich or Gramps without the usual preview): "before / after the photo from 1950" and "in the 1940s" narrow the span of a photo or series; "this one is older" and sorted rows put estimates that contradict your order closer together. Photos that are already confirmed or have a draft are never moved. Contradicting bounds are ignored. This works before a photo becomes an anchor. In the detail view a note shows what the AI alone said.
+- New questions: before or after a dated photo (anchor), sort 3–5 photos of one person from young to old, and the decade of a photo. The free "In which year?" question is no longer asked (old answers stay in the results).
+- On phones and tablets the keyboard no longer opens by itself at questions with an input.
+
 ## 0.9.55 – 2026-11-03 – Game: swipe between the photos, frame for the face, results page
 - In the whole-photo view of a pair you can swipe left/right (or use the arrow keys or the arrows on the screen) to go from one photo to the other; the zoom stays. (Before, the arrow keys did nothing there.)
 - "Who is this?": a frame marks the face that is meant, in the cut-out and in the whole-photo view.

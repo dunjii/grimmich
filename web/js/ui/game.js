@@ -1,10 +1,12 @@
 // Game: short questions about the photos, mixed at random. Question types:
-//   older (two photos of one person), who (a face without a name), year (when was it taken), place (where was it taken).
+//   older (two photos of one person), who (a face without a name), place (where was it taken),
+//   anchor (before or after a photo with a known year), sort (3–5 photos of one person from young to old), decade.
+//   Old “year” answers are still kept and shown, the question itself is no longer asked.
 // The answers stay in Grimmich (game_votes); nothing is written to Immich or Gramps.
-import {S, ui, draw, saveGame} from "../state.js";
+import {S, ui, draw, saveGame, mark} from "../state.js";
 import {esc, image, recall, remember} from "../util.js";
 import {loadGrampsPlaces, loadEvents} from "../gramps.js";
-import {unitFromKey, placeFrom} from "../model.js";
+import {unitFromKey, placeFrom, immichDate} from "../model.js";
 import {suggestions, norm} from "./places.js";
 import {peopleOn} from "./event.js";
 import {tr} from "../language.js";
@@ -20,8 +22,8 @@ function people() { return (S.pf && S.pf.ok ? S.pf.people : []).filter((p) => p.
 const unnamed = () => (S.pf && S.pf.ok ? S.pf.unnamed || [] : []);
 
 // ---- what has been answered: the latest answer per question; "unknown" comes back now and then
-const qid = (v) => (v.type && v.type !== "older" ? `${v.type}|${v.key}` : `older|${pairId(v.a, v.b)}`);
-const answerOf = (v) => (v.type === "who" ? (v.name ? "x" : "unknown") : v.type === "year" ? (v.year ? "x" : "unknown") : v.type === "place" ? (v.place ? "x" : "unknown") : v.older);
+const qid = (v) => (v.type === "anchor" ? `anchor|${v.key}|${v.anchor}` : v.type === "sort" ? `sort|${[...v.keys].sort().join("|")}` : v.type && v.type !== "older" ? `${v.type}|${v.key}` : `older|${pairId(v.a, v.b)}`);
+const answerOf = (v) => (v.type === "who" ? (v.name ? "x" : "unknown") : v.type === "year" ? (v.year ? "x" : "unknown") : v.type === "place" ? (v.place ? "x" : "unknown") : v.type === "anchor" ? v.rel : v.type === "sort" ? (v.keys.length && !v.unknown ? "x" : "unknown") : v.type === "decade" ? (v.from ? "x" : "unknown") : v.older);
 function lastAnswers() {
   const m = new Map();
   S.game.votes.forEach((v) => m.set(qid(v), answerOf(v)));
@@ -57,11 +59,44 @@ function uncertain() {
   const rows = (S.res && S.res.rows) || [];
   return rows.filter((r) => S.photos[r.key] && !(S.corr[r.key] && S.corr[r.key].source === "confirmed") && ((r.to !== null && r.from !== null && r.to - r.from >= 15) || r.hint)).map((r) => r.key);
 }
-function pickYear(last, wish) {
-  const u = uncertain();
+// Photos with a year that is certain: confirmed by you or dated in Immich (anchors)
+function anchors() {
+  const out = [];
+  Object.keys(S.photos).forEach((k) => {
+    const c = S.corr[k], h = immichDate(k);
+    const y = c && c.source !== "ignoriert" && c.source !== "draft" && c.year ? c.year : !c && h ? +h.date.slice(0, 4) : null;
+    if (y) out.push({key: k, year: y});
+  });
+  return out;
+}
+function pickAnchor(last, wish) {
+  const u = uncertain(), a = anchors();
+  if (!u.length || !a.length) return null;
+  const rows = new Map(((S.res && S.res.rows) || []).map((r) => [r.key, r]));
+  for (let i = 0; i < 300; i++) {
+    const key = rnd(u), r = rows.get(key);
+    const near = a.filter((x) => r && r.from !== null && x.year >= r.from && x.year <= r.to && x.key !== key);   // an anchor inside the span tells the most
+    const c = rnd(near.length ? near : a);
+    if (c.key !== key && wanted(last, `anchor|${key}|${c.key}`, wish)) return {type: "anchor", key, anchor: c.key, ay: c.year};
+  }
+  return null;
+}
+function pickSort(last, wish) {
+  const ps = people().filter((p) => p.photos.length >= 3);
+  for (let i = 0; ps.length && i < 200; i++) {
+    const p = rnd(ps), n = Math.min(p.photos.length, 3 + Math.floor(Math.random() * 3));
+    const items = p.photos.slice().sort(() => Math.random() - 0.5).slice(0, n);
+    if (wanted(last, `sort|${items.map((f) => f.key).sort().join("|")}`, wish)) return {type: "sort", pid: p.id, name: p.name, items, order: []};
+  }
+  return null;
+}
+function pickDecade(last, wish) {
+  const rows = ((S.res && S.res.rows) || []).filter((r) => S.photos[r.key] && r.year && !(S.corr[r.key] && S.corr[r.key].source === "confirmed") && !immichDate(r.key));
+  const wide = rows.filter((r) => r.to - r.from >= 8);
+  const u = (wide.length ? wide : rows).map((r) => r.key);
   for (let i = 0; u.length && i < 200; i++) {
     const key = rnd(u);
-    if (wanted(last, `year|${key}`, wish)) return {type: "year", key};
+    if (wanted(last, `decade|${key}`, wish)) return {type: "decade", key};
   }
   return null;
 }
@@ -74,7 +109,7 @@ function pickPlace(last, wish) {
   }
   return null;
 }
-const PICKERS = [pickOlder, pickWho, pickYear, pickPlace];
+const PICKERS = [pickOlder, pickWho, pickPlace, pickAnchor, pickSort, pickDecade];
 
 // A new question of a random type that has material; every now and then (and at the end) one answered with “don't know” again.
 function pickQuestion() {
@@ -112,6 +147,8 @@ const ICON = {
   same: '<path d="M5 9h14M5 15h14"/>',
   unknown: '<path d="M9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4M12 17.5v.5"/><circle cx="12" cy="12" r="10"/>',
   different: '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20c0-3 2-5 5-5M21 20c0-3-2-5-5-5M4 4l16 16"/>',
+  before: '<path d="M15 5l-7 7 7 7"/>',
+  after: '<path d="M9 5l7 7-7 7"/>',
   undo: '<path d="M9 7H4v5M4 7c4-4 12-3 15 3 1 3 0 6-2 8"/>',
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-9 7"/>',
 };
@@ -127,7 +164,7 @@ const face = (pair, side) => {
     <span class="game-badge">${icon("older")}${tr("Older")}</span>${thumb(f.key, `data-pair="${esc(pair.a.key)}|${esc(pair.b.key)}" data-i="${side === "a" ? 0 : 1}"`)}
   </div></div>`;
 };
-const wholePhoto = (key) => `<div class="game-cell"><button class="game-whole" data-a="game-view" data-key="${esc(key)}" title="${tr("Show whole photo")}"><img src="${image(key)}" alt=""></button></div>`;
+const wholePhoto = (key, badge = "") => `<div class="game-cell"><button class="game-whole" data-a="game-view" data-key="${esc(key)}" title="${tr("Show whole photo")}"><img src="${image(key)}" alt=""></button>${badge ? `<span class="game-badge">${badge}</span>` : ""}</div>`;
 const answerBar = (kind, listId, items, placeholder, input) => `<div class="game-answer">
   <input class="game-input" id="game-input" ${input} list="${listId}" placeholder="${esc(placeholder)}" autocomplete="off">
   <datalist id="${listId}">${items}</datalist>
@@ -185,6 +222,28 @@ function questionHtml(q) {
       ${answerBar("who", "game-names", (S.allNames || []).map((x) => `<option value="${esc(x)}">`).join(""), tr("Name"), "")}
       <div class="game-buttons">${unknown}${undo}</div>`;
   }
+  if (q.type === "anchor") {
+    return `<div class="game-q">${tr("Was this photo taken before or after the one from {year}?", {year: q.ay})}</div>
+      <div class="game-pair">${wholePhoto(q.key)}${wholePhoto(q.anchor, q.ay)}</div>
+      <div class="game-buttons">${btn("game-pick", "before", "before", tr("Earlier"))}${btn("game-pick", "same", "same", tr("About the same time"))}${btn("game-pick", "after", "after", tr("Later"))}${unknown}${undo}</div>`;
+  }
+  if (q.type === "sort") {
+    const done = q.order.length === q.items.length;
+    return `<div class="game-q">${tr("Put the photos of {name} in order, youngest first.", {name: esc(q.name)})}</div>
+      <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${at + 1}</span>` : ""}${thumb(f.key)}</div>`; }).join("")}</div>
+      <div class="game-buttons">${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
+      <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${done ? "" : "disabled"}>${tr("Save")}</button></div>`;
+  }
+  if (q.type === "decade") {
+    const r = ((S.res && S.res.rows) || []).find((x) => x.key === q.key) || {};
+    const lo = Math.floor(((r.from || r.year || 1950) - 5) / 10), hi = Math.floor(((r.to || r.year || 1950) + 5) / 10);
+    const first = Math.max(lo, hi - 5);
+    const decades = []; for (let d = first; d <= hi; d++) decades.push(d * 10);
+    return `<div class="game-q">${tr("In which decade was this photo taken?")}</div>
+      <div class="game-pair">${wholePhoto(q.key)}</div>
+      <div class="game-chips">${decades.map((d) => `<button class="game-chip" data-a="game-decade" data-d="${d}"><b>${d}s</b></button>`).join("")}</div>
+      <div class="game-buttons">${unknown}${undo}</div>`;
+  }
   if (q.type === "year") {
     return `<div class="game-q">${tr("In which year was this photo taken?")}</div>
       <div class="game-pair">${wholePhoto(q.key)}</div>
@@ -221,10 +280,11 @@ function resultsHtml() {
   const votes = S.game.votes, type = (v) => v.type || "older";
   const by = (t) => votes.filter((v) => type(v) === t);
   const known = new Set((S.allNames || []).map((x) => String(x).toLowerCase()));
-  const older = by("older"), who = by("who"), year = by("year"), place = by("place");
+  const older = by("older"), who = by("who"), year = by("year"), place = by("place"), anchor = by("anchor"), sort = by("sort"), decade = by("decade");
   const unknown = (arr, f) => arr.filter(f).length;
   const summary = [[tr("Which photo shows … older?"), older, (v) => v.older === "unknown"], [tr("Who is this?"), who, (v) => !v.name],
-    [tr("In which year was this photo taken?"), year, (v) => !v.year], [tr("Where was this photo taken?"), place, (v) => !v.place]]
+    [tr("In which year was this photo taken?"), year, (v) => !v.year], [tr("Where was this photo taken?"), place, (v) => !v.place],
+    [tr("Before or after a dated photo?"), anchor, (v) => v.rel === "unknown"], [tr("Sort photos by age"), sort, (v) => v.unknown], [tr("In which decade was this photo taken?"), decade, (v) => !v.from]]
     .map(([label, arr, u]) => `<tr><td>${label}</td><td>${arr.length}</td><td>${unknown(arr, u)}</td></tr>`).join("");
   // older: your answers against the AI estimate (ages of the person at the time of the photo)
   let agree = 0, total = 0;
@@ -251,7 +311,7 @@ function resultsHtml() {
   const placeHtml = place.filter((v) => v.place).slice(0, LIMIT).map((v) => `<div class="game-res-row">${miniPhoto(v.key)}<span>${esc(v.place)}${v.h ? "" : ` <small>${tr("new name")}</small>`}</span></div>`).join("");
   const none = `<div class="quiet">${tr("Nothing here yet.")}</div>`;
   return `<div class="write-page game-results">
-    <div class="quiet">${tr("These answers are only collected. They change nothing in the dating.")}</div>
+    <div class="quiet">${tr("Your answers narrow the estimates (shown as “refined”). Nothing is written to Immich or Gramps.")}</div>
     ${section(tr("Answers"), `<table><tr><th></th><th>${tr("Answers")}</th><th>${tr("Don't know")}</th></tr>${summary}</table>`)}
     ${section(tr("Your answers against the AI estimate"), total ? `<div>${tr("{agree} of {n} answers agree with the AI estimate.", {agree, n: total})}</div>
       ${contra.length ? `<div class="quiet">${tr("Contradictions (the AI sees it the other way round by at least 2 years):")}</div>${contraHtml}${more(contra.length)}` : ""}` : none)}
@@ -338,9 +398,12 @@ function viewer(items, start = 0) {
 }
 
 const stamp = () => new Date().toISOString().slice(0, 19);
-const focusInput = () => setTimeout(() => { const i = document.getElementById("game-input"); if (i) i.focus(); }, 50);
+// No automatic focus on phones and tablets: the keyboard would open at every question with an input.
+const touch = () => window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+const focusInput = () => { if (!touch()) setTimeout(() => { const i = document.getElementById("game-input"); if (i) i.focus(); }, 50); };
 async function answer(v) {
   S.game.votes.push({...v, t: stamp()});
+  mark();   // the estimates are recomputed with the new answer
   ui.game = null; draw(); focusInput();
   await saveGame();
 }
@@ -361,7 +424,22 @@ export const actions = {
     if (q.type === "who") return answer({type: "who", key: q.f.key, box: q.f.box, name: ""});
     if (q.type === "year") return answer({type: "year", key: q.key, year: null});
     if (q.type === "place") return answer({type: "place", key: q.key, place: "", h: null});
+    if (q.type === "anchor") return answer({type: "anchor", key: q.key, anchor: q.anchor, ay: q.ay, rel: w});
+    if (q.type === "sort") return answer({type: "sort", pid: q.pid, keys: q.items.map((f) => f.key), unknown: true});
+    if (q.type === "decade") return answer({type: "decade", key: q.key, from: null, to: null});
     return answer({a: q.a.key, b: q.b.key, pid: q.pid, older: w});
+  },
+  "game-sort": (el) => {
+    const q = ui.game;
+    if (!q || q.type !== "sort") return;
+    const i = +el.dataset.i, at = q.order.indexOf(i);
+    if (at >= 0) q.order.splice(at, 1); else q.order.push(i);
+    draw();
+  },
+  "game-sort-reset": () => { if (ui.game && ui.game.type === "sort") { ui.game.order = []; draw(); } },
+  "game-decade": (el) => {
+    const q = ui.game, d = +el.dataset.d;
+    if (q && q.type === "decade" && d) return answer({type: "decade", key: q.key, from: d, to: d + 9});
   },
   "game-place-choose": (el) => {
     const q = ui.game;
@@ -373,6 +451,10 @@ export const actions = {
   },
   "game-place-search": () => { if (ui.game && ui.game.type === "place" && S.grPlaces && S.grPlaces.list) placeSheet(ui.game); },
   "game-save": async () => {
+    if (ui.game && ui.game.type === "sort") {
+      const q = ui.game;
+      return q.order.length === q.items.length ? answer({type: "sort", pid: q.pid, keys: q.order.map((i) => q.items[i].key)}) : undefined;
+    }
     if (ui.game && ui.game.type === "place") {
       const c = ui.game.choice;
       return c ? answer({type: "place", key: ui.game.key, place: c.t, h: c.h || null}) : undefined;
@@ -392,13 +474,20 @@ export const actions = {
     if (!v) return;
     if (v.type === "who") ui.game = {type: "who", f: {key: v.key, box: v.box}};
     else if (v.type === "year") ui.game = {type: "year", key: v.key};
+    else if (v.type === "anchor") ui.game = {type: "anchor", key: v.key, anchor: v.anchor, ay: v.ay};
+    else if (v.type === "decade") ui.game = {type: "decade", key: v.key};
+    else if (v.type === "sort") {
+      const p = people().find((x) => x.id === v.pid);
+      const items = p ? v.keys.map((k) => p.photos.find((f) => f.key === k)).filter(Boolean) : [];
+      ui.game = items.length === v.keys.length ? {type: "sort", pid: p.id, name: p.name, items: items.slice().sort(() => Math.random() - 0.5), order: []} : null;
+    }
     else if (v.type === "place") ui.game = {type: "place", key: v.key, choice: null};
     else {
       const p = people().find((x) => x.id === v.pid);
       const a = p && p.photos.find((f) => f.key === v.a), b = p && p.photos.find((f) => f.key === v.b);
       ui.game = a && b ? {type: "older", pid: p.id, name: p.name, a, b} : null;
     }
-    draw(); focusInput(); await saveGame();
+    mark(); draw(); focusInput(); await saveGame();
   },
 };
 
