@@ -1005,7 +1005,6 @@
   "Who is older?": "Wer ist älter?",
   "This one is older": "Dieses ist älter",
   "Which photo shows {name} older?": "Auf welchem Foto ist {name} älter?",
-  "Same age / cannot tell": "Gleich alt / nicht erkennbar",
   "Skip": "Überspringen",
   "Undo last decision": "Letzte Entscheidung zurücknehmen",
   "{n} {n:decision|decisions} so far": "{n} {n:Entscheidung|Entscheidungen} bisher",
@@ -1013,6 +1012,12 @@
   "Nothing is written to Immich or Gramps. Your decisions stay in Grimmich.": "Es wird nichts nach Immich oder Gramps geschrieben. Deine Entscheidungen bleiben in Grimmich.",
   "All pairs decided. Nice!": "Alle Paare entschieden. Prima!",
   "Not enough photos of named people yet. Please click “Refresh” first.": "Noch nicht genug Fotos benannter Personen. Bitte zuerst „Aktualisieren“ klicken.",
-  "The full interface is made for large screens.": "Die volle Oberfläche ist für große Bildschirme gemacht."
+  "The full interface is made for large screens.": "Die volle Oberfläche ist für große Bildschirme gemacht.",
+  "Same age": "Gleich alt",
+  "Don't know": "Weiß nicht",
+  "Not the same person": "Nicht dieselbe Person",
+  "Older": "Älter",
+  "Show whole photo": "Ganzes Foto zeigen",
+  "Back to decision": "Zurück zur Entscheidung"
  }
 }
