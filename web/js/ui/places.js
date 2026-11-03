@@ -8,11 +8,11 @@ import {albumNeighbors} from "../provenance.js";
 import {peopleOn} from "./event.js";
 import {tr} from "../language.js";
 
-const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
+export const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
 const same = (a, b) => (a && a.h) === (b && b.h);
 const coordText = (o) => (o && o.lat != null && o.lon != null ? `${Number(o.lat).toFixed(4)}, ${Number(o.lon).toFixed(4)}` : "");
 
-function suggestions(e, key) {
+export function suggestions(e, key) {
   const G = S.grPlaces;
   if (!G || !G.byHandle) return [];
   const off = [], da = new Set();

@@ -367,3 +367,13 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .game-answer { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .game-input { min-width: min(320px, 70vw); padding: 9px 12px; border: 1px solid var(--rand2); border-radius: 10px; background: var(--karte); font-size: 16px; }
 .game-btn.primary { background: var(--akzent); color: #fff; border-color: var(--akzent); }
+.game-chips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.game-chip { display: flex; flex-direction: column; align-items: flex-start; padding: 7px 12px; border: 1px solid var(--rand2); border-radius: 18px; background: var(--karte); cursor: pointer; text-align: left; }
+.game-chip small { color: var(--leise); font-size: 11px; } .game-chip.on { background: var(--akzent); border-color: var(--akzent); color: #fff; } .game-chip.on small { color: #cfe3ea; }
+.game-btn[disabled] { opacity: .5; cursor: default; }
+.game-sheet { position: fixed; inset: 0; z-index: 66; background: var(--papier); display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; }
+.game-sheet-bar { display: flex; align-items: center; gap: 10px; } .game-sheet-bar .space { flex: 1; }
+.game-sheet-thumb { width: 64px; height: 50px; padding: 2px; border: 2px solid #fff; border-radius: 8px; background: rgba(0,0,0,.45); cursor: zoom-in; } .game-sheet-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.game-sheet .game-input { width: 100%; }
+.game-sheet-list { flex: 1; min-height: 0; overflow: auto; border-top: 1px solid var(--rand); background: var(--karte); }
+.game-sheet-item { display: block; width: 100%; text-align: left; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--rand); background: none; cursor: pointer; } .game-sheet-item small { display: block; color: var(--leise); font-size: 12px; } .game-sheet-item.new { color: var(--akzent-d); }

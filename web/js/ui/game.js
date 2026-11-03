@@ -3,7 +3,10 @@
 // The answers stay in Grimmich (game_votes); nothing is written to Immich or Gramps.
 import {S, ui, draw, saveGame} from "../state.js";
 import {esc, image, recall, remember} from "../util.js";
-import {loadGrampsPlaces} from "../gramps.js";
+import {loadGrampsPlaces, loadEvents} from "../gramps.js";
+import {unitFromKey, placeFrom} from "../model.js";
+import {suggestions, norm} from "./places.js";
+import {peopleOn} from "./event.js";
 import {tr} from "../language.js";
 
 const narrow = () => window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
@@ -67,7 +70,7 @@ function pickPlace(last, wish) {
   const u = Object.keys(S.photos).filter((k) => !S.places[k]);
   for (let i = 0; u.length && i < 200; i++) {
     const key = rnd(u);
-    if (wanted(last, `place|${key}`, wish)) return {type: "place", key};
+    if (wanted(last, `place|${key}`, wish)) return {type: "place", key, choice: null};
   }
   return null;
 }
@@ -119,6 +122,48 @@ const answerBar = (kind, listId, items, placeholder, input) => `<div class="game
   <datalist id="${listId}">${items}</datalist>
   <button class="game-btn primary" data-a="game-save">${tr("Save")}</button></div>`;
 
+// Suggestions for the place: what the place list already knows (event, residence, neighbour in the album), then places of the
+// other photos of the series, then the most used places.
+function placeChips(q) {
+  if (!S.grPlaces || !S.grPlaces.byHandle) return [];
+  const e = unitFromKey(q.key);
+  const out = [], seen = new Set();
+  const add = (o, reason) => { if (o && o.h && !seen.has(o.h) && out.length < 4) { seen.add(o.h); out.push({o, reason}); } };
+  if (e) suggestions(e, q.key).forEach((x) => add(x.o, x.reason));
+  if (e) e.keys.filter((k) => k !== q.key).forEach((k) => { const p = placeFrom(k); if (p && p.h) add(S.grPlaces.byHandle[p.h], tr("other photos of the series")); });
+  const count = {};
+  Object.values(S.places || {}).forEach((p) => { if (p && p.h) count[p.h] = (count[p.h] || 0) + 1; });
+  Object.keys(count).sort((x, y) => count[y] - count[x]).forEach((h) => add(S.grPlaces.byHandle[h], tr("often used")));
+  return out;
+}
+
+// Search for a place on its own page: the list stands right under the field, so the keyboard only covers the empty part.
+function placeSheet(q) {
+  const el = document.createElement("div"); el.className = "game-sheet";
+  el.innerHTML = `<div class="game-sheet-bar"><b>${tr("Search place")}</b><span class="space"></span><button class="game-sheet-close">${tr("Close")}</button></div>
+    <button class="game-sheet-thumb" data-a="game-view" data-key="${esc(q.key)}"><img src="${image(q.key)}" alt=""></button>
+    <input class="game-input" id="game-sheet-input" placeholder="${esc(tr("Search place: type name or Gramps number"))}" autocomplete="off">
+    <div class="game-sheet-list" id="game-sheet-list"></div>`;
+  const list = el.querySelector("#game-sheet-list"), input = el.querySelector("input");
+  const close = () => el.remove();
+  const choose = (o) => { q.choice = o; close(); draw(); };
+  const fill = () => {
+    const text = input.value.trim(), w = norm(text).split(/\s+/).filter(Boolean);
+    const hits = w.length ? S.grPlaces.list.filter((o) => { const s = norm(o.t + " " + o.id); return w.every((x) => s.includes(x)); })
+      .sort((a, b) => (norm(a.n).startsWith(w[0]) ? 0 : 1) - (norm(b.n).startsWith(w[0]) ? 0 : 1) || a.t.length - b.t.length).slice(0, 30) : [];
+    list.innerHTML = hits.map((o, i) => `<button class="game-sheet-item" data-i="${i}"><b>${esc(o.n)}</b><small>${esc(o.t)}</small></button>`).join("")
+      + (text ? `<button class="game-sheet-item new"><b>${esc(tr("Remember “{name}” as a new place", {name: text}))}</b></button>` : "");
+    list.querySelectorAll(".game-sheet-item").forEach((b) => b.addEventListener("click", () => {
+      if (b.classList.contains("new")) choose({h: null, t: text, n: text});
+      else choose(hits[+b.dataset.i]);
+    }));
+  };
+  input.addEventListener("input", fill);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { const f = list.querySelector(".game-sheet-item"); if (f) f.click(); } });
+  el.querySelector(".game-sheet-close").addEventListener("click", close);
+  document.body.appendChild(el); input.focus();
+}
+
 function questionHtml(q) {
   const n = S.game.votes.length;
   const undo = btn("game-undo", "", "undo", tr("Undo last decision"), n ? "" : "disabled");
@@ -136,10 +181,16 @@ function questionHtml(q) {
       <div class="game-buttons">${unknown}${undo}</div>`;
   }
   if (q.type === "place") {
+    if (!q.asked) { q.asked = true; peopleOn(q.key).forEach((p) => loadEvents(p.id)); }   // residences of the people on the photo help with suggestions
+    const chips = placeChips(q);
+    const c = q.choice;
+    const shown = c && !chips.some((x) => x.o.h === c.h && c.h) ? [{o: c, reason: tr("chosen")}, ...chips] : chips;
     return `<div class="game-q">${tr("Where was this photo taken?")}</div>
       <div class="game-pair">${wholePhoto(q.key)}</div>
-      ${answerBar("place", "game-places", S.grPlaces.list.map((o) => `<option value="${esc(o.name)}">`).join(""), tr("Place"), "")}
-      <div class="game-buttons">${unknown}${undo}</div>`;
+      <div class="game-chips">${shown.map((x, i) => `<button class="game-chip ${c && (c.h ? c.h === x.o.h : c.t === x.o.t) ? "on" : ""}" data-a="game-place-choose" data-i="${i}"><b>${esc(x.o.n || x.o.t)}</b><small>${esc(x.reason)}</small></button>`).join("")}
+        <button class="game-chip" data-a="game-place-search"><b>${tr("Another place …")}</b></button></div>
+      <div class="game-buttons">${unknown}${undo}</div>
+      <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${c ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }
   return `<div class="game-q">${tr("Which photo shows {name} older?", {name: esc(q.name)})}</div>
     <div class="game-pair">${face(q, "a")}${face(q, "b")}</div>
@@ -217,7 +268,20 @@ export const actions = {
     if (q.type === "place") return answer({type: "place", key: q.key, place: "", h: null});
     return answer({a: q.a.key, b: q.b.key, pid: q.pid, older: w});
   },
+  "game-place-choose": (el) => {
+    const q = ui.game;
+    if (!q || q.type !== "place") return;
+    const chips = placeChips(q);
+    const shown = q.choice && !chips.some((x) => x.o.h === q.choice.h && q.choice.h) ? [{o: q.choice}, ...chips] : chips;
+    const x = shown[+el.dataset.i];
+    if (x) { q.choice = x.o; draw(); }
+  },
+  "game-place-search": () => { if (ui.game && ui.game.type === "place" && S.grPlaces && S.grPlaces.list) placeSheet(ui.game); },
   "game-save": async () => {
+    if (ui.game && ui.game.type === "place") {
+      const c = ui.game.choice;
+      return c ? answer({type: "place", key: ui.game.key, place: c.t, h: c.h || null}) : undefined;
+    }
     const q = ui.game, text = (document.getElementById("game-input") || {}).value;
     if (!q || !String(text || "").trim()) return;
     const t = String(text).trim();
@@ -227,16 +291,13 @@ export const actions = {
       if (!(y >= 1800 && y <= 2100)) { document.getElementById("game-input").select(); return; }
       return answer({type: "year", key: q.key, year: y});
     }
-    if (q.type === "place") {
-      const o = S.grPlaces.list.find((x) => x.name === t);
-      return answer({type: "place", key: q.key, place: t, h: o ? o.h : null});
-    }
   },
   "game-undo": async () => {
     const v = S.game.votes.pop();
     if (!v) return;
     if (v.type === "who") ui.game = {type: "who", f: {key: v.key, box: v.box}};
-    else if (v.type === "year" || v.type === "place") ui.game = {type: v.type, key: v.key};
+    else if (v.type === "year") ui.game = {type: "year", key: v.key};
+    else if (v.type === "place") ui.game = {type: "place", key: v.key, choice: null};
     else {
       const p = people().find((x) => x.id === v.pid);
       const a = p && p.photos.find((f) => f.key === v.a), b = p && p.photos.find((f) => f.key === v.b);

@@ -1022,6 +1022,12 @@
   "Year, e.g. 1952": "Jahr, z. B. 1952",
   "Where was this photo taken?": "Wo wurde dieses Foto aufgenommen?",
   "All questions answered. Nice!": "Alle Fragen beantwortet. Prima!",
-  "Nothing is written to Immich or Gramps. Your answers stay in Grimmich.": "Es wird nichts nach Immich oder Gramps geschrieben. Deine Antworten bleiben in Grimmich."
+  "Nothing is written to Immich or Gramps. Your answers stay in Grimmich.": "Es wird nichts nach Immich oder Gramps geschrieben. Deine Antworten bleiben in Grimmich.",
+  "Another place …": "Anderer Ort …",
+  "Search place": "Ort suchen",
+  "Remember “{name}” as a new place": "„{name}“ als neuen Ort merken",
+  "other photos of the series": "andere Fotos der Serie",
+  "often used": "oft verwendet",
+  "chosen": "gewählt"
  }
 }
