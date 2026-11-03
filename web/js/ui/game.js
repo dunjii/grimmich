@@ -53,7 +53,6 @@ const ICON = {
   same: '<path d="M5 9h14M5 15h14"/>',
   unknown: '<path d="M9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.2-1.5 2.4M12 17.5v.5"/><circle cx="12" cy="12" r="10"/>',
   different: '<circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><path d="M3 20c0-3 2-5 5-5M21 20c0-3-2-5-5-5M4 4l16 16"/>',
-  skip: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   undo: '<path d="M9 7H4v5M4 7c4-4 12-3 15 3 1 3 0 6-2 8"/>',
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-9 7"/>',
 };
@@ -79,7 +78,7 @@ export function gameHtml() {
     ? `<div class="game-q">${tr("Which photo shows {name} older?", {name: esc(pair.name)})}</div>
        <div class="game-pair">${face(pair, "a")}${face(pair, "b")}</div>
        <div class="game-buttons">${btn("game-pick", "same", "same", tr("Same age"))}${btn("game-pick", "unknown", "unknown", tr("Don't know"))}
-         ${btn("game-pick", "different", "different", tr("Not the same person"))}${btn("game-skip", "", "skip", tr("Skip"))}
+         ${btn("game-pick", "different", "different", tr("Not the same person"))}
          ${btn("game-undo", "", "undo", tr("Undo last decision"), n ? "" : "disabled")}</div>`
     : `<div class="empty game-empty">${people().length ? tr("All pairs decided. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
   return `<div class="game-full"><div class="game-bar"><b>${tr("Who is older?")}</b><span class="quiet">${tr("{n} {n:decision|decisions} so far", {n})}</span>${note}<span class="space"></span>
@@ -127,7 +126,6 @@ export const actions = {
   "game-view": (el) => viewer(el.dataset.key),
   "game-open": () => { ui.view = "game"; ui.game = null; window.scrollTo(0, 0); draw(); },
   "game-leave": () => { remember("fullView", true); ui.view = "start"; ui.game = null; draw(); },
-  "game-skip": () => { ui.game = null; draw(); },
   "game-pick": async (el) => {
     const pair = ui.game;
     if (!pair) return;

@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.52 – 2026-11-03 – Game: simpler buttons
+- "Who is older?": the button "Skip" is gone ("Don't know" does the same and remembers the answer).
+
 ## 0.9.51 – 2026-11-03 – Game: more answers, icons, whole-photo viewer
 - "Who is older?": new answers "Don't know" and "Not the same person" (to check later whether Immich assigned a face correctly) next to "Same age"; all buttons have small icons. Tapping a photo still means "this one is older".
 - Every photo has a small preview of the whole photo; a tap opens it large (pinch or mouse wheel to zoom, drag to move, double tap to reset, button back to the decision).
