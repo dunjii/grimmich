@@ -77,7 +77,7 @@ export function openSettings() {
       <div class="actions"><button class="small" data-a="calibration" title="${tr("Shows how far off the AI is for your people. Changes nothing.")}">${tr("View AI calibration …")}</button>
         <button class="small" data-a="vb-probe" title="${tr("Fetches a sample person with events from Gramps and saves them in gramps_probe.json")}">${tr("Fetch Gramps sample")}</button></div></details>
     <details class="expand" ${j.rc !== null && j.rc !== 0 ? "open" : ""}><summary data-a="load-log">${tr("Log of the last run")}</summary><pre class="log" id="joblog">${esc((j.rows || []).join("\n"))}</pre></details>
-    <div class="actions" style="margin-top:14px"><button id="f-to">${tr("Close")}</button><span class="space"></span><span class="quiet">Grimmich ${esc(S.version || "")}</span></div>`, 900);
+    <div class="actions" style="margin-top:14px"><button id="f-to">${tr("Close")}</button><button data-a="help">${tr("Help")}</button><span class="space"></span><span class="quiet">Grimmich ${esc(S.version || "")}</span></div>`, 900);
   $("f-to").onclick = () => { ui.settings = false; closeIt(); };
   ui.settings = true;
 }

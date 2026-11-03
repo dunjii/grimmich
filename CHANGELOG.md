@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.58 – 2026-11-03 – Estimates from the rows for photos without AI estimate; legend and FAQ
+- A photo without an AI estimate gets an estimate when you sorted it into a row between two fixed anchors: the year comes from its place in the row, the span is the two anchors. The detail view says so. Photos in no row stay without an estimate.
+- New page "Help" (settings window, button "Help"): legend of the states (anchor, draft, estimate, warning) and of the marks on the tiles, and questions with answers (how a year comes about, what is written to Immich and Gramps, playing on the phone, …).
+
 ## 0.9.57 – 2026-11-03 – Everything counts together: rows, series, anchors and game answers; name choice in the game
 - The estimate of a photo or series is now refined step by step, and every step builds on the one before: AI estimate and series, then your game answers (before/after, decade), then the rows "Sort by appearance" of all people (your order, fixed anchors, anchors without photo), then the order answers of the game. It is recomputed after every change, nothing of it is stored, and it works before a photo becomes an anchor.
 - A series has one year for all rows it appears in. Fixed years (confirmed, from Immich, drafts) never move; they act on the others through the rows. The year never lies after today.

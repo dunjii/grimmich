@@ -16,10 +16,11 @@ const fixed = (e) => e.confirmedFlag || e.draftFlag || e.immich || e.kind;
 
 function refine(cache) {
   info.conflicts = []; info.moved = 0;
-  const units = cache.list.filter((e) => !fixed(e) && e.year);
+  const units = cache.list.filter((e) => !fixed(e));   // also photos without an AI estimate: their place in the rows can give one
   if (!units.length || !S.pf || !S.pf.ok) return;
   const before = new Map(units.map((e) => [e, [e.year, e.from, e.to]]));
-  const sum = new Map(units.map((e) => [e, {w: W_AI, s: W_AI * (e.decimal_year || e.year), lo: -Infinity, hi: Infinity}]));
+  const blank = new Set();
+  const sum = new Map(units.map((e) => [e, {w: e.year ? W_AI : 0, s: e.year ? W_AI * (e.decimal_year || e.year) : 0, lo: -Infinity, hi: Infinity}]));
   const laneIndex = [];   // per person: uid -> position in the row
   S.pf.people.forEach((raw) => {
     const p = personOf(raw.id);
@@ -43,6 +44,10 @@ function refine(cache) {
   const now = today();
   units.forEach((e) => {
     const a = sum.get(e);
+    if (!e.year) {   // no AI estimate: only with fixed anchors before AND after in a row (a span) – then the row gives the year
+      if (!(a.lo > -Infinity && a.hi < Infinity && a.lo <= a.hi)) return;
+      e.from = a.lo; e.to = a.hi; a.s = a.w ? a.s : (a.lo + a.hi) / 2; a.w = a.w || 1; blank.add(e);
+    }
     let y = Math.min(a.s / a.w, now);
     const b = boundsOf(e.keys);
     let lo = a.lo, hi = a.hi;
@@ -71,6 +76,7 @@ function refine(cache) {
   });
   units.forEach((e) => {
     const b = before.get(e);
+    if (blank.has(e)) e.rowOnly = true;
     if (e.year !== b[0] || e.from !== b[1] || e.to !== b[2]) { e.refined = true; info.moved++; }
   });
 }
