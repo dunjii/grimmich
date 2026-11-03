@@ -3,6 +3,11 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.48 – 2026-11-03 – English file names
+- The last German file and folder names are now English: `estimates_body.csv`, `series.csv`, `series_suggestions.csv`, `series_manual.txt`, `series_separate.txt`, `series_cache.npz`, `known_years.csv`, `series_output/` (with `photos/` and `series_001.jpg …`), `control_images/`, `control_images_body/`, `json_old/`. The same goes for the column headers of the CSV files and the web address of the photos (`/photos/`).
+- Existing data folders are converted automatically at the first start: old files and folders are renamed (a file that already has the new name is never overwritten) and the headers of the CSV files are translated. Nothing has to be done by hand.
+- After the update "Refresh" calculates once again, because the program code changed (the results stay the same).
+
 ## 0.9.47 – 2026-11-02 – Progress row, log without colour codes, ZimaOS guide
 - The progress of "Refresh" now sits in its own row over the whole width of the card, so the bar keeps its length when the text changes; the text line is shortened with "…" instead of pushing the bar around.
 - Colour codes of libraries (`[31m[1m …`) are removed from the log.

@@ -33,7 +33,7 @@ class TestDemoData(unittest.TestCase):
         for name in self.docs:
             with open(os.path.join(self.folder, name + ".json"), encoding="utf-8") as f:
                 self.assertEqual(json.load(f), self.docs[name])
-        self.assertTrue(os.path.exists(os.path.join(self.folder, "schaetzung_koerper.csv")))
+        self.assertTrue(os.path.exists(os.path.join(self.folder, "estimates_body.csv")))
 
     def test_every_key_is_known_everywhere(self):
         keys = {p["key"] for p in self.docs["photos"]["photos"]}
@@ -65,7 +65,7 @@ class TestDemoData(unittest.TestCase):
         self.assertTrue(any(s["status"] == "open" for s in self.docs["series_work"]["series"]))
 
     def test_estimates_are_plausible(self):
-        with open(os.path.join(self.folder, "schaetzung_koerper.csv"), encoding="utf-8-sig") as f:
+        with open(os.path.join(self.folder, "estimates_body.csv"), encoding="utf-8-sig") as f:
             rows = [line.split(";") for line in f.read().strip().split("\n")[1:]]
         self.assertGreater(len(rows), 30)
         for r in rows:

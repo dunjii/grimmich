@@ -26,7 +26,7 @@ def base_state():
     storage.save("series.json", {"series": []})
     storage.save("series_work.json", {"discarded": [], "counters": 2, "single_ok": False, "series": [{"id": "S001", "photos": ["F1", "F2"], "status": "ok"}, {"id": "S002", "photos": ["F3", "F4"], "status": "offen"}]})
     storage.save("kinds.json", {})
-    with open("schaetzung_koerper.csv", "w", encoding="utf-8") as f:
+    with open("estimates_body.csv", "w", encoding="utf-8") as f:
         f.write("key;jahr\n")
 
 
@@ -81,7 +81,7 @@ class TestFingerprint(Base):
 
     def test_text_files_count(self):
         fp = run_check.fingerprint()
-        with open("serien_manuell.txt", "w", encoding="utf-8") as f:
+        with open("series_manual.txt", "w", encoding="utf-8") as f:
             f.write("F1 F2\n")
         self.assertNotEqual(fp, run_check.fingerprint())
 
@@ -90,7 +90,7 @@ class TestFingerprint(Base):
         self.assertIsNone(run_check.fingerprint())
 
     def test_missing_results_force_calculation(self):
-        os.remove("schaetzung_koerper.csv")
+        os.remove("estimates_body.csv")
         self.assertIsNone(run_check.fingerprint())
 
     def test_never_calculated(self):

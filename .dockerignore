@@ -7,6 +7,6 @@ grimmich.db*
 data
 demo_data
 tests/data
-json_alt
+json_old
 export
-serien_ausgabe
+series_output

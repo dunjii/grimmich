@@ -185,6 +185,70 @@ def _rename_cache_files(folder):
             continue   # cache files are rebuilt when missing
 
 
+# ---- German file and folder names of earlier versions -> English (renamed once, never overwriting)
+FILE_NAMES = {
+    "schaetzung.csv": "estimates.csv", "schaetzung_koerper.csv": "estimates_body.csv",
+    "bekannte_jahre.csv": "known_years.csv", "serien.csv": "series.csv", "serien_vorschlaege.csv": "series_suggestions.csv",
+    "serien_manuell.txt": "series_manual.txt", "serien_getrennt.txt": "series_separate.txt", "serien_cache.npz": "series_cache.npz",
+    "ausgabe_immich": "control_images", "ausgabe_immich_koerper": "control_images_body",
+    "serien_ausgabe": "series_output", "json_alt": "json_old",
+}
+CSV_HEADERS = {
+    "Datei": "File", "Schaetzung Jahr": "Estimated year", "von": "from", "bis": "to", "Gesichter genutzt": "Faces used",
+    "Hinweis": "Hint", "Ausreisser": "Outliers", "Vorschlag ohne Ausreisser": "Suggestion without outliers",
+    "Aktuelles Datum": "Current date", "Asset-ID": "Asset ID", "Serie": "Series", "Einzelschaetzung": "Single estimate",
+    "Serie A": "Series A", "Serie B": "Series B", "Schluessel A": "Key A", "Schluessel B": "Key B",
+    "Gemeinsame Personen": "Shared people", "Jahr A": "Year A", "Jahr B": "Year B", "Bestaetigt (ja/nein)": "Confirmed (yes/no)",
+    "Schluessel": "Key", "Zusammenhalt der Serie": "Series cohesion",
+}
+
+
+def _translate_header(path):
+    """First line of a CSV file: German column names -> English. Everything else stays as it is."""
+    try:
+        with open(path, encoding="utf-8-sig", newline="") as f:
+            text = f.read()
+        first, sep, rest = text.partition("\n")
+        cr = "\r" if first.endswith("\r") else ""
+        names = first.rstrip("\r").split(";")
+        if not any(n in CSV_HEADERS for n in names):
+            return
+        first = ";".join(CSV_HEADERS.get(n, n) for n in names) + cr
+        with open(path + ".tmp", "w", encoding="utf-8-sig", newline="") as f:
+            f.write(first + sep + rest)
+        os.replace(path + ".tmp", path)
+    except OSError:
+        pass
+
+
+def rename_files(folder="."):
+    """Use the English names for files and folders of earlier versions (once; an existing new name is never overwritten)."""
+    for old, new in FILE_NAMES.items():
+        old_path, new_path = os.path.join(folder, old), os.path.join(folder, new)
+        if os.path.exists(old_path) and not os.path.exists(new_path):
+            try:
+                os.rename(old_path, new_path)
+            except OSError:
+                continue
+    out = os.path.join(folder, "series_output")
+    if os.path.isdir(out):
+        old_photos, new_photos = os.path.join(out, "fotos"), os.path.join(out, "photos")
+        if os.path.isdir(old_photos) and not os.path.exists(new_photos):
+            try:
+                os.rename(old_photos, new_photos)
+            except OSError:
+                pass
+        for name in os.listdir(out):
+            if name.startswith("serie_") and name.endswith(".jpg") and not os.path.exists(os.path.join(out, "series_" + name[6:])):
+                try:
+                    os.rename(os.path.join(out, name), os.path.join(out, "series_" + name[6:]))
+                except OSError:
+                    pass
+    for name in ("estimates.csv", "estimates_body.csv", "series.csv", "series_suggestions.csv"):
+        if os.path.isfile(os.path.join(folder, name)):
+            _translate_header(os.path.join(folder, name))
+
+
 def report(path=DB_FILE):
     backup = path + ".vor-englisch"
     if not os.path.exists(backup):

@@ -16,7 +16,7 @@ export function openCalibration() {
   }
   const better = r.newError < r.rawError - 0.1;
   const verdict = r.photos < 8
-    ? `${tr("That is still too few photos ({fotos}) to be sure. The numbers are only a first impression.", {fotos: r.photos})}`
+    ? `${tr("That is still too few photos ({photos}) to be sure. The numbers are only a first impression.", {photos: r.photos})}`
     : better ? `${tr("With the calibration, the error in the test would drop from {rohFehler} to {neuFehler} years.", {rohFehler: f1(r.rawError), neuFehler: f1(r.newError)})}`
       : `${tr("In this test the calibration brings no improvement ({rohFehler} compared with {neuFehler} years). I would not use it.", {rohFehler: f1(r.rawError), neuFehler: f1(r.newError)})}`;
   const peopleList = r.perPerson.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.photos}</td><td>${z1(p.mean)} J</td>
@@ -24,7 +24,7 @@ export function openCalibration() {
   const levels = r.perLevel.filter((s) => s.n).map((s) => `<tr><td>${tr("AI age {von}–{bis}", {von: s.from, bis: s.to > 150 ? "…" : s.to})}</td><td>${s.n}</td><td>${z1(s.median)} J</td><td>${z1(-s.corr)} J</td></tr>`).join("");
   modal(`<h3>${tr("Calibration of the AI estimate")}</h3>
     <div class="quiet" style="margin-bottom:8px">${tr("Photos whose year you set yourself (not taken over from the AI) are compared. “+” means: the AI estimates the person older than they were. Nothing is changed here, it is only an evaluation.")}</div>
-    <div class="box ${better && r.photos >= 8 ? "info" : "warn"}"><b>${tr("{n} {n:face|faces} on {fotos} photos or series.", {n: r.n, fotos: r.photos})}</b> ${verdict}</div>
+    <div class="box ${better && r.photos >= 8 ? "info" : "warn"}"><b>${tr("{n} {n:face|faces} on {photos} photos or series.", {n: r.n, photos: r.photos})}</b> ${verdict}</div>
     <h4>${tr("By AI age (for all people)")}</h4>
     <table><thead><tr><th>${tr("Bracket")}</th><th>${tr("Faces")}</th><th>${tr("AI is off on average by")}</th><th>${tr("Suggested correction")}</th></tr></thead><tbody>${levels}</tbody></table>
     <h4 style="margin-top:14px">${tr("By person")}</h4>

@@ -4,7 +4,7 @@
 
 Everything is made up: people, birth dates, photos (simple drawings), series, estimates. Nothing is real.
 The folder gets the documents Grimmich normally stores in its database (as .json files), a table of estimates
-(schaetzung_koerper.csv) and the pictures (serien_ausgabe/fotos/). To look at it:
+(estimates_body.csv) and the pictures (series_output/photos/). To look at it:
 
     1. Copy the content of the folder into a NEW, empty Grimmich folder (a copy of the program, without grimmich.db).
     2. Start there with   GRIMMICH_READ_ONLY=1 ./.venv/bin/python grimmich.py   and open http://localhost:8765.
@@ -233,14 +233,14 @@ def build(folder, pictures=True):
     for name, doc in docs.items():
         with open(os.path.join(folder, name + ".json"), "w", encoding="utf-8") as f:
             json.dump(doc, f, ensure_ascii=False, indent=1)
-    with open(os.path.join(folder, "schaetzung_koerper.csv"), "w", encoding="utf-8-sig", newline="") as f:
+    with open(os.path.join(folder, "estimates_body.csv"), "w", encoding="utf-8-sig", newline="") as f:
         w = csv.writer(f, delimiter=";")
-        w.writerow(["Datei", "Asset-ID", "Schaetzung Jahr", "from", "to", "Hinweis", "Serie", "Einzelschaetzung", "Aktuelles Datum"])
+        w.writerow(["File", "Asset ID", "Estimated year", "from", "to", "Hint", "Series", "Single estimate", "Current date"])
         for r in records:
             if r["estimate"]:
                 w.writerow([r["file"], r["asset"], r["estimate"][0], r["estimate"][1], r["estimate"][2], "", "S%03d" % (r["series"] + 1) if r["series"] is not None else "", "", ""])
     if pictures:
-        pics = os.path.join(folder, "serien_ausgabe", "fotos")
+        pics = os.path.join(folder, "series_output", "photos")
         os.makedirs(pics, exist_ok=True)
         for r in records:
             draw_photo(os.path.join(pics, r["key"] + ".jpg"), r["key"], random.Random(r["key"]), r["boxes"], r["year"], ages=r["face_ages"])

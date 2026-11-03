@@ -140,7 +140,7 @@ export function personHtml() {
   const tileList = personTiles(p), openVal = tileList.filter((k) => !k.e.confirmedFlag).length;
   const nSeries = tileList.filter((k) => k.e.type === "series").length;
   const gr = S.assignMap[p.id] && S.grP ? S.grP.people.find((g) => g.h === S.assignMap[p.id]) : null, L = lifeDates(p.name);
-  const modes = [["time", tr("Timeline")], ["sort", tr("Sort by appearance")], ["series", `${tr("Series ({nSerien})", {nSerien: nSeries})}`]];
+  const modes = [["time", tr("Timeline")], ["sort", tr("Sort by appearance")], ["series", `${tr("Series ({nSeries})", {nSeries: nSeries})}`]];
   const head = `<div class="person-head"><div><h1>${esc(shortName(p.name))}</h1>
     <div class="quiet">${tr("{Geburtsdatum} · {n} {n:unit|units} · {offen} open{zugeordnet}", {Geburtsdatum: L.born ? tr("born {datum}", {datum: L.born.full ? dateLong(`${L.born.text.split(".").reverse().join("-")}`) : L.born.text}) : p.birthSource === "Immich" ? tr("born {jahr} (Immich)", {jahr: Math.floor(p.birth)}) : p.birthSource === "geschätzt" ? `${tr("Year of birth estimated: c. {geburt}", {geburt: Math.round(p.birth)})}` : tr("no date of birth"), n: tileList.length, offen: openVal, zugeordnet: gr ? ` ${tr("· assigned to Gramps {id}", {id: grampsLink(gr.id)})}` : ""})}</div></div>
     <div class="toggle">${modes.map(([id, t]) => `<button class="${ui.mode === id ? "on" : ""}" data-a="mode" data-m="${id}">${t}</button>`).join("")}</div></div>`;

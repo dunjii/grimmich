@@ -8,20 +8,20 @@ Two hints are used:
      (comparison of the body crops).
   2. Almost identical whole images (e.g. the same photo scanned twice).
 
-Addition: your own merges go into the text file 'serien_manuell.txt':
+Addition: your own merges go into the text file 'series_manual.txt':
 one line per group, keys joined with +, e.g.
     2_6c525d+14_26295f+3_f04070
-(keys are shown in the contact sheet and in serien.csv; series numbers change
+(keys are shown in the contact sheet and in series.csv; series numbers change
 between runs, keys do not.)
-Photos that do NOT belong together you enter in 'serien_getrennt.txt'
+Photos that do NOT belong together you enter in 'series_separate.txt'
 (one line per pair, keys separated by |, e.g.  2_6c525d|14_26295f).
-If 'schaetzung_koerper.csv' exists, series are also suggested that
+If 'estimates_body.csv' exists, series are also suggested that
 might belong together because of the same person and a similar year
-(file serien_vorschlaege.csv).
+(file series_suggestions.csv).
 
 Result:
-  serien_ausgabe/serie_001.jpg ...  contact sheet per series (photo keys below)
-  serien.csv                        table for confirming
+  series_output/series_001.jpg ...  contact sheet per series (photo keys below)
+  series.csv                        table for confirming
 
 Usage:
     python series.py            -> with the default thresholds
@@ -40,16 +40,16 @@ import estimate as S
 import storage
 
 EMBED_MODEL = "facebook/dinov2-small"
-CACHE_FILE = "serien_cache.npz"
-OUTPUT = "serien_ausgabe"
-CSV_FILE = "serien.csv"
-MANUAL_FILE = "serien_manuell.txt"
-SEPARATE_FILE = "serien_getrennt.txt"
-ESTIMATE_FILE = "schaetzung_koerper.csv"
-SUGGESTION_FILE = "serien_vorschlaege.csv"
+CACHE_FILE = "series_cache.npz"
+OUTPUT = "series_output"
+CSV_FILE = "series.csv"
+MANUAL_FILE = "series_manual.txt"
+SEPARATE_FILE = "series_separate.txt"
+ESTIMATE_FILE = "estimates_body.csv"
+SUGGESTION_FILE = "series_suggestions.csv"
 JSON_FILE = "series.json"          # for the browser interface (datierung_gui.py)
 PHOTOS_FILE = "photos.json"          # all album photos (for the interface)
-PHOTO_FOLDER = os.path.join(OUTPUT, "fotos")
+PHOTO_FOLDER = os.path.join(OUTPUT, "photos")
 YEAR_GAP = 3  # series suggestion if the estimated years are that close together
 THRESHOLD_PERSON = 0.80   # body crops of the same person
 THRESHOLD_ALL = 0.80     # whole photos (measured: from 0.80 on about 92 % of the pairs really belong to the same series)
@@ -125,14 +125,14 @@ def split_up(nodes, edges, threshold, bans=()):
 
 
 def read_years():
-    """Photo ID -> estimated year from schaetzung_koerper.csv (if present)."""
+    """Photo ID -> estimated year from estimates_body.csv (if present)."""
     years = {}
     if not os.path.exists(ESTIMATE_FILE):
         return years
     with open(ESTIMATE_FILE, encoding="utf-8-sig", newline="") as f:
         for z in csv.DictReader(f, delimiter=";"):
             try:
-                years[z["Asset-ID"]] = float(z["Schaetzung Jahr"])
+                years[z["Asset ID"]] = float(z["Estimated year"])
             except (KeyError, ValueError):
                 continue
     return years
@@ -166,8 +166,8 @@ def write_suggestions(groups, pers, info):
                            round(series_years[a]), round(series_years[b]), ""])
     with open(SUGGESTION_FILE, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f, delimiter=";")
-        w.writerow(["Serie A", "Serie B", "Schluessel A", "Schluessel B",
-                    "Gemeinsame Personen", "Jahr A", "Jahr B", "Bestaetigt (ja/nein)"])
+        w.writerow(["Series A", "Series B", "Key A", "Key B",
+                    "Shared people", "Year A", "Year B", "Confirmed (yes/no)"])
         w.writerows(rows)
     print(tx("Merge suggestions: {n} (file {file})", n=len(rows), file=SUGGESTION_FILE))
 
@@ -400,7 +400,7 @@ def main():
         if cells:
             height_ = max(z.shape[0] for z in cells)
             cells = [np.pad(z, ((0, height_ - z.shape[0]), (0, 0), (0, 0)), constant_values=255) for z in cells]
-            cv2.imwrite(os.path.join(OUTPUT, f"serie_{no:03d}.jpg"), np.hstack(cells))
+            cv2.imwrite(os.path.join(OUTPUT, f"series_{no:03d}.jpg"), np.hstack(cells))
 
     write_suggestions(groups, pers, info)
 
@@ -424,7 +424,7 @@ def main():
 
     with open(CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f, delimiter=";")
-        w.writerow(["Serie", "Schluessel", "Datei", "Asset-ID", "Bestaetigt (ja/nein)", "Zusammenhalt der Serie"])
+        w.writerow(["Series", "Key", "File", "Asset ID", "Confirmed (yes/no)", "Series cohesion"])
         w.writerows(rows)
 
     print()
@@ -435,7 +435,7 @@ def main():
     if groups:
         sizes = sorted(len(g) for g in groups)
         print(tx("Series size:             smallest {smallest}, median {median}, largest {largest}", smallest=sizes[0], median=sizes[len(sizes)//2], largest=sizes[-1]))
-    print(tx("Contact sheets:           folder {folder}/ (serie_001.jpg ...)", folder=OUTPUT))
+    print(tx("Contact sheets:           folder {folder}/ (series_001.jpg ...)", folder=OUTPUT))
     print(tx("Table:                  {file}", file=CSV_FILE))
 
 

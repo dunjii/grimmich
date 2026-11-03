@@ -15,8 +15,8 @@ import storage
 
 MARKER = "run_marker.json"
 CODE = ("estimate.py", "series.py", "calculation.py", "immich.py", "VERSION")
-TEXTS = ("serien_manuell.txt", "serien_getrennt.txt", "bekannte_jahre.csv")
-RESULTS = ("schaetzung_koerper.csv",)   # if one of these files is missing, it has to be computed
+TEXTS = ("series_manual.txt", "series_separate.txt", "known_years.csv")
+RESULTS = ("estimates_body.csv",)   # if one of these files is missing, it has to be computed
 
 
 def _file(name):

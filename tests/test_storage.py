@@ -93,7 +93,7 @@ class TestTakeover(Base):
         self.assertEqual(sorted(storage.migriere()), ["corrections.json", "kinds.json"])
         self.assertEqual(storage.load("kinds.json", None), {"F1": "karte"})
         self.assertFalse(os.path.exists("kinds.json"))
-        self.assertTrue(os.path.exists(os.path.join("json_alt", "kinds.json")))   # Sicherung bleibt
+        self.assertTrue(os.path.exists(os.path.join("json_old", "kinds.json")))   # Sicherung bleibt
 
     def test_second_start_changes_nothing(self):
         self.json("kinds.json", {"F1": "karte"})
@@ -109,7 +109,7 @@ class TestTakeover(Base):
         storage._migrated.clear()
         storage.migriere()
         self.assertEqual(storage.load("kinds.json", None), {"new": 1})
-        self.assertTrue(os.path.exists(os.path.join("json_alt", "kinds.json")))
+        self.assertTrue(os.path.exists(os.path.join("json_old", "kinds.json")))
 
     def test_earlier_backup_is_never_overwritten(self):
         self.json("kinds.json", {"v": 1})
@@ -118,9 +118,9 @@ class TestTakeover(Base):
         self.json("kinds.json", {"v": 3})
         storage._migrated.clear()
         storage.migriere()
-        with open(os.path.join("json_alt", "kinds.json"), encoding="utf-8") as f:
+        with open(os.path.join("json_old", "kinds.json"), encoding="utf-8") as f:
             self.assertEqual(json.load(f), {"v": 1})
-        self.assertEqual(len(os.listdir("json_alt")), 2)
+        self.assertEqual(len(os.listdir("json_old")), 2)
 
     def test_broken_file_stays_where_it_is(self):
         with open("kinds.json", "w", encoding="utf-8") as f:
@@ -164,7 +164,7 @@ class TestRealData(Base):
         for ext in ("-wal", "-shm"):
             if os.path.exists(storage.DB_FILE_NAME + ext):
                 os.remove(storage.DB_FILE_NAME + ext)
-        shutil.rmtree("json_alt")
+        shutil.rmtree("json_old")
         for n in before:
             shutil.copy(os.path.join("ex", n), n)
         storage._migrated.clear()

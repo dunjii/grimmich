@@ -5,7 +5,7 @@ in the database. The shape of the data stays the same, only the place changes. A
 cannot leave anything half written (every change applies completely or not at all), and a backup is a single file.
 
 On first start existing .json files are adopted automatically and then moved to the folder
-json_alt (as a backup). To look at the data or pass it on:
+json_old (as a backup). To look at the data or pass it on:
     python storage.py export        writes all documents as .json files into the folder export
 """
 from messages import tx
@@ -19,7 +19,7 @@ import threading
 import migration
 
 DB_FILE_NAME = "grimmich.db"
-OLD_FOLDER = "json_alt"
+OLD_FOLDER = "json_old"
 
 # documents that live in the database. Everything else (caches, probes, keys) stays a file.
 NAMES = (
@@ -53,7 +53,7 @@ def in_db(path_):
 
 
 def migriere():
-    """Adopt existing .json files into the database once and move them to json_alt."""
+    """Adopt existing .json files into the database once and move them to json_old."""
     with _lock_:
         path_ = os.path.abspath(DB_FILE_NAME)
         if path_ in _migrated:

@@ -66,7 +66,7 @@ Um deine vorhandenen Daten mitzunehmen, lege `grimmich.db` und die `*.env`-Datei
 1. Öffne den App Store, wähle den Knopf für eine benutzerdefinierte Installation und wechsle auf den Reiter **YAML**.
 2. Ersetze den Inhalt durch den Text unten (er nutzt das fertige Image) und prüfe ihn im Reiter **Formular**.
 3. Klicke auf **Installieren**. Öffne Grimmich über sein Symbol; es hört auf Port 8765.
-4. Um deine vorhandenen Daten mitzunehmen, stoppe die App, lade `grimmich.db` und deine `*.env`-Dateien (und, damit nichts neu gerechnet werden muss, `estimate_cache_body.json`, `gramps_cache.json`, `schaetzung_koerper.csv`, `serien.csv`, `serien_vorschlaege.csv`) mit der Dateien-App nach `AppData/grimmich` hoch und starte die App wieder.
+4. Um deine vorhandenen Daten mitzunehmen, stoppe die App, lade `grimmich.db` und deine `*.env`-Dateien (und, damit nichts neu gerechnet werden muss, `estimate_cache_body.json`, `gramps_cache.json`, `estimates_body.csv`, `series.csv`, `series_suggestions.csv`) mit der Dateien-App nach `AppData/grimmich` hoch und starte die App wieder.
 5. Updates: Wenn eine neue Version erscheint, bietet ZimaOS das Update in seiner Oberfläche an. Aktualisiere nicht, während in Grimmich ein Auftrag läuft.
 
 ```yaml

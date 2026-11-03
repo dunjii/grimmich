@@ -44,8 +44,8 @@ WEB = os.path.join(HERE, "web")
 WORK = "series_work.json"
 SERIES_JSON = "series.json"
 PHOTOS_FILE = "photos.json"
-RESULT_CSV = "schaetzung_koerper.csv"
-PHOTO_FOLDER = os.path.join("serien_ausgabe", "fotos")
+RESULT_CSV = "estimates_body.csv"
+PHOTO_FOLDER = os.path.join("series_output", "photos")
 SCRIPTS = {k: os.path.join(HERE, f) for k, f in {"series": "series.py", "estimate": "estimate.py", "names": "names.py", "state": "immich_state.py",
                                                    "write": "immich_write.py", "provenance": "provenance.py", "gramps": "gramps_write.py"}.items()}
 PIPELINE = ["names", "state", "estimate", "series", "provenance"]
@@ -182,14 +182,14 @@ def read_results():
     rows = []
     with open(RESULT_CSV, encoding="utf-8-sig", newline="") as f:
         for z in csv.DictReader(f, delimiter=";"):
-            file_path = z.get("Datei", "")
-            key = os.path.splitext(file_path)[0] + "_" + z.get("Asset-ID", "")[:6]
+            file_path = z.get("File", "")
+            key = os.path.splitext(file_path)[0] + "_" + z.get("Asset ID", "")[:6]
             try:
-                year_num, from_, to_ = int(float(z["Schaetzung Jahr"])), int(float(z["from"])), int(float(z["to"]))
+                year_num, from_, to_ = int(float(z["Estimated year"])), int(float(z["from"])), int(float(z["to"]))
             except (KeyError, ValueError):
                 year_num = from_ = to_ = None
-            rows.append({"key": key, "file": file_path, "year": year_num, "from": from_, "to": to_, "hint": z.get("Hinweis", ""),
-                           "series_id": z.get("Serie", ""), "single": z.get("Einzelschaetzung", ""), "current": z.get("Aktuelles Datum", "")})
+            rows.append({"key": key, "file": file_path, "year": year_num, "from": from_, "to": to_, "hint": z.get("Hint", ""),
+                           "series_id": z.get("Series", ""), "single": z.get("Single estimate", ""), "current": z.get("Current date", "")})
     return rows
 
 
@@ -279,7 +279,7 @@ def similar_photos(key, n=40):
         import numpy as np
     except ImportError:
         return {"ok": False, "text": tx('numpy is missing.')}
-    file_path = "serien_cache.npz"
+    file_path = "series_cache.npz"
     if not os.path.exists(file_path):
         return {"ok": False, "text": tx('No image comparison data yet. “Refresh” in the Inbox creates it.')}
     with _lock_:
@@ -489,8 +489,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(JOB.status(all_rows=(q.get("all") or [""])[0] == "1"))
         elif path_ == "/api/new":
             self._json(count_new_photos())
-        elif path_.startswith("/fotos/"):
-            name = os.path.basename(urllib.parse.unquote(path_[len("/fotos/"):]))
+        elif path_.startswith("/photos/"):
+            name = os.path.basename(urllib.parse.unquote(path_[len("/photos/"):]))
             file_path = os.path.join(PHOTO_FOLDER, name)
             if name.lower().endswith(".jpg") and os.path.isfile(file_path):
                 with open(file_path, "rb") as f:
@@ -547,6 +547,7 @@ class Handler(BaseHTTPRequestHandler):
 def main():
     if not os.path.isfile(os.path.join(WEB, "index.html")):
         sys.exit(tx("The folder web with index.html is missing. It has to lie next to grimmich.py."))
+    migration.rename_files()   # file and folder names of earlier versions (German) -> English
     try:
         storage.all_names()   # an older database is switched to the current schema here, before anything else runs
     except migration.MigrationError as e:

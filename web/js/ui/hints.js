@@ -1,6 +1,6 @@
 // “Hints for the year”: for a photo without a fixed year, show what fits the year.
 //  - Album neighbours: photos with a fixed year that lie nearby in the album (without the collective album).
-//  - Similar photos: photos with a fixed year that resemble the photo overall (basis: serien_cache.npz).
+//  - Similar photos: photos with a fixed year that resemble the photo overall (basis: series_cache.npz).
 // All of these are only hints. “Adopt as draft” sets a year as a draft, not as a confirmed year.
 import {S, ui, draw, saveWork, saveCorr} from "../state.js";
 import {esc, fetchIt, image} from "../util.js";

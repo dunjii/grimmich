@@ -1,13 +1,13 @@
 """Age estimate for the datable photos in the album (TEST RUN).
 
-Writes NOTHING to Immich. Result: table 'schaetzung.csv' and
-control images in the folder 'ausgabe_immich'.
+Writes NOTHING to Immich. Result: table 'estimates.csv' and
+control images in the folder 'control_images'.
 
 Usage:
     python estimate.py        -> all datable photos
     python estimate.py 10     -> only the first 10 datable photos (test)
 
-Optional: if the file 'bekannte_jahre.csv' is in the same folder
+Optional: if the file 'known_years.csv' is in the same folder
 (columns: key;year;confidence), the script compares its estimates
 with these years at the end. The key is the name of the control
 image without '.jpg' (e.g. 2_6c525d); the year may be a range.
@@ -58,13 +58,13 @@ def _anchor_album():
 ALBUM_NAME = _work_album()
 ANCHOR_NAME = _anchor_album()
 MODEL_NAME = "iitolstykh/mivolo_v2"
-CSV_FILE = "schaetzung.csv"
+CSV_FILE = "estimates.csv"
 CACHE_FILE = "estimate_cache.json"
-KNOWN_FILE = "bekannte_jahre.csv"
+KNOWN_FILE = "known_years.csv"
 SERIES_JSON = "series.json"                      # from series.py
 SERIES_DECISION = "series_decisions.json"  # old interface (serien_gui.py)
 SERIES_WORK = "series_work.json"             # new interface (datierung_gui.py)
-IMAGE_FOLDER = "ausgabe_immich"
+IMAGE_FOLDER = "control_images"
 PAGE_SIZE = 500
 
 # True: every face is additionally computed mirrored, both results
@@ -79,9 +79,9 @@ BODY = True
 # stated span. Calibrated on the known years.
 
 if BODY:  # separate files, so the results of both variants stay comparable
-    CSV_FILE = "schaetzung_koerper.csv"
+    CSV_FILE = "estimates_body.csv"
     CACHE_FILE = "estimate_cache_body.json"
-    IMAGE_FOLDER = "ausgabe_immich_koerper"
+    IMAGE_FOLDER = "control_images_body"
 
 
 # ---------------------------------------------------------------- Immich access
@@ -725,15 +725,15 @@ def main():
 
     with open(CSV_FILE, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f, delimiter=";")
-        w.writerow(["Datei", "Schaetzung Jahr", "von", "bis", "Gesichter genutzt",
-                    "Hinweis", "Details", "Ausreisser", "Vorschlag ohne Ausreisser",
-                    "Aktuelles Datum", "Asset-ID", "Serie", "Einzelschaetzung"])
+        w.writerow(["File", "Estimated year", "from", "to", "Faces used",
+                    "Hint", "Details", "Outliers", "Suggestion without outliers",
+                    "Current date", "Asset ID", "Series", "Single estimate"])
         for z in rows:
             w.writerow([z["file"], z["year"], z["from"], z["to"], z["count"],
                         z["hint"], z["details"], z["outliers"], z["suggestion"],
                         z["current"], z["id"], z["series_id"], z["single"]])
         for e in errors:
-            w.writerow([e["file"], "", "", "", 0, "UEBERSPRUNGEN: " + e["reason"],
+            w.writerow([e["file"], "", "", "", 0, "SKIPPED: " + e["reason"],
                         "", "", "", e["current"], e["id"]])
 
     print()

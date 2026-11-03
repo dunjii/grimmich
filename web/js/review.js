@@ -62,10 +62,10 @@ export async function loadWrite() {
   try { S.ss = await fetchIt("/api/write_status"); } catch (e) { /* alter Stand bleibt */ }
 }
 export function loadCsv() {
-  const head = ["Schluessel", "Datei", "Serie", "Jahr", "Datum", "von", "bis", "Status", "Tag", "Aktuelles Datum", "Hinweis"];
+  const head = ["Key", "File", "Series", "Year", "Date", "from", "to", "Status", "Tag", "Current date", "Hint"];
   const lines = [head, ...adoptionRows().map((r) => [r.key, r.file, r.series_id, r.year, r.date, r.from, r.to, r.status, r.tag, r.current, r.hint])];
   const csv = "﻿" + lines.map((r) => r.map((x) => `"${String(x ?? "").replace(/"/g, '""')}"`).join(";")).join("\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type: "text/csv;charset=utf-8"}));
-  a.download = "datierung_vorschau.csv"; a.click();
+  a.download = "dating_preview.csv"; a.click();
 }

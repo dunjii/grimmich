@@ -166,6 +166,38 @@ class TestEnv(Base):
         self.assertTrue(os.path.exists("immich.env.vor-englisch"))
         self.assertEqual(migration.migrate_env(), 0)   # a second time changes nothing
 
+    def test_german_file_names_become_english(self):
+        os.makedirs(os.path.join("serien_ausgabe", "fotos"))
+        for n in ("serie_001.jpg", "serie_002.jpg"):
+            open(os.path.join("serien_ausgabe", n), "wb").close()
+        open(os.path.join("serien_ausgabe", "fotos", "a.jpg"), "wb").close()
+        os.makedirs("ausgabe_immich_koerper")
+        with open("schaetzung_koerper.csv", "w", encoding="utf-8-sig", newline="") as f:
+            f.write("Datei;Schaetzung Jahr;von;bis;Asset-ID\r\nx.jpg;1950;1948;1952;A1\r\n")
+        with open("serien.csv", "w", encoding="utf-8-sig", newline="") as f:
+            f.write("Serie;Schluessel;Datei\n001;k;x.jpg\n")
+        with open("serien_manuell.txt", "w", encoding="utf-8") as f:
+            f.write("a b\n")
+        with open("series_separate.txt", "w", encoding="utf-8") as f:
+            f.write("already new\n")
+        with open("serien_getrennt.txt", "w", encoding="utf-8") as f:
+            f.write("old\n")
+        migration.rename_files()
+        self.assertFalse(os.path.exists("serien_ausgabe"))
+        self.assertTrue(os.path.exists(os.path.join("series_output", "photos", "a.jpg")))
+        self.assertTrue(os.path.exists(os.path.join("series_output", "series_002.jpg")))
+        self.assertTrue(os.path.isdir("control_images_body"))
+        with open("estimates_body.csv", encoding="utf-8-sig", newline="") as f:
+            self.assertEqual(f.read(), "File;Estimated year;from;to;Asset ID\r\nx.jpg;1950;1948;1952;A1\r\n")
+        with open("series.csv", encoding="utf-8-sig") as f:
+            self.assertEqual(f.readline().strip(), "Series;Key;File")
+        self.assertTrue(os.path.exists("series_manual.txt"))
+        with open("series_separate.txt", encoding="utf-8") as f:
+            self.assertEqual(f.read(), "already new\n")   # never overwritten
+        self.assertTrue(os.path.exists("serien_getrennt.txt"))
+        migration.rename_files()   # a second time changes nothing
+        self.assertTrue(os.path.exists("series_manual.txt"))
+
 
 if __name__ == "__main__":
     unittest.main()

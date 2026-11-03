@@ -66,7 +66,7 @@ To copy your existing data, put `grimmich.db` and the `*.env` files into the dat
 1. Open the App Store, choose the button for a custom installation and switch to the **YAML** tab.
 2. Replace the content with the text below (it uses the ready-made image) and check it in the **Form** tab.
 3. Press **Install**. Open Grimmich with its icon; it listens on port 8765.
-4. To bring your existing data, stop the app, upload `grimmich.db` and your `*.env` files (and, to save recalculating, `estimate_cache_body.json`, `gramps_cache.json`, `schaetzung_koerper.csv`, `serien.csv`, `serien_vorschlaege.csv`) to `AppData/grimmich` with the Files app, then start the app again.
+4. To bring your existing data, stop the app, upload `grimmich.db` and your `*.env` files (and, to save recalculating, `estimate_cache_body.json`, `gramps_cache.json`, `estimates_body.csv`, `series.csv`, `series_suggestions.csv`) to `AppData/grimmich` with the Files app, then start the app again.
 5. Updates: when a new version is published, ZimaOS offers the update in its interface. Do not update while a job is running in Grimmich.
 
 ```yaml

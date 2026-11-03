@@ -5,6 +5,7 @@ grimmich.db-*
 .env*
 *.vor-englisch
 json_alt/
+json_old/
 export/
 anonym/
 anonymize_key.json
@@ -15,9 +16,14 @@ ausgabe/
 ausgabe_immich/
 ausgabe_immich_koerper/
 serien_ausgabe/
+series_output/
+control_images/
+control_images_body/
 *.csv
 serien_manuell.txt
 serien_getrennt.txt
+series_manual.txt
+series_separate.txt
 LIESMICH.txt
 provenance_albums.json
 reload.json
