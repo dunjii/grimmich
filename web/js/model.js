@@ -3,7 +3,7 @@
 import {S, mark} from "./state.js";
 import {median, dateShort} from "./util.js";
 import {tr} from "./language.js";
-import {narrowed, ordered} from "./refine.js";
+import {narrowed} from "./refine.js";
 
 // ------------------------------------------------------------------ Serien
 let smVer = -1, smCache = {};
@@ -199,19 +199,18 @@ function buildUnits() {
     if (kk.length === s.photos.length) { u.kind = kindOf(kk[0]); cardEstimate(u); cards.push(u); } else unitsList.push(u);   // cards only: belongs to “Cards and documents”
   });
   singleKeys().forEach((k) => unitsList.push({uid: "f:" + k, type: "photo", keys: [k], ...data([k], undefined)}));
-  const before = new Map(unitsList.map((u) => [u, [u.year, u.from, u.to]]));
-  ordered(unitsList);   // your order answers (older / sorting) move estimates that contradict them
-  unitsList.forEach((u) => { const b = before.get(u); if (b && (u.year !== b[0] || u.from !== b[1] || u.to !== b[2])) u.refined = true; });
   const m = seriesMap();   // single cards and documents: their own units without AI estimate
   Object.keys(S.photos).filter((k) => kindOf(k) && !m[k]).sort().forEach((k) => { const u = {uid: "f:" + k, type: "photo", keys: [k], kind: kindOf(k), ...data([k], null)}; cardEstimate(u); cards.push(u); });
   return {unitsList, cards};
 }
-let eVer = -1, eCache = null;
+let eVer = -1, eCache = null, jointFn = null, jointBusy = false;
+export const setJoint = (f) => { jointFn = f; };
 export function unitList() {   // {list, afterUid, afterKey}, only recomputed on changes
   if (eVer !== S.ver || !eCache) {
     const {unitsList: list, cards} = buildUnits(), byUid = {}, byKey = {};
     [...list, ...cards].forEach((e) => { byUid[e.uid] = e; e.keys.forEach((k) => { byKey[k] = e; }); });
     eCache = {list, cards, byUid, byKey}; eVer = S.ver;
+    if (jointFn && !jointBusy) { jointBusy = true; try { jointFn(eCache); } finally { jointBusy = false; } }   // rows, anchors and answers together (joint.js)
   }
   return eCache;
 }

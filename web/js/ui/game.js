@@ -212,6 +212,40 @@ function placeSheet(q) {
   document.body.appendChild(el); input.focus();
 }
 
+// Suggestions for a face without a name: people on the other photos of the same series (not on this photo), then names
+// you gave in the game before.
+function nameChips(q) {
+  const e = unitFromKey(q.f.key), mates = new Set(e ? e.keys.filter((k) => k !== q.f.key) : []), out = [], seen = new Set();
+  const add = (name, reason) => { if (name && !seen.has(name) && out.length < 6) { seen.add(name); out.push({name, reason}); } };
+  const here = new Set(S.pf.people.filter((p) => p.photos.some((f) => f.key === q.f.key)).map((p) => p.name));
+  S.pf.people.filter((p) => !here.has(p.name)).map((p) => ({p, n: p.photos.filter((f) => mates.has(f.key)).length})).filter((x) => x.n > 0)
+    .sort((a, b) => b.n - a.n).forEach((x) => add(x.p.name, tr("in the same series")));
+  S.game.votes.filter((v) => v.type === "who" && v.name).reverse().forEach((v) => add(v.name, tr("named before")));
+  return out;
+}
+function nameSheet(q) {
+  const el = document.createElement("div"); el.className = "game-sheet";
+  el.innerHTML = `<div class="game-sheet-bar"><b>${tr("Search name")}</b><span class="space"></span><button class="game-sheet-close">${tr("Close")}</button></div>
+    <button class="game-sheet-thumb" data-a="game-view" data-key="${esc(q.f.key)}" ${q.f.box ? `data-box="${q.f.box.join(",")}"` : ""}><img src="${image(q.f.key)}" alt=""></button>
+    <input class="game-input" id="game-sheet-input" placeholder="${esc(tr("Name"))}" autocomplete="off">
+    <div class="game-sheet-list" id="game-sheet-list"></div>`;
+  const list = el.querySelector("#game-sheet-list"), input = el.querySelector("input");
+  const close = () => el.remove();
+  const choose = (name) => { close(); answer({type: "who", key: q.f.key, box: q.f.box, name}); };
+  const fill = () => {
+    const text = input.value.trim(), w = norm(text).split(/\s+/).filter(Boolean);
+    const hits = w.length ? (S.allNames || []).filter((x) => { const t = norm(x); return w.every((y) => t.includes(y)); })
+      .sort((a, b) => (norm(a).startsWith(w[0]) ? 0 : 1) - (norm(b).startsWith(w[0]) ? 0 : 1) || a.length - b.length).slice(0, 30) : [];
+    list.innerHTML = hits.map((n, i) => `<button class="game-sheet-item" data-i="${i}"><b>${esc(n)}</b></button>`).join("")
+      + (text ? `<button class="game-sheet-item new"><b>${esc(tr("Remember “{name}” as a new name", {name: text}))}</b></button>` : "");
+    list.querySelectorAll(".game-sheet-item").forEach((b) => b.addEventListener("click", () => choose(b.classList.contains("new") ? text : hits[+b.dataset.i])));
+  };
+  input.addEventListener("input", fill);
+  input.addEventListener("keydown", (e) => { if (e.key === "Enter") { const f = list.querySelector(".game-sheet-item"); if (f) f.click(); } });
+  el.querySelector(".game-sheet-close").addEventListener("click", close);
+  document.body.appendChild(el); if (!touch()) input.focus();
+}
+
 function questionHtml(q) {
   const n = S.game.votes.length;
   const undo = btn("game-undo", "", "undo", tr("Undo last decision"), n ? "" : "disabled");
@@ -219,7 +253,8 @@ function questionHtml(q) {
   if (q.type === "who") {
     return `<div class="game-q">${tr("Who is this?")}</div>
       <div class="game-pair"><div class="game-cell"><div class="game-box"><span class="game-photo static" style="${faceBg(q.f)}"></span>${q.f.box ? frameInCutout(q.f.box) : ""}${thumb(q.f.key, q.f.box ? `data-box="${q.f.box.join(",")}"` : "")}</div></div></div>
-      ${answerBar("who", "game-names", (S.allNames || []).map((x) => `<option value="${esc(x)}">`).join(""), tr("Name"), "")}
+      <div class="game-chips">${nameChips(q).map((x, i) => `<button class="game-chip" data-a="game-name-choose" data-i="${i}"><b>${esc(x.name)}</b><small>${esc(x.reason)}</small></button>`).join("")}
+        <button class="game-chip" data-a="game-name-search"><b>${tr("Another name …")}</b></button></div>
       <div class="game-buttons">${unknown}${undo}</div>`;
   }
   if (q.type === "anchor") {
@@ -429,6 +464,12 @@ export const actions = {
     if (q.type === "decade") return answer({type: "decade", key: q.key, from: null, to: null});
     return answer({a: q.a.key, b: q.b.key, pid: q.pid, older: w});
   },
+  "game-name-choose": (el) => {
+    const q = ui.game;
+    const x = q && q.type === "who" ? nameChips(q)[+el.dataset.i] : null;
+    if (x) return answer({type: "who", key: q.f.key, box: q.f.box, name: x.name});
+  },
+  "game-name-search": () => { if (ui.game && ui.game.type === "who") nameSheet(ui.game); },
   "game-sort": (el) => {
     const q = ui.game;
     if (!q || q.type !== "sort") return;

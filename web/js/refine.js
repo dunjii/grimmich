@@ -68,7 +68,8 @@ export function narrowed(est, keys) {
 
 // Order: where a younger photo got a later year than an older one, both move towards each other (a fixed one stays).
 // units: list of {keys, year, decimal_year, from, to, confirmedFlag}; changes the units and returns the count of moved ones.
-export function ordered(units) {
+// skip(youngUnit, oldUnit) = true leaves a pair alone (your own order in a row wins over an answer).
+export function ordered(units, skip) {
   const {pairs} = constraints();
   if (!pairs.length) return 0;
   const byKey = {};
@@ -80,7 +81,7 @@ export function ordered(units) {
       const y = byKey[young], o = byKey[old];
       if (!y || !o || y === o || !y.year || !o.year) return;
       const yy = y.decimal_year || y.year, oy = o.decimal_year || o.year;
-      if (yy <= oy) return;
+      if (yy <= oy || (skip && skip(y, o))) return;
       const mid = (yy + oy) / 2;
       const set = (u, val) => {
         if (u.confirmedFlag || u.draftFlag) return;

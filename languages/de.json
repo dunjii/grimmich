@@ -1060,6 +1060,11 @@
   "In which decade was this photo taken?": "In welchem Jahrzehnt wurde dieses Foto aufgenommen?",
   "Refined by your answers in the game. The AI alone said: ca. {year} ({from}–{to}).": "Durch deine Antworten im Spiel verfeinert. Die KI allein sagte: ca. {year} ({from}–{to}).",
   "Before or after a dated photo?": "Vor oder nach einem datierten Foto?",
-  "Sort photos by age": "Fotos nach Alter sortieren"
+  "Sort photos by age": "Fotos nach Alter sortieren",
+  "in the same series": "in derselben Serie",
+  "named before": "vorher genannt",
+  "Search name": "Name suchen",
+  "Another name …": "Anderer Name …",
+  "Remember “{name}” as a new name": "„{name}“ als neuen Namen merken"
  }
 }

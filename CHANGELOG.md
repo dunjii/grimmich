@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.57 – 2026-11-03 – Everything counts together: rows, series, anchors and game answers; name choice in the game
+- The estimate of a photo or series is now refined step by step, and every step builds on the one before: AI estimate and series, then your game answers (before/after, decade), then the rows "Sort by appearance" of all people (your order, fixed anchors, anchors without photo), then the order answers of the game. It is recomputed after every change, nothing of it is stored, and it works before a photo becomes an anchor.
+- A series has one year for all rows it appears in. Fixed years (confirmed, from Immich, drafts) never move; they act on the others through the rows. The year never lies after today.
+- Where your own row decides the order of two photos, the row wins over a game answer; contradictions are counted, not applied.
+- Game: "Who is this?" now offers name buttons (people on the other photos of the same series, names you gave before) and a search page with all names, also for a new name. The keyboard only opens when you tap the search.
+
 ## 0.9.56 – 2026-11-03 – Game answers now refine the estimates; new question types
 - Your answers in the game now flow into the estimates (as suggestions only, nothing is written to Immich or Gramps without the usual preview): "before / after the photo from 1950" and "in the 1940s" narrow the span of a photo or series; "this one is older" and sorted rows put estimates that contradict your order closer together. Photos that are already confirmed or have a draft are never moved. Contradicting bounds are ignored. This works before a photo becomes an anchor. In the detail view a note shows what the AI alone said.
 - New questions: before or after a dated photo (anchor), sort 3–5 photos of one person from young to old, and the decade of a photo. The free "In which year?" question is no longer asked (old answers stay in the results).

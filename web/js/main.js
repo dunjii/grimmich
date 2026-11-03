@@ -2,6 +2,7 @@
 import {S, ui, hook, loading, loadNewInfo, draw, mark} from "./state.js";
 import {$, remember, send, toast} from "./util.js";
 import {unitList, unitOf, unitFromKey, personForPhotos} from "./model.js";
+import "./joint.js";   // rows, anchors and answers together (registers itself in model.js)
 import {loadGrampsPeople, loadEvents} from "./gramps.js";
 import {loadWrite} from "./review.js";
 import {checkJob, startJob} from "./job.js";
