@@ -11,7 +11,7 @@ import {tr} from "../language.js";
 
 const narrow = () => window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
 const pairId = (a, b) => [a, b].sort().join("|");
-const ageOf = (key, name) => { const x = (S.age[key] || []).find((z) => z.name === name); return x && typeof x.alter === "number" ? x.alter : null; };
+const ageOf = (key, name) => { const x = (S.age[key] || []).find((z) => z.name === name); return x && typeof x.age === "number" ? x.age : null; };
 const rnd = (list) => list[Math.floor(Math.random() * list.length)];
 const SOFT = 250;      // a face cut-out with fewer pixels than this in the stored photo is fetched sharper from Immich
 const STORED = 1000;   // the stored photos have at most this many pixels on the long side
@@ -85,16 +85,27 @@ function pickQuestion() {
 
 // ---- pictures. A face with surroundings, filled by CSS; small faces are fetched sharper from Immich (/crops/...),
 //      the stored photo stays underneath until that picture is there (or when Immich cannot deliver it).
-function faceStyle(key, b) {
+function faceGeom(b) {
   const W = b[4], H = b[5], bw = Math.max(1, b[2] - b[0]), bh = Math.max(1, b[3] - b[1]);
   const side = Math.min(Math.max(Math.max(bw, bh) * 2.6, 20), W, H);
   const x0 = Math.max(0, Math.min((b[0] + b[2]) / 2 - side / 2, W - side)), y0 = Math.max(0, Math.min((b[1] + b[3]) / 2 - side / 2, H - side));
+  return {W, H, bw, bh, side, x0, y0};
+}
+function faceStyle(key, b, plain = false) {
+  const {W, H, side, x0, y0} = faceGeom(b);
   const px = W > side ? (x0 / (W - side)) * 100 : 0, py = H > side ? (y0 / (H - side)) * 100 : 0;
   const stored = `background-image:url(${image(key)});background-size:${((W / side) * 100).toFixed(2)}% auto;background-position:${px.toFixed(2)}% ${py.toFixed(2)}%;`;
-  if (side * Math.min(1, STORED / Math.max(W, H)) >= SOFT) return stored;
+  if (plain || side * Math.min(1, STORED / Math.max(W, H)) >= SOFT) return stored;
   const sharp = `/crops/${encodeURIComponent(key)}_${W}_${H}_${Math.round(x0)}_${Math.round(y0)}_${Math.round(side)}.jpg`;
   return `background-image:url(${sharp}),url(${image(key)});background-size:cover,${((W / side) * 100).toFixed(2)}% auto;background-position:center,${px.toFixed(2)}% ${py.toFixed(2)}%;`;
 }
+// A frame around the face that is meant: inside the cut-out (square) or in the whole photo (box = null: the cut-out).
+const boxPct = (v, total) => `${((v / total) * 100).toFixed(2)}%`;
+function frameInCutout(b) {
+  const g = faceGeom(b);
+  return `<span class="game-kasten" style="left:${boxPct(b[0] - g.x0, g.side)};top:${boxPct(b[1] - g.y0, g.side)};width:${boxPct(g.bw, g.side)};height:${boxPct(g.bh, g.side)}"></span>`;
+}
+const frameInPhoto = (b) => `<span class="game-kasten" style="left:${boxPct(b[0], b[4])};top:${boxPct(b[1], b[5])};width:${boxPct(b[2] - b[0], b[4])};height:${boxPct(b[3] - b[1], b[5])}"></span>`;
 
 const ICON = {
   older: '<path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9"/>',
@@ -107,13 +118,13 @@ const ICON = {
 const icon = (n) => `<svg class="game-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
 const btn = (action, w, name, text, extra = "") => `<button class="game-btn" data-a="${action}" ${w ? `data-w="${w}"` : ""} ${extra} title="${text}">${icon(name)}<span>${text}</span></button>`;
 
-const thumb = (key) => `<button class="game-thumb" data-a="game-view" data-key="${esc(key)}" title="${tr("Show whole photo")}"><img src="${image(key)}" alt="${tr("Show whole photo")}"></button>`;
+const thumb = (key, extra = "") => `<button class="game-thumb" data-a="game-view" data-key="${esc(key)}" ${extra} title="${tr("Show whole photo")}"><img src="${image(key)}" alt="${tr("Show whole photo")}"></button>`;
 const faceBg = (f) => (f.box ? faceStyle(f.key, f.box) : `background-image:url(${image(f.key)});background-size:cover;`);
 const face = (pair, side) => {
   const f = pair[side];
   return `<div class="game-cell"><div class="game-box">
     <button class="game-photo" data-a="game-pick" data-w="${side}" title="${tr("This one is older")}" style="${faceBg(f)}"></button>
-    <span class="game-badge">${icon("older")}${tr("Older")}</span>${thumb(f.key)}
+    <span class="game-badge">${icon("older")}${tr("Older")}</span>${thumb(f.key, `data-pair="${esc(pair.a.key)}|${esc(pair.b.key)}" data-i="${side === "a" ? 0 : 1}"`)}
   </div></div>`;
 };
 const wholePhoto = (key) => `<div class="game-cell"><button class="game-whole" data-a="game-view" data-key="${esc(key)}" title="${tr("Show whole photo")}"><img src="${image(key)}" alt=""></button></div>`;
@@ -170,7 +181,7 @@ function questionHtml(q) {
   const unknown = btn("game-pick", "unknown", "unknown", tr("Don't know"));
   if (q.type === "who") {
     return `<div class="game-q">${tr("Who is this?")}</div>
-      <div class="game-pair"><div class="game-cell"><div class="game-box"><span class="game-photo static" style="${faceBg(q.f)}"></span>${thumb(q.f.key)}</div></div></div>
+      <div class="game-pair"><div class="game-cell"><div class="game-box"><span class="game-photo static" style="${faceBg(q.f)}"></span>${q.f.box ? frameInCutout(q.f.box) : ""}${thumb(q.f.key, q.f.box ? `data-box="${q.f.box.join(",")}"` : "")}</div></div></div>
       ${answerBar("who", "game-names", (S.allNames || []).map((x) => `<option value="${esc(x)}">`).join(""), tr("Name"), "")}
       <div class="game-buttons">${unknown}${undo}</div>`;
   }
@@ -198,28 +209,92 @@ function questionHtml(q) {
       ${btn("game-pick", "different", "different", tr("Not the same person"))}${undo}</div>`;
 }
 
+// ---- results: what has been answered so far (only looking, nothing is changed)
+const LIMIT = 40;
+const faceOf = (pid, key) => { const p = people().find((x) => x.id === pid); const f = p && p.photos.find((z) => z.key === key); return f ? f.box : null; };
+const mini = (key, box) => (box ? `<span class="game-mini" style="${faceStyle(key, box, true)}"></span>` : `<img class="game-mini" src="${image(key)}" alt="">`);
+const miniPhoto = (key) => `<button class="game-mini-btn" data-a="game-view" data-key="${esc(key)}" title="${tr("Show whole photo")}"><img class="game-mini" src="${image(key)}" alt=""></button>`;
+const more = (n) => (n > LIMIT ? `<div class="quiet">${tr("Only the first {n} are shown.", {n: LIMIT})}</div>` : "");
+const section = (title, body) => `<section class="game-res"><h3>${title}</h3>${body}</section>`;
+
+function resultsHtml() {
+  const votes = S.game.votes, type = (v) => v.type || "older";
+  const by = (t) => votes.filter((v) => type(v) === t);
+  const known = new Set((S.allNames || []).map((x) => String(x).toLowerCase()));
+  const older = by("older"), who = by("who"), year = by("year"), place = by("place");
+  const unknown = (arr, f) => arr.filter(f).length;
+  const summary = [[tr("Which photo shows … older?"), older, (v) => v.older === "unknown"], [tr("Who is this?"), who, (v) => !v.name],
+    [tr("In which year was this photo taken?"), year, (v) => !v.year], [tr("Where was this photo taken?"), place, (v) => !v.place]]
+    .map(([label, arr, u]) => `<tr><td>${label}</td><td>${arr.length}</td><td>${unknown(arr, u)}</td></tr>`).join("");
+  // older: your answers against the AI estimate (ages of the person at the time of the photo)
+  let agree = 0, total = 0;
+  const contra = [];
+  older.filter((v) => v.older === "a" || v.older === "b").forEach((v) => {
+    const p = people().find((x) => x.id === v.pid);
+    if (!p) return;
+    const x = ageOf(v.a, p.name), y = ageOf(v.b, p.name);
+    if (x === null || y === null || x === y) return;
+    total++;
+    const youSaidA = v.older === "a";
+    if ((x > y) === youSaidA) agree++;
+    else if (Math.abs(x - y) >= 2) contra.push({v, p, x, y});
+  });
+  const ageText = (n) => tr("{n} {n:year|years}", {n: Math.round(n)});
+  const contraHtml = contra.slice(0, LIMIT).map(({v, p, x, y}) => `<div class="game-res-row">${[["a", v.a, x], ["b", v.b, y]].map(([side, key, age]) =>
+    `<div class="game-res-item">${mini(key, faceOf(v.pid, key))}<small>${ageText(age)}${v.older === side ? ` · <b>${tr("Your choice")}</b>` : ""}</small></div>`).join("")}<span>${esc(p.name)}</span></div>`).join("");
+  const diff = by("older").filter((v) => v.older === "different");
+  const diffHtml = diff.slice(0, LIMIT).map((v) => { const p = people().find((x) => x.id === v.pid);
+    return `<div class="game-res-row">${mini(v.a, faceOf(v.pid, v.a))}${mini(v.b, faceOf(v.pid, v.b))}<span>${tr("Person in Immich: {name}", {name: esc(p ? p.name : "?")})}</span></div>`; }).join("");
+  const whoHtml = who.filter((v) => v.name).slice(0, LIMIT).map((v) => `<div class="game-res-row">${mini(v.key, v.box)}<span><b>${esc(v.name)}</b> <small>${known.has(v.name.toLowerCase()) ? tr("known name") : tr("new name")}</small></span></div>`).join("");
+  const est = new Map(((S.res && S.res.rows) || []).map((r) => [r.key, r.year]));
+  const yearHtml = year.filter((v) => v.year).slice(0, LIMIT).map((v) => `<div class="game-res-row">${miniPhoto(v.key)}<span>${tr("Your year {y}, AI estimate {e}", {y: v.year, e: est.get(v.key) ?? "–"})}</span></div>`).join("");
+  const placeHtml = place.filter((v) => v.place).slice(0, LIMIT).map((v) => `<div class="game-res-row">${miniPhoto(v.key)}<span>${esc(v.place)}${v.h ? "" : ` <small>${tr("new name")}</small>`}</span></div>`).join("");
+  const none = `<div class="quiet">${tr("Nothing here yet.")}</div>`;
+  return `<div class="write-page game-results">
+    <div class="quiet">${tr("These answers are only collected. They change nothing in the dating.")}</div>
+    ${section(tr("Answers"), `<table><tr><th></th><th>${tr("Answers")}</th><th>${tr("Don't know")}</th></tr>${summary}</table>`)}
+    ${section(tr("Your answers against the AI estimate"), total ? `<div>${tr("{agree} of {n} answers agree with the AI estimate.", {agree, n: total})}</div>
+      ${contra.length ? `<div class="quiet">${tr("Contradictions (the AI sees it the other way round by at least 2 years):")}</div>${contraHtml}${more(contra.length)}` : ""}` : none)}
+    ${section(tr("Marked as not the same person"), diffHtml ? diffHtml + more(diff.length) : none)}
+    ${section(tr("Names you gave"), whoHtml ? whoHtml + more(who.filter((v) => v.name).length) : none)}
+    ${section(tr("Years you gave"), yearHtml ? yearHtml + more(year.filter((v) => v.year).length) : none)}
+    ${section(tr("Places you gave"), placeHtml ? placeHtml + more(place.filter((v) => v.place).length) : none)}
+  </div>`;
+}
+
 // The game takes the whole browser window (see .game-full in style.css).
 export function gameHtml() {
   if (!S.grPlaces) loadGrampsPlaces(false);
   if (ui.game === undefined || ui.game === null) ui.game = pickQuestion();
   const q = ui.game, n = S.game.votes.length;
   const note = narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
-  const body = q ? questionHtml(q)
+  const body = ui.gameResults ? resultsHtml() : q ? questionHtml(q)
     : `<div class="empty game-empty">${people().length || unnamed().length ? tr("All questions answered. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
-  return `<div class="game-full"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="space"></span>
-      <button data-a="game-leave">${tr("Back to Grimmich")}</button></div>${body}
+  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="space"></span>
+      <button data-a="game-results">${ui.gameResults ? tr("Back to game") : tr("Results")}</button><button data-a="game-leave">${tr("Back to Grimmich")}</button></div>${body}
     <div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your answers stay in Grimmich.")}</div></div>`;
 }
 
 // Whole photo in a viewer: pinch / mouse wheel to zoom, drag to move, double tap resets.
-function viewer(key) {
+// With two photos (a pair) you swipe or use the arrow keys to go from one to the other; the zoom stays.
+function viewer(items, start = 0) {
   const el = document.createElement("div"); el.className = "game-viewer";
-  el.innerHTML = `<img src="${image(key)}" alt="" draggable="false"><button class="game-viewer-back">${tr("Back to decision")}</button>`;
-  const img = el.querySelector("img");
-  let sc = 1, tx = 0, ty = 0;
+  const many = items.length > 1;
+  el.innerHTML = `<div class="game-stage"><img alt="" draggable="false"><span class="game-frame"></span></div>
+    <button class="game-viewer-back">${tr("Back to decision")}</button>
+    ${many ? `<button class="game-viewer-prev" aria-label="${tr("Previous photo")}">‹</button><button class="game-viewer-next" aria-label="${tr("Next photo")}">›</button><span class="game-viewer-count"></span>` : ""}`;
+  const stage = el.querySelector(".game-stage"), img = el.querySelector("img"), frame = el.querySelector(".game-frame");
+  let idx = start, sc = 1, tx = 0, ty = 0, start1 = null;
   const pts = new Map();
-  let start = null;
-  const apply = () => { img.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`; };
+  let start2 = null;
+  const apply = () => { stage.style.transform = `translate(${tx}px, ${ty}px) scale(${sc})`; };
+  const show = () => {
+    const it = items[idx];
+    img.src = image(it.key);
+    frame.innerHTML = it.box ? frameInPhoto(it.box) : "";
+    const c = el.querySelector(".game-viewer-count"); if (c) c.textContent = `${idx + 1} / ${items.length}`;
+  };
+  const go = (d) => { if (many) { idx = (idx + d + items.length) % items.length; show(); } };
   const zoomAt = (f, cx, cy) => {   // keeps the point under the fingers where it is
     const n = Math.max(1, Math.min(8, sc * f)), k = n / sc;
     const r = el.getBoundingClientRect(), ox = cx - r.left - r.width / 2, oy = cy - r.top - r.height / 2;
@@ -229,22 +304,37 @@ function viewer(key) {
   };
   const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
   const mid = () => { const [a, b] = [...pts.values()]; return {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2}; };
-  el.addEventListener("pointerdown", (e) => { if (e.target.closest("button")) return; el.setPointerCapture(e.pointerId); pts.set(e.pointerId, {x: e.clientX, y: e.clientY}); start = pts.size === 2 ? dist() : null; });
+  el.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button")) return;
+    el.setPointerCapture(e.pointerId); pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    start2 = pts.size === 2 ? dist() : null; start1 = pts.size === 1 ? {x: e.clientX, y: e.clientY} : null;
+  });
   el.addEventListener("pointermove", (e) => {
     const p = pts.get(e.pointerId); if (!p) return;
     const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
-    if (pts.size === 2 && start) { const d = dist(); zoomAt(d / start, mid().x, mid().y); start = d; }
+    if (pts.size === 2 && start2) { const d = dist(); zoomAt(d / start2, mid().x, mid().y); start2 = d; start1 = null; }
     else if (pts.size === 1 && sc > 1) { tx += dx; ty += dy; apply(); }
   });
-  const up = (e) => { pts.delete(e.pointerId); start = pts.size === 2 ? dist() : null; };
-  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+  const up = (e) => {
+    const p = pts.get(e.pointerId);
+    if (p && pts.size === 1 && start1 && sc === 1) {   // a swipe to the side with the photo not zoomed: the other photo
+      const dx = p.x - start1.x, dy = p.y - start1.y;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) go(dx < 0 ? 1 : -1);
+    }
+    pts.delete(e.pointerId); start2 = pts.size === 2 ? dist() : null; start1 = null;
+  };
+  el.addEventListener("pointerup", up); el.addEventListener("pointercancel", (e) => { pts.delete(e.pointerId); start1 = null; start2 = null; });
   el.addEventListener("wheel", (e) => { e.preventDefault(); zoomAt(e.deltaY < 0 ? 1.2 : 1 / 1.2, e.clientX, e.clientY); }, {passive: false});
   el.addEventListener("dblclick", (e) => { if (sc > 1) { sc = 1; tx = 0; ty = 0; apply(); } else zoomAt(3, e.clientX, e.clientY); });
   const close = () => { el.remove(); document.removeEventListener("keydown", onKey, true); };
-  const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+  const onKey = (e) => {
+    if (e.key === "Escape") { e.stopPropagation(); close(); }
+    else if (many && (e.key === "ArrowLeft" || e.key === "ArrowRight")) { e.preventDefault(); e.stopPropagation(); go(e.key === "ArrowRight" ? 1 : -1); }
+  };
   document.addEventListener("keydown", onKey, true);
-  el.querySelector("button").addEventListener("click", close);
-  document.body.appendChild(el);
+  el.querySelector(".game-viewer-back").addEventListener("click", close);
+  if (many) { el.querySelector(".game-viewer-prev").addEventListener("click", () => go(-1)); el.querySelector(".game-viewer-next").addEventListener("click", () => go(1)); }
+  show(); document.body.appendChild(el);
 }
 
 const stamp = () => new Date().toISOString().slice(0, 19);
@@ -256,8 +346,13 @@ async function answer(v) {
 }
 
 export const actions = {
-  "game-view": (el) => viewer(el.dataset.key),
-  "game-open": () => { ui.view = "game"; ui.game = null; window.scrollTo(0, 0); loadGrampsPlaces(false); draw(); focusInput(); },
+  "game-view": (el) => {
+    const d = el.dataset;
+    if (d.pair) viewer(d.pair.split("|").map((key) => ({key})), +d.i || 0);
+    else viewer([{key: d.key, box: d.box ? d.box.split(",").map(Number) : null}]);
+  },
+  "game-results": () => { ui.gameResults = !ui.gameResults; draw(); },
+  "game-open": () => { ui.view = "game"; ui.game = null; ui.gameResults = false; window.scrollTo(0, 0); loadGrampsPlaces(false); draw(); focusInput(); },
   "game-leave": () => { remember("fullView", true); ui.view = "start"; ui.game = null; draw(); },
   "game-pick": async (el) => {   // older / same / different / unknown
     const q = ui.game;

@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.55 – 2026-11-03 – Game: swipe between the photos, frame for the face, results page
+- In the whole-photo view of a pair you can swipe left/right (or use the arrow keys or the arrows on the screen) to go from one photo to the other; the zoom stays. (Before, the arrow keys did nothing there.)
+- "Who is this?": a frame marks the face that is meant, in the cut-out and in the whole-photo view.
+- New page "Results" in the game: counts per question, your "Who is older?" answers against the AI estimate (how many agree, the contradictions of at least 2 years), the pairs marked "Not the same person", the names, years and places you gave. Only looking; nothing is changed.
+- **Fix:** the pairs of "Who is older?" were meant to prefer photos with similar estimated ages, but the age was read from the wrong field, so they were picked at random. Now the preference works.
+
 ## 0.9.54 – 2026-11-03 – Game: place question without keyboard hassle
 - "Where was this photo taken?" now offers up to four suggestions as buttons (event or residence from Gramps, other photos of the series, often used places) and "Another place …", which opens its own search page: the hits stand right under the field, the photo is only a small preview, so the keyboard no longer squeezes the view. A place that is not in Gramps can be remembered as text. Fixes the missing suggestions of the previous version.
 - "Save" confirms the chosen place.
