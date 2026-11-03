@@ -99,7 +99,6 @@ x-casaos:
 - `grimmich.db`: all working data (one SQLite file). **This is the file to back up** (copy it while Grimmich is stopped).
 - `*.env`: credentials. Never share these files.
 - `python3 storage.py export` writes all data as readable `.json` files into the folder `export`.
-- An older installation with German names (database and `*.env` files) is switched to English names once on first start. Copies are kept first: `grimmich.db.vor-englisch` and `*.env.vor-englisch`. Check with `python3 migration.py report`.
 - `python3 anonymize.py` creates an anonymised copy of the data for debugging and tests.
 
 ## Tests
