@@ -81,6 +81,7 @@ WRITING = {
     "/api/changes": ("changes.json", "photos"),
     "/api/provenance": ("provenance.json", "pages"),
     "/api/inbox": ("inbox.json", "seen"),
+    "/api/game_votes": ("game_votes.json", "votes"),
     "/api/gramps_input": ("gramps_input.json", "items"),
 }
 
@@ -262,7 +263,7 @@ def everything():
         "age": read_json("age_per_photo.json", {}), "people_photos": people_photos(), "order": read_json("order.json", {}),
         "assignment": read_json("assignment.json", {}), "connection": connections.status(), "write_preview": read_json("write_preview.json", None),
         "write_status": write_status(), "job": JOB.status(), "provenance_albums": read_json("provenance_albums.json", {"albums": []}),
-        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox,
+        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": read_json("game_votes.json", {"votes": []}),
         "immich_data": read_json("immich_data.json", {"photos": {}}),
         "gramps_preview": read_json("gramps_preview.json", None), "gramps_written": read_json("gramps_written.json", {}),
         "gramps_status": grampsstatus(), "event_assignment": read_json("event_assignment.json", {}), "kinds": read_json("kinds.json", {}), "places": read_json("place_assignment.json", {}), "version": version(),

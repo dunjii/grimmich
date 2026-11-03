@@ -340,3 +340,15 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .card > #jobstatus { flex: 1 1 100%; min-width: 0; }
 .card > #jobstatus:empty { display: none; }
 .job-last { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Game “Who is older?” */
+.game { align-items: center; text-align: center; }
+.game-q { max-width: 36ch; }
+.game-pair { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+.game-photo { padding: 0; border: 3px solid var(--rand); border-radius: 14px; background: var(--karte); cursor: pointer; overflow: hidden; line-height: 0; }
+.game-photo:hover, .game-photo:focus-visible { border-color: var(--akzent); }
+.game-face { display: block; width: 220px; height: 220px; background-color: #cdbfa6; background-repeat: no-repeat; }
+.game-buttons { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.game-note { max-width: 520px; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+.game-foot { max-width: 520px; }
+@media (max-width: 520px) { .game-face { width: 150px; height: 150px; } .game-pair { gap: 10px; } }

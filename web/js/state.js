@@ -29,11 +29,12 @@ export const S = {
   grPlaces: null,                    // {liste, nachH, ohne}: alle Orte aus Gramps
   similar: {},                        // similar photos per photo (response of the server)
   grP: null, grEv: {},             // Gramps: Personenliste, Ereignisse je Immich-Person
+  game: {votes: []},                 // decisions of the game “Who is older?”: {a, b, pid, older: a|b|same, t}
   ver: 0,                          // counts changes so that derived data is recomputed
 };
 
 export const ui = {
-  view: "start",                // start | person | aufgabe | eingang | album | schreiben
+  view: "start",                // start | person | aufgabe | eingang | album | schreiben | game
   personId: null, task: "", albumId: null,
   mode: "time",                   // time | sort | series (only for a person)
   focusKey: null, photoKey: null,      // chosen unit (uid) and the photo chosen in it
@@ -68,6 +69,7 @@ export async function loading() {
   S.inbox = a.inbox || {seen: []};
   S.immichData = (a.immich_data || {}).photos || {};
   S.version = a.version || "";
+  S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? a.game_votes : {votes: []};
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
   S.ez = a.event_assignment && typeof a.event_assignment === "object" ? a.event_assignment : {};
@@ -88,6 +90,7 @@ export const saveEz = () => send("/api/event_assignment", S.ez).catch(problem);
 export const saveAssign = () => send("/api/assignment", S.assignMap).catch(problem);
 export const saveChanges = () => send("/api/changes", {photos: S.changed}).catch(problem);
 export const savePages = () => send("/api/provenance", {pages: S.pages, order: S.aRow}).catch(problem);
+export const saveGame = () => send("/api/game_votes", S.game).catch(problem);
 export const saveInbox = () => send("/api/inbox", S.inbox).catch(problem);
 
 // The words Grimmich writes into Immich (chosen once on the server, see naming.py); German until the server has answered.

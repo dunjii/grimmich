@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.49 – 2026-11-03 – Game "Who is older?", phone notice
+- New page "Who is older?" (button in the header): Grimmich shows two photos of the same named person, you tap the older one (or "same age / cannot tell", "skip", "undo"; on the desktop also the arrow keys). Pairs with similar estimated ages come first. The decisions are only saved in Grimmich (`game_votes`); nothing is written to Immich or Gramps.
+- On a small screen (phone) Grimmich now shows a notice that the full interface is made for large screens and starts with the game; a button opens the full interface anyway.
+
 ## 0.9.48 – 2026-11-03 – English file names
 - The last German file and folder names are now English: `estimates_body.csv`, `series.csv`, `series_suggestions.csv`, `series_manual.txt`, `series_separate.txt`, `series_cache.npz`, `known_years.csv`, `series_output/` (with `photos/` and `series_001.jpg …`), `control_images/`, `control_images_body/`, `json_old/`. The same goes for the column headers of the CSV files and the web address of the photos (`/photos/`).
 - Existing data folders are converted automatically at the first start: old files and folders are renamed (a file that already has the new name is never overwritten) and the headers of the CSV files are translated. Nothing has to be done by hand.
