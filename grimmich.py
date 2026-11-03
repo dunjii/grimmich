@@ -33,6 +33,7 @@ import storage  # noqa: E402
 import run_check as run_check_mod  # noqa: E402
 from immich import Immich  # noqa: E402
 import connections  # noqa: E402
+import face_crops  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
 import messages  # noqa: E402
@@ -200,11 +201,13 @@ def people_photos():
     if not st:
         return {"ok": False, "text": tx('No state from Immich yet. Please click “Refresh” once.')}
     pers = st.get("people", {})
-    per = {}
+    per, unnamed = {}, []
     for key, f in st.get("photos", {}).items():
         seen = set()
         for g in f.get("faces", []):
             pid, b = g.get("p"), g.get("b") or []
+            if len(b) >= 6 and b[4] and b[5] and not (pid and (pers.get(pid) or {}).get("name")) and len(unnamed) < 3000:
+                unnamed.append({"key": key, "box": b})
             if not pid or not (pers.get(pid) or {}).get("name") or len(b) < 6 or not b[4] or not b[5] or (pid, key) in seen:
                 continue
             seen.add((pid, key))
@@ -215,7 +218,7 @@ def people_photos():
         output.append({"id": pid, "name": p["name"], "birth": calculation.decimal_year_value(p["birth"]) if p.get("birth") else None,
                         "photos": items_list})
     output.sort(key=lambda x: (-len(x["photos"]), x["name"]))
-    return {"ok": True, "people": output}
+    return {"ok": True, "people": output, "unnamed": unnamed}
 
 
 def count_new_photos():
@@ -490,6 +493,13 @@ class Handler(BaseHTTPRequestHandler):
             self._json(JOB.status(all_rows=(q.get("all") or [""])[0] == "1"))
         elif path_ == "/api/new":
             self._json(count_new_photos())
+        elif path_.startswith("/crops/"):   # sharper face picture: /crops/<key>_<W>_<H>_<x0>_<y0>_<side>.jpg
+            m = re.match(r"^(.+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)\.jpg$", urllib.parse.unquote(path_[len("/crops/"):]))
+            data = face_crops.crop(m.group(1), *[int(x) for x in m.groups()[1:]]) if m else None
+            if data:
+                self._send(200, data, "image/jpeg")
+            else:
+                self._send(404, b"not found", "text/plain")
         elif path_.startswith("/photos/"):
             name = os.path.basename(urllib.parse.unquote(path_[len("/photos/"):]))
             file_path = os.path.join(PHOTO_FOLDER, name)

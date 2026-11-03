@@ -29,7 +29,7 @@ export const S = {
   grPlaces: null,                    // {liste, nachH, ohne}: alle Orte aus Gramps
   similar: {},                        // similar photos per photo (response of the server)
   grP: null, grEv: {},             // Gramps: Personenliste, Ereignisse je Immich-Person
-  game: {votes: []},                 // decisions of the game “Who is older?”: {a, b, pid, older: a|b|same, t}
+  game: {votes: []},                 // answers of the game: {type?, ...}; older: {a, b, pid, older: a|b|same|unknown|different}, who, year, place
   ver: 0,                          // counts changes so that derived data is recomputed
 };
 

@@ -66,3 +66,4 @@ features_test.py
 gramps_write_test.py
 gramps_event_probe.py
 tests/ui_*.py
+face_cutouts/

@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.53 – 2026-11-03 – Game: more questions, sharper faces
+- The game (button "Game", before "Who is older?") now mixes questions at random: **Who is this?** (a face without a name; name field with the names from Immich/Gramps, any new name can be typed), **In which year was this photo taken?** (only photos whose estimate is uncertain), **Where was this photo taken?** (places from Gramps, photos without a place) and the pair question "Who is older?". "Don't know" is possible everywhere; such questions come back later. All answers are only saved in Grimmich; nothing is written to Immich or Gramps and nothing changes in the dating.
+- Sharper faces: for faces that are small in the stored photo (less than 250 pixels) Grimmich fetches the big picture from Immich once (read only), cuts the face out and keeps only the small cut-out in the folder `face_cutouts/`. If Immich cannot be reached, or the picture does not fit the face box, the stored photo is shown as before. The AI age estimate is not changed.
+
 ## 0.9.52 – 2026-11-03 – Game: simpler buttons
 - "Who is older?": the button "Skip" is gone ("Don't know" does the same and remembers the answer).
 
