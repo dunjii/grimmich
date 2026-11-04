@@ -220,8 +220,8 @@ function placeSheet(q) {
 
 // Suggestions for a face without a name: people on the other photos of the same series (not on this photo), then names
 // you gave in the game before.
-// Ranks of a sorted row, ties allowed: 1, 2, 2, 4, 5 (q.ties[i] = same age as the one before)
-const ranksOf = (q) => { const r = []; q.order.forEach((_, i) => { r.push(q.ties[i] && i > 0 ? r[i - 1] : i + 1); }); return r; };
+// Ranks of a sorted row, ties allowed: 1, 2, 2, 3 (q.ties[i] = same age as the one before; counted without gaps)
+const ranksOf = (q) => { const r = []; let n = 0; q.order.forEach((_, i) => { r.push(q.ties[i] && i > 0 ? r[i - 1] : ++n); }); return r; };
 function nameChips(q) {
   const e = unitFromKey(q.f.key), mates = new Set(e ? e.keys.filter((k) => k !== q.f.key) : []), out = [], seen = new Set();
   const add = (name, reason) => { if (name && !seen.has(name) && out.length < 6) { seen.add(name); out.push({name, reason}); } };
@@ -273,8 +273,9 @@ function questionHtml(q) {
   if (q.type === "sort") {
     const done = q.order.length === q.items.length, ranks = ranksOf(q);
     return `<div class="game-q">${tr("Put the photos of {name} in order, youngest first.", {name: esc(q.name)})}</div>
+      <div class="quiet game-sort-hint">${tr("Tap the photos from youngest to oldest. Tap the last one again if it is as old as the one before; a third tap removes it.")}</div>
       <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${ranks[at]}</span>` : ""}${thumb(f.key, `data-pair="${q.items.map((x) => esc(x.key)).join("|")}" data-i="${i}"`)}</div>`; }).join("")}</div>
-      <div class="game-buttons">${btn("game-sort-same", "", "same", tr("Next one is the same age"), q.order.length && q.order.length < q.items.length ? "" : "disabled", q.same)}${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
+      <div class="game-buttons">${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
       <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${done ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }
   if (q.type === "decade") {
@@ -513,12 +514,12 @@ export const actions = {
     const q = ui.game;
     if (!q || q.type !== "sort") return;
     const i = +el.dataset.i, at = q.order.indexOf(i);
-    if (at >= 0) { q.order.splice(at, 1); q.ties.splice(at, 1); }
-    else { q.ties.push(!!q.same && q.order.length > 0); q.order.push(i); q.same = false; }
+    if (at < 0) { q.ties.push(false); q.order.push(i); }                                  // 1st tap: next number
+    else if (at === q.order.length - 1 && at > 0 && !q.ties[at]) q.ties[at] = true;       // 2nd tap on the last one: same age as the one before
+    else { q.order.splice(at, 1); q.ties.splice(at, 1); }                                  // 3rd tap (or a tap on an earlier one): back to none
     draw();
   },
-  "game-sort-reset": () => { if (ui.game && ui.game.type === "sort") { ui.game.order = []; ui.game.ties = []; ui.game.same = false; draw(); } },
-  "game-sort-same": () => { if (ui.game && ui.game.type === "sort") { ui.game.same = !ui.game.same; draw(); } },
+  "game-sort-reset": () => { if (ui.game && ui.game.type === "sort") { ui.game.order = []; ui.game.ties = []; draw(); } },
   "game-decade": (el) => {
     const q = ui.game, d = +el.dataset.d;
     if (q && q.type === "decade" && d) return answer({type: "decade", key: q.key, from: d, to: d + 9});

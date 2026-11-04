@@ -1102,7 +1102,6 @@
   "Help": "Hilfe",
   "Legend": "Legende",
   "Questions and answers": "Fragen und Antworten",
-  "Next one is the same age": "Nächstes gleich alt",
   "Who is playing?": "Wer spielt?",
   "Your name": "Dein Name",
   "Change player": "Spieler wechseln",
@@ -1134,6 +1133,7 @@
   "Faces that Immich does not recognise cannot be hidden this way.": "Gesichter, die Immich nicht erkennt, lassen sich so nicht verbergen.",
   "There is already a player with this name.": "Es gibt schon einen Spieler mit diesem Namen.",
   "Please enter a name.": "Bitte gib einen Namen ein.",
-  "Game for several players": "Spiel für mehrere Spieler"
+  "Game for several players": "Spiel für mehrere Spieler",
+  "Tap the photos from youngest to oldest. Tap the last one again if it is as old as the one before; a third tap removes it.": "Tippe die Fotos vom jüngsten zum ältesten an. Tippe das letzte noch einmal an, wenn es so alt ist wie das davor; ein drittes Tippen nimmt es wieder heraus."
  }
 }

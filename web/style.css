@@ -407,3 +407,4 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .login-note { min-height: 1.4em; text-align: center; }
 .pl-buttons { white-space: nowrap; text-align: right; } .pl-password { margin: 8px 0; } .pl-password code { font-size: 1.15em; letter-spacing: .03em; user-select: all; }
 .pl-people { max-height: 14rem; overflow: auto; margin-top: 6px; }
+.game-sort-hint { text-align: center; font-size: .92em; padding: 0 8px; }

@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.63 – 2026-11-04 – Game: ties in a sorted row by tapping the photo again
+- Sorting 3–5 photos: tap the photos from youngest to oldest. Tap the last one again and it gets the same number as the one before; a third tap takes it out again. The button "Next one is the same age" is gone. The numbers now count without gaps (1, 2, 2, 3); this changes nothing in the estimates, only the order counts.
+
 ## 0.9.62 – 2026-11-04 – Game: swipe between the photos of a sorted row
 - When you open a photo of a row of 3–5 ("Sort from young to old") in the whole-photo view, you can now swipe (or use the arrow keys / the arrows on the screen) to the other photos of the row, like with a pair. The zoom stays.
 
