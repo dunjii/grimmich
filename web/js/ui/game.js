@@ -156,6 +156,7 @@ const ICON = {
   before: '<path d="M15 5l-7 7 7 7"/>',
   after: '<path d="M9 5l7 7-7 7"/>',
   undo: '<path d="M9 7H4v5M4 7c4-4 12-3 15 3 1 3 0 6-2 8"/>',
+  person: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-9 7"/>',
 };
 const icon = (n) => `<svg class="game-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
@@ -191,15 +192,28 @@ function placeChips(q) {
   return out;
 }
 
-// Search for a place on its own page: the list stands right under the field, so the keyboard only covers the empty part.
-function placeSheet(q) {
+// A search window in the middle of the screen (instead of a second page): photo, field, list, "Cancel".
+// With the keyboard open the window follows the visible part of the screen.
+function openSheet(title, key, box, placeholder) {
   const el = document.createElement("div"); el.className = "game-sheet";
-  el.innerHTML = `<div class="game-sheet-bar"><b>${tr("Search place")}</b><span class="space"></span><button class="game-sheet-close">${tr("Close")}</button></div>
-    <button class="game-sheet-thumb" data-a="game-view" data-key="${esc(q.key)}"><img src="${image(q.key)}" alt=""></button>
-    <input class="game-input" id="game-sheet-input" placeholder="${esc(tr("Search place: type name or Gramps number"))}" autocomplete="off">
-    <div class="game-sheet-list" id="game-sheet-list"></div>`;
-  const list = el.querySelector("#game-sheet-list"), input = el.querySelector("input");
-  const close = () => el.remove();
+  el.innerHTML = `<div class="game-sheet-card" role="dialog" aria-label="${esc(title)}">
+    <div class="game-sheet-head"><button class="game-sheet-thumb" data-a="game-view" data-key="${esc(key)}" ${box ? `data-box="${box.join(",")}"` : ""}><img src="${image(key)}" alt=""></button><b>${esc(title)}</b></div>
+    <input class="game-input" id="game-sheet-input" placeholder="${esc(placeholder)}" autocomplete="off">
+    <div class="game-sheet-list" id="game-sheet-list"></div>
+    <div class="game-sheet-foot"><button class="game-btn game-sheet-close">${tr("Cancel")}</button></div></div>`;
+  const vv = window.visualViewport;
+  const fit = () => { if (vv) { el.style.top = vv.offsetTop + "px"; el.style.height = vv.height + "px"; } };
+  const close = () => { if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); } el.remove(); };
+  if (vv) { vv.addEventListener("resize", fit); vv.addEventListener("scroll", fit); fit(); }
+  el.addEventListener("click", (e) => { if (e.target === el) close(); });
+  el.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  el.querySelector(".game-sheet-close").addEventListener("click", close);
+  document.body.appendChild(el);
+  return {input: el.querySelector("input"), list: el.querySelector("#game-sheet-list"), close};
+}
+
+function placeSheet(q) {
+  const {input, list, close} = openSheet(tr("Where was this photo taken?"), q.key, null, tr("Search place: type name or Gramps number"));
   const choose = (o) => { q.choice = o; close(); draw(); };
   const fill = () => {
     const text = input.value.trim(), w = norm(text).split(/\s+/).filter(Boolean);
@@ -214,8 +228,7 @@ function placeSheet(q) {
   };
   input.addEventListener("input", fill);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") { const f = list.querySelector(".game-sheet-item"); if (f) f.click(); } });
-  el.querySelector(".game-sheet-close").addEventListener("click", close);
-  document.body.appendChild(el); input.focus();
+  input.focus();
 }
 
 // Suggestions for a face without a name: people on the other photos of the same series (not on this photo), then names
@@ -232,13 +245,7 @@ function nameChips(q) {
   return out;
 }
 function nameSheet(q) {
-  const el = document.createElement("div"); el.className = "game-sheet";
-  el.innerHTML = `<div class="game-sheet-bar"><b>${tr("Search name")}</b><span class="space"></span><button class="game-sheet-close">${tr("Close")}</button></div>
-    <button class="game-sheet-thumb" data-a="game-view" data-key="${esc(q.f.key)}" ${q.f.box ? `data-box="${q.f.box.join(",")}"` : ""}><img src="${image(q.f.key)}" alt=""></button>
-    <input class="game-input" id="game-sheet-input" placeholder="${esc(tr("Name"))}" autocomplete="off">
-    <div class="game-sheet-list" id="game-sheet-list"></div>`;
-  const list = el.querySelector("#game-sheet-list"), input = el.querySelector("input");
-  const close = () => el.remove();
+  const {input, list, close} = openSheet(tr("What is this person called?"), q.f.key, q.f.box, tr("Name"));
   const choose = (name) => { close(); answer({type: "who", key: q.f.key, box: q.f.box, name}); };
   const fill = () => {
     const text = input.value.trim(), w = norm(text).split(/\s+/).filter(Boolean);
@@ -250,8 +257,7 @@ function nameSheet(q) {
   };
   input.addEventListener("input", fill);
   input.addEventListener("keydown", (e) => { if (e.key === "Enter") { const f = list.querySelector(".game-sheet-item"); if (f) f.click(); } });
-  el.querySelector(".game-sheet-close").addEventListener("click", close);
-  document.body.appendChild(el); if (!touch()) input.focus();
+  if (!touch()) input.focus();
 }
 
 function questionHtml(q) {
@@ -355,6 +361,7 @@ function resultsHtml() {
   const placeHtml = place.filter((v) => v.place).slice(0, LIMIT).map((v) => `<div class="game-res-row">${miniPhoto(v.key)}<span>${esc(v.place)}${v.h ? "" : ` <small>${tr("new name")}</small>`}</span></div>`).join("");
   const none = `<div class="quiet">${tr("Nothing here yet.")}</div>`;
   return `<div class="write-page game-results">
+    <div><button class="game-btn" data-a="game-results">${tr("Back to game")}</button></div>
     <div class="quiet">${tr("Your answers narrow the estimates (shown as “refined”). Nothing is written to Immich or Gramps.")}</div>
     ${section(tr("Answers"), `<table><tr><th></th><th>${tr("Answers")}</th><th>${tr("Don't know")}</th></tr>${summary}</table>`)}
     ${section(tr("Your answers against the AI estimate"), total ? `<div>${tr("{agree} of {n} answers agree with the AI estimate.", {agree, n: total})}</div>
@@ -378,8 +385,15 @@ function playerHtml() {
     <div class="game-answer"><input class="game-input" id="game-player-input" placeholder="${esc(tr("Your name"))}" maxlength="60" autocomplete="off">
       <button class="game-btn primary" data-a="game-player-new">${tr("Start")}</button></div></div>`;
 }
-// From outside: the own account (change password, sign out)
+// ---- the own account: from outside password and sign out, on your own computer player, results and the way back
 function accountHtml() {
+  const back = `<button class="game-btn" data-a="game-account">${tr("Back to game")}</button>`;
+  if (!PLAY) {
+    return `<div class="game-q">${esc(S.player)}</div><div class="login-form">
+      <button class="game-btn" data-a="game-player-change">${tr("Change player")}</button>
+      <button class="game-btn" data-a="game-results">${tr("Results")}</button>
+      <button class="game-btn" data-a="game-leave">${tr("Back to Grimmich")}</button>${back}</div>`;
+  }
   return `<div class="game-q">${esc(S.player)}</div>
     <form id="account-form" class="login-form">
       <input class="game-input" id="account-old" type="password" placeholder="${esc(tr("Old password"))}" maxlength="200" autocomplete="current-password" required>
@@ -387,19 +401,83 @@ function accountHtml() {
       <button class="game-btn primary" type="submit">${tr("Change password")}</button>
       <div class="quiet login-note" id="account-note" role="alert"></div>
     </form>
-    <div class="game-answer"><button class="game-btn" data-a="game-signout">${tr("Sign out")}</button></div>`;
+    <div class="login-form"><button class="game-btn" data-a="game-signout">${tr("Sign out")}</button>${back}</div>`;
 }
+
+// ---- what the player did (own answers) and what others confirmed
+// A comparable form of an answer: the same text for the same opinion (null for "don't know" and empty answers).
+function signature(v) {
+  const t = v.type || "older";
+  if (t === "older") return v.older === "a" ? "k:" + v.a : v.older === "b" ? "k:" + v.b : v.older === "same" ? "same" : null;
+  if (t === "who") return v.name ? "n:" + norm(v.name) : null;
+  if (t === "place") return v.place ? "p:" + (v.h || norm(v.place)) : null;
+  if (t === "anchor") return v.rel && v.rel !== "unknown" ? "r:" + v.rel : null;
+  if (t === "decade") return v.from ? "d:" + v.from : null;
+  if (t === "sort") return v.keys && !v.unknown ? "s:" + v.keys.map((k, i) => `${k}=${(v.ranks || [])[i] ?? i + 1}`).sort().join(",") : null;
+  return null;
+}
+function myStats() {
+  const mine = S.game.votes.filter((v) => v.player === S.player);
+  const latest = new Map();   // latest answer per question and player
+  S.game.votes.forEach((v) => { if (v.player) latest.set(qid(v) + "|" + v.player, v); });
+  let confirmed = 0;
+  new Set(mine.map(qid)).forEach((id) => {
+    const my = latest.get(id + "|" + S.player), sig = my && signature(my);
+    if (sig && [...latest.entries()].some(([k, o]) => k.startsWith(id + "|") && o.player !== S.player && signature(o) === sig)) confirmed++;
+  });
+  const real = (v) => signature(v) !== null;
+  return {n: mine.length, confirmed, who: mine.filter((v) => v.type === "who" && real(v)).length, place: mine.filter((v) => v.type === "place" && real(v)).length,
+    age: mine.filter((v) => ["older", "sort", "anchor", "decade", undefined].includes(v.type) && real(v)).length};
+}
+const badges = () => [
+  {id: "first", icon: "🔍", name: tr("First steps"), sub: tr("First answer"), test: (s) => s.n >= 1},
+  {id: "names", icon: "🏷️", name: tr("Name giver"), sub: tr("10 names given"), test: (s) => s.who >= 10},
+  {id: "places", icon: "🧭", name: tr("Place finder"), sub: tr("5 places given"), test: (s) => s.place >= 5},
+  {id: "time", icon: "⏳", name: tr("Time traveller"), sub: tr("25 age questions"), test: (s) => s.age >= 25},
+  {id: "eyes", icon: "👁️", name: tr("Sharp eyes"), sub: tr("5 answers confirmed by others"), test: (s) => s.confirmed >= 5},
+  {id: "chronicle", icon: "📜", name: tr("Family chronicler"), sub: tr("100 answers"), test: (s) => s.n >= 100},
+];
+function doneHtml() {
+  const st = myStats(), fresh = ui.fresh || [];
+  const card = (num, label) => `<div class="game-stat"><b>${num}</b><span class="quiet">${label}</span></div>`;
+  const confetti = fresh.length ? [..."🎉✨⭐🎊✨⭐🎉🎊✨⭐"].map((c, i) => `<span style="left:${6 + i * 9}%;animation-delay:${(i % 5) * 0.18}s">${c}</span>`).join("") : "";
+  return `<div class="game-done"><div class="game-confetti" aria-hidden="true">${confetti}</div>
+    <div class="game-q">${tr("Thank you, {name}!", {name: esc(S.player)})} 🎉</div>
+    <div class="quiet game-center">${tr("This is what you did for the family photos")}</div>
+    <div class="game-stats">${card(st.n, tr("Answers"))}${card(st.who + st.place, tr("Names and places"))}${card(st.confirmed, tr("confirmed by others"))}</div>
+    <div class="game-q game-h">${tr("Your badges")}</div>
+    <div class="game-badges">${badges().map((b) => { const on = b.test(st); return `<div class="game-badge-card ${on ? "on" : ""} ${on && fresh.includes(b.id) ? "fresh" : ""}"><span class="game-medal">${b.icon}${on && fresh.includes(b.id) ? '<i aria-hidden="true">✨</i>' : ""}</span><b>${b.name}</b><small>${b.sub}</small></div>`; }).join("")}</div>
+    <div class="login-form game-done-buttons"><button class="game-btn primary" data-a="game-again">${tr("Keep playing")}</button>
+      ${PLAY ? `<button class="game-btn" data-a="game-signout">${tr("Sign out")}</button>` : `<button class="game-btn" data-a="game-leave">${tr("Back to Grimmich")}</button>`}</div></div>`;
+}
+
+// ---- the bar: logo, account, "Done" with the number of own answers; narrow screens: first only the tick, then only icons, last the name goes
+const brand = () => `<span class="game-brand"><img src="${BASE}/favicon.svg" alt="" width="34" height="34"><b>Grimmich</b></span>`;
+function barHtml() {
+  const n = S.game.votes.filter((v) => v.player === S.player).length;
+  return `<div class="game-bar">${brand()}<span class="space"></span>
+    <button class="small game-account-btn" data-a="game-account" title="${tr("Account")}" aria-label="${tr("Account")}">${icon("person")}<span class="game-account-text">${tr("Account")}</span></button>
+    <span class="game-done-wrap"><button class="small primary game-done-btn" data-a="game-done" title="${tr("Done")}" aria-label="${tr("Done")}"><span class="game-done-text">${tr("Done")}</span> ✓</button>${n ? `<span class="game-count" title="${esc(tr("{n} {n:answer|answers} so far", {n}))}">${n}</span>` : ""}</span></div>`;
+}
+function fitBar() {
+  const bar = document.querySelector(".game-bar");
+  if (!bar) return;
+  bar.classList.remove("tight", "tighter", "tightest");
+  const over = () => bar.scrollWidth > bar.clientWidth + 1;
+  for (const step of ["tight", "tighter", "tightest"]) { if (!over()) break; bar.classList.add(step); }
+}
+window.addEventListener("resize", fitBar);
+
 export function gameHtml() {
   if (!S.grPlaces) loadGrampsPlaces(false);
   if (!S.player) return playerHtml();
   if (ui.game === undefined || ui.game === null) ui.game = pickQuestion();
-  const q = ui.game, n = S.game.votes.filter((v) => v.player === S.player).length;
-  const note = !PLAY && narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
-  const body = PLAY && ui.gameAccount ? accountHtml() : ui.gameResults ? resultsHtml() : q ? questionHtml(q)
+  const q = ui.game;
+  const body = ui.gameDone ? doneHtml() : ui.gameAccount ? accountHtml() : ui.gameResults ? resultsHtml() : q ? questionHtml(q)
     : `<div class="empty game-empty">${people().length || unnamed().length ? tr("All questions answered. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
-  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="quiet">${esc(S.player)}</span>${PLAY ? `<button class="small" data-a="game-account">${ui.gameAccount ? tr("Back to game") : tr("Account")}</button>` : `<button class="small" data-a="game-player-change">${tr("Change player")}</button>`}<span class="space"></span>
-      ${PLAY ? "" : `<button data-a="game-results">${ui.gameResults ? tr("Back to game") : tr("Results")}</button><button data-a="game-leave">${tr("Back to Grimmich")}</button>`}</div>${body}
-    <div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your answers stay in Grimmich.")}</div></div>`;
+  requestAnimationFrame(fitBar);
+  return `<div class="game-full ${ui.gameResults ? "results" : ""}">${barHtml()}${body}
+    <div class="quiet game-foot">${tr("Thank you for helping to date our old photos. Every answer counts.")}</div></div>`;
 }
 
 // Whole photo in a viewer: pinch / mouse wheel to zoom, drag to move, double tap resets.
@@ -476,7 +554,13 @@ async function answer(v) {
 }
 
 export const actions = {
-  "game-account": () => { ui.gameAccount = !ui.gameAccount; draw(); },
+  "game-account": () => { ui.gameAccount = !ui.gameAccount; ui.gameResults = false; ui.gameDone = false; draw(); },
+  "game-done": () => {   // the own evaluation; badges that are new since the last time sparkle
+    const st = myStats(), now = badges().filter((b) => b.test(st)).map((b) => b.id), key = "badges." + S.player, seen = recall(key, []);
+    ui.fresh = now.filter((id) => !seen.includes(id)); remember(key, now);
+    ui.gameDone = true; ui.gameAccount = false; ui.gameResults = false; draw();
+  },
+  "game-again": () => { ui.gameDone = false; ui.fresh = []; draw(); },
   "game-signout": () => signOut(),
   "game-view": (el) => {
     const d = el.dataset;
@@ -488,10 +572,10 @@ export const actions = {
     const name = ((document.getElementById("game-player-input") || {}).value || "").replace(/\s+/g, " ").trim().slice(0, 60);
     if (name) { S.player = name; remember("player", name); ui.game = null; draw(); }
   },
-  "game-player-change": () => { S.player = ""; remember("player", ""); ui.game = null; draw(); },
-  "game-results": () => { ui.gameResults = !ui.gameResults; draw(); },
+  "game-player-change": () => { ui.gameAccount = false; S.player = ""; remember("player", ""); ui.game = null; draw(); },
+  "game-results": () => { ui.gameResults = !ui.gameResults; ui.gameAccount = false; draw(); },
   "game-open": () => { ui.view = "game"; ui.game = null; ui.gameResults = false; window.scrollTo(0, 0); loadGrampsPlaces(false); draw(); focusInput(); },
-  "game-leave": () => { remember("fullView", true); ui.view = "start"; ui.game = null; draw(); },
+  "game-leave": () => { ui.gameAccount = ui.gameDone = false; remember("fullView", true); ui.view = "start"; ui.game = null; draw(); },
   "game-pick": async (el) => {   // older / same / different / unknown
     const q = ui.game;
     if (!q) return;

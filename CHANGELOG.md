@@ -3,6 +3,14 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.64 – 2026-11-04 – Game: new look (bar, account, search window, "Done")
+- New bar in one row: logo and name, "Account", and "Done ✓" with a yellow number (your answers so far) at its corner. On narrow screens it shrinks step by step: first only the tick, then "Account" as an icon, last without the name.
+- "Account" is there on your own computer too: change player, results, back to Grimmich. From outside it holds password and sign out. The name of the player is shown there, not in the bar.
+- Searching a name or a place no longer opens a second page: a window in the middle of the screen with photo, field, list and "Cancel"; with the keyboard open it moves into the visible part of the screen. Tapping next to it closes it.
+- "Done ✓" shows your own evaluation: thanks, three numbers (answers, names and places, answers confirmed by others) and badges (first steps, name giver, place finder, time traveller, sharp eyes, family chronicler). New badges sparkle once, with a little confetti (not when the device asks for less motion). The badges are counted from your own answers; nothing is compared with other players.
+- The line at the bottom now reads: "Thank you for helping to date our old photos. Every answer counts."
+- New local test `tests/ui_game_test.py`.
+
 ## 0.9.63 – 2026-11-04 – Game: ties in a sorted row by tapping the photo again
 - Sorting 3–5 photos: tap the photos from youngest to oldest. Tap the last one again and it gets the same number as the one before; a third tap takes it out again. The button "Next one is the same age" is gone. The numbers now count without gaps (1, 2, 2, 3); this changes nothing in the estimates, only the order counts.
 
