@@ -70,6 +70,7 @@ export async function loading() {
   S.immichData = (a.immich_data || {}).photos || {};
   S.version = a.version || "";
   S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? a.game_votes : {votes: []};
+  S.player = recall("player", "");
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
   S.ez = a.event_assignment && typeof a.event_assignment === "object" ? a.event_assignment : {};
@@ -90,7 +91,14 @@ export const saveEz = () => send("/api/event_assignment", S.ez).catch(problem);
 export const saveAssign = () => send("/api/assignment", S.assignMap).catch(problem);
 export const saveChanges = () => send("/api/changes", {photos: S.changed}).catch(problem);
 export const savePages = () => send("/api/provenance", {pages: S.pages, order: S.aRow}).catch(problem);
-export const saveGame = () => send("/api/game_votes", S.game).catch(problem);
+// An answer of the game goes to the server on its own (op "add") or the last answer of this player is taken back (op "undo");
+// the server returns the whole list, so the answers of other players are there too.
+export async function sendVote(op, vote) {
+  try {
+    const r = await send("/api/vote", {op, vote, player: S.player});
+    if (r && r.ok) { S.game = {votes: r.votes}; mark(); } else problem();
+  } catch (e) { problem(); }
+}
 export const saveInbox = () => send("/api/inbox", S.inbox).catch(problem);
 
 // The words Grimmich writes into Immich (chosen once on the server, see naming.py); German until the server has answered.

@@ -3,8 +3,8 @@
 //   anchor (before or after a photo with a known year), sort (3–5 photos of one person from young to old), decade.
 //   Old “year” answers are still kept and shown, the question itself is no longer asked.
 // The answers stay in Grimmich (game_votes); nothing is written to Immich or Gramps.
-import {S, ui, draw, saveGame, mark} from "../state.js";
-import {esc, image, recall, remember} from "../util.js";
+import {S, ui, draw, sendVote, mark} from "../state.js";
+import {esc, image, recall, remember, BASE, PLAY} from "../util.js";
 import {loadGrampsPlaces, loadEvents} from "../gramps.js";
 import {unitFromKey, placeFrom, immichDate} from "../model.js";
 import {suggestions, norm} from "./places.js";
@@ -24,9 +24,14 @@ const unnamed = () => (S.pf && S.pf.ok ? S.pf.unnamed || [] : []);
 // ---- what has been answered: the latest answer per question; "unknown" comes back now and then
 const qid = (v) => (v.type === "anchor" ? `anchor|${v.key}|${v.anchor}` : v.type === "sort" ? `sort|${[...v.keys].sort().join("|")}` : v.type && v.type !== "older" ? `${v.type}|${v.key}` : `older|${pairId(v.a, v.b)}`);
 const answerOf = (v) => (v.type === "who" ? (v.name ? "x" : "unknown") : v.type === "year" ? (v.year ? "x" : "unknown") : v.type === "place" ? (v.place ? "x" : "unknown") : v.type === "anchor" ? v.rel : v.type === "sort" ? (v.keys.length && !v.unknown ? "x" : "unknown") : v.type === "decade" ? (v.from ? "x" : "unknown") : v.older);
+// A real answer of anybody settles a question; “don't know” only counts for the player who said it (old answers without player for everybody).
 function lastAnswers() {
   const m = new Map();
-  S.game.votes.forEach((v) => m.set(qid(v), answerOf(v)));
+  S.game.votes.forEach((v) => {
+    const id = qid(v), a = answerOf(v);
+    if (a !== "unknown") m.set(id, a);
+    else if ((!v.player || v.player === S.player) && !(m.has(id) && m.get(id) !== "unknown")) m.set(id, "unknown");
+  });
   return m;
 }
 
@@ -131,7 +136,7 @@ function faceStyle(key, b, plain = false) {
   const px = W > side ? (x0 / (W - side)) * 100 : 0, py = H > side ? (y0 / (H - side)) * 100 : 0;
   const stored = `background-image:url(${image(key)});background-size:${((W / side) * 100).toFixed(2)}% auto;background-position:${px.toFixed(2)}% ${py.toFixed(2)}%;`;
   if (plain || side * Math.min(1, STORED / Math.max(W, H)) >= SOFT) return stored;
-  const sharp = `/crops/${encodeURIComponent(key)}_${W}_${H}_${Math.round(x0)}_${Math.round(y0)}_${Math.round(side)}.jpg`;
+  const sharp = `${BASE}/crops/${encodeURIComponent(key)}_${W}_${H}_${Math.round(x0)}_${Math.round(y0)}_${Math.round(side)}.jpg`;
   return `background-image:url(${sharp}),url(${image(key)});background-size:cover,${((W / side) * 100).toFixed(2)}% auto;background-position:center,${px.toFixed(2)}% ${py.toFixed(2)}%;`;
 }
 // A frame around the face that is meant: inside the cut-out (square) or in the whole photo (box = null: the cut-out).
@@ -249,7 +254,7 @@ function nameSheet(q) {
 }
 
 function questionHtml(q) {
-  const n = S.game.votes.length;
+  const n = S.game.votes.filter((v) => v.player === S.player).length;
   const undo = btn("game-undo", "", "undo", tr("Undo last decision"), n ? "" : "disabled");
   const unknown = btn("game-pick", "unknown", "unknown", tr("Don't know"));
   if (q.type === "who") {
@@ -360,15 +365,27 @@ function resultsHtml() {
 }
 
 // The game takes the whole browser window (see .game-full in style.css).
+// Who is playing: the name is kept in this browser and goes with every answer.
+function playerHtml() {
+  const count = new Map();
+  S.game.votes.forEach((v) => { if (v.player) count.set(v.player, (count.get(v.player) || 0) + 1); });
+  const names = [...count.entries()].sort((a, b) => b[1] - a[1]).map((x) => x[0]);
+  return `<div class="game-full"><div class="game-bar"><b>${tr("Game")}</b></div>
+    <div class="game-q">${tr("Who is playing?")}</div>
+    <div class="game-chips">${names.map((n) => `<button class="game-chip" data-a="game-player" data-name="${esc(n)}"><b>${esc(n)}</b></button>`).join("")}</div>
+    <div class="game-answer"><input class="game-input" id="game-player-input" placeholder="${esc(tr("Your name"))}" maxlength="60" autocomplete="off">
+      <button class="game-btn primary" data-a="game-player-new">${tr("Start")}</button></div></div>`;
+}
 export function gameHtml() {
   if (!S.grPlaces) loadGrampsPlaces(false);
+  if (!S.player) return playerHtml();
   if (ui.game === undefined || ui.game === null) ui.game = pickQuestion();
-  const q = ui.game, n = S.game.votes.length;
+  const q = ui.game, n = S.game.votes.filter((v) => v.player === S.player).length;
   const note = narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
   const body = ui.gameResults ? resultsHtml() : q ? questionHtml(q)
     : `<div class="empty game-empty">${people().length || unnamed().length ? tr("All questions answered. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
-  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="space"></span>
-      <button data-a="game-results">${ui.gameResults ? tr("Back to game") : tr("Results")}</button><button data-a="game-leave">${tr("Back to Grimmich")}</button></div>${body}
+  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="quiet">${esc(S.player)}</span><button class="small" data-a="game-player-change">${tr("Change player")}</button><span class="space"></span>
+      ${PLAY ? "" : `<button data-a="game-results">${ui.gameResults ? tr("Back to game") : tr("Results")}</button><button data-a="game-leave">${tr("Back to Grimmich")}</button>`}</div>${body}
     <div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your answers stay in Grimmich.")}</div></div>`;
 }
 
@@ -439,10 +456,10 @@ const stamp = () => new Date().toISOString().slice(0, 19);
 const touch = () => window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 const focusInput = () => { if (!touch()) setTimeout(() => { const i = document.getElementById("game-input"); if (i) i.focus(); }, 50); };
 async function answer(v) {
-  S.game.votes.push({...v, t: stamp()});
+  S.game.votes.push({...v, player: S.player, t: stamp()});
   mark();   // the estimates are recomputed with the new answer
   ui.game = null; draw(); focusInput();
-  await saveGame();
+  await sendVote("add", v);
 }
 
 export const actions = {
@@ -451,6 +468,12 @@ export const actions = {
     if (d.pair) viewer(d.pair.split("|").map((key) => ({key})), +d.i || 0);
     else viewer([{key: d.key, box: d.box ? d.box.split(",").map(Number) : null}]);
   },
+  "game-player": (el) => { S.player = el.dataset.name; remember("player", S.player); ui.game = null; draw(); },
+  "game-player-new": () => {
+    const name = ((document.getElementById("game-player-input") || {}).value || "").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (name) { S.player = name; remember("player", name); ui.game = null; draw(); }
+  },
+  "game-player-change": () => { S.player = ""; remember("player", ""); ui.game = null; draw(); },
   "game-results": () => { ui.gameResults = !ui.gameResults; draw(); },
   "game-open": () => { ui.view = "game"; ui.game = null; ui.gameResults = false; window.scrollTo(0, 0); loadGrampsPlaces(false); draw(); focusInput(); },
   "game-leave": () => { remember("fullView", true); ui.view = "start"; ui.game = null; draw(); },
@@ -515,29 +538,32 @@ export const actions = {
     }
   },
   "game-undo": async () => {
-    const v = S.game.votes.pop();
-    if (!v) return;
+    let i = S.game.votes.length - 1;
+    while (i >= 0 && S.game.votes[i].player !== S.player) i--;
+    if (i < 0) return;
+    const v = S.game.votes.splice(i, 1)[0];
     if (v.type === "who") ui.game = {type: "who", f: {key: v.key, box: v.box}};
     else if (v.type === "year") ui.game = {type: "year", key: v.key};
+    else if (v.type === "place") ui.game = {type: "place", key: v.key, choice: null};
     else if (v.type === "anchor") ui.game = {type: "anchor", key: v.key, anchor: v.anchor, ay: v.ay};
     else if (v.type === "decade") ui.game = {type: "decade", key: v.key};
     else if (v.type === "sort") {
       const p = people().find((x) => x.id === v.pid);
       const items = p ? v.keys.map((k) => p.photos.find((f) => f.key === k)).filter(Boolean) : [];
       ui.game = items.length === v.keys.length ? {type: "sort", pid: p.id, name: p.name, items: items.slice().sort(() => Math.random() - 0.5), order: [], ties: []} : null;
-    }
-    else if (v.type === "place") ui.game = {type: "place", key: v.key, choice: null};
-    else {
+    } else {
       const p = people().find((x) => x.id === v.pid);
       const a = p && p.photos.find((f) => f.key === v.a), b = p && p.photos.find((f) => f.key === v.b);
       ui.game = a && b ? {type: "older", pid: p.id, name: p.name, a, b} : null;
     }
-    mark(); draw(); focusInput(); await saveGame();
+    mark(); draw(); focusInput(); await sendVote("undo");
   },
 };
 
 document.addEventListener("keydown", (ev) => {
-  if (ui.view !== "game" || !ui.game || document.querySelector(".game-viewer")) return;
+  if (ui.view !== "game" || document.querySelector(".game-viewer")) return;
+  if (ev.key === "Enter" && ev.target.id === "game-player-input") { ev.preventDefault(); actions["game-player-new"](); return; }
+  if (!ui.game) return;
   if (ev.key === "Enter" && ev.target.id === "game-input") { ev.preventDefault(); actions["game-save"](); return; }
   if (ev.target.closest("input, textarea, select") || ui.game.type !== "older") return;
   const w = {ArrowLeft: "a", ArrowRight: "b"}[ev.key];

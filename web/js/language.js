@@ -4,8 +4,9 @@
 const STORAGE = "grimmich.language";
 const OLD_STORAGE = "grimmich.sprache";
 
+const BASE = location.pathname === "/play" || location.pathname.startsWith("/play/") ? "/play" : "";   // see util.js
 async function getJson(path) {
-  try { const r = await fetch(path); return r.ok ? await r.json() : null; } catch (e) { return null; }
+  try { const r = await fetch(BASE + path); return r.ok ? await r.json() : null; } catch (e) { return null; }
 }
 export const languages = (await getJson("/api/languages")) || [{code: "en", name: "English", date_input: "iso"}];
 

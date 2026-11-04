@@ -2,9 +2,12 @@ import {tr, language, dateInput} from "./language.js";
 // Small helpers without dependencies: text, server calls, date.
 export const $ = (id) => document.getElementById(id);
 export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
-export const image = (key) => "/photos/" + encodeURIComponent(key) + ".jpg";
-export const fetchIt = async (path) => (await fetch(path, {headers: {"X-Language": language}})).json();
-export const send = async (path, data) => (await fetch(path, {method: "POST", headers: {"X-Language": language}, body: JSON.stringify(data)})).json();
+// The game for several players lives under /play/ (see play.py): every address of the interface gets this prefix there.
+export const BASE = location.pathname === "/play" || location.pathname.startsWith("/play/") ? "/play" : "";
+export const PLAY = BASE !== "";
+export const image = (key) => BASE + "/photos/" + encodeURIComponent(key) + ".jpg";
+export const fetchIt = async (path) => (await fetch(BASE + path, {headers: {"X-Language": language}})).json();
+export const send = async (path, data) => (await fetch(BASE + path, {method: "POST", headers: {"X-Language": language}, body: JSON.stringify(data)})).json();
 export const median = (a) => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 export const newId = () => Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36) + Math.floor(Math.random() * 1296).toString(36);
 export const p2 = (x) => String(x).padStart(2, "0");

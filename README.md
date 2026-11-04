@@ -94,6 +94,12 @@ x-casaos:
   icon: https://raw.githubusercontent.com/dunjii/grimmich/main/assets/logo-512.png
 ```
 
+## The game for several players
+
+The game ("Who is older?") can be played by several people. Open `/play/` (for example `http://zimaboard:8765/play/`), choose or type your name, and answer. Everything the game may reach lies under `/play/`: the server hands out only the photos, faces and estimates the game needs (no settings, keys, birth dates or Gramps events) and accepts only single, checked answers. Answers are appended to the list together with the player's name, they never replace the file. Nothing is written to Immich or Gramps.
+
+If you put Grimmich behind a reverse proxy or a tunnel for people outside your network, forward **only** the path `/play/`. Note that the game shows your photos, so anybody who can open it sees them; there is no login yet.
+
 ## Where is the data?
 
 - `grimmich.db`: all working data (one SQLite file). **This is the file to back up** (copy it while Grimmich is stopped).

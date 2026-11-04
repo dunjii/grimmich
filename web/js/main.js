@@ -1,6 +1,6 @@
 // Start, drawing and distributing the clicks.
 import {S, ui, hook, loading, loadNewInfo, draw, mark} from "./state.js";
-import {$, remember, send, toast} from "./util.js";
+import {$, remember, send, toast, PLAY} from "./util.js";
 import {unitList, unitOf, unitFromKey, personForPhotos} from "./model.js";
 import "./joint.js";   // rows, anchors and answers together (registers itself in model.js)
 import {loadGrampsPeople, loadEvents} from "./gramps.js";
@@ -39,6 +39,7 @@ function middleHtml() {
 }
 let calcSig = "", calcNo = 0;
 async function calcSeries() {
+  if (PLAY) return false;   // the game does not need the series years
   const nr = ++calcNo;
   try {
     const r = await send("/api/series_calc", {series: S.work.series.map((s) => ({id: s.id, photos: s.photos}))});
@@ -174,6 +175,7 @@ document.addEventListener("keydown", (ev) => {
   translatePage();
   try { await loading(); }
   catch (e) { $("middle").innerHTML = '<div class="box warn">' + tr("The data could not be loaded. Is Grimmich still running?") + '</div>'; return; }
+  if (PLAY) { ui.view = "game"; draw(); return; }   // play mode: only the game
   const openOnes = peopleState().find((x) => !x.done);
   if (!Object.keys(S.photos).length) ui.view = "inbox";
   else if (startOnPhone()) ui.view = "game";   // small screen: the full interface is made for the desktop

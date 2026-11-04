@@ -9,6 +9,7 @@ Grimmich only reads from Immich and Gramps. Immich is only changed when you go t
 for it.
 """
 import csv
+import datetime
 import json
 import mimetypes
 import os
@@ -34,6 +35,7 @@ import run_check as run_check_mod  # noqa: E402
 from immich import Immich  # noqa: E402
 import connections  # noqa: E402
 import face_crops  # noqa: E402
+import play  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
 import messages  # noqa: E402
@@ -82,7 +84,6 @@ WRITING = {
     "/api/changes": ("changes.json", "photos"),
     "/api/provenance": ("provenance.json", "pages"),
     "/api/inbox": ("inbox.json", "seen"),
-    "/api/game_votes": ("game_votes.json", "votes"),
     "/api/gramps_input": ("gramps_input.json", "items"),
 }
 
@@ -428,6 +429,45 @@ def start_job(name, args):
 
 # ------------------------------------------------------------------ Server
 
+RATE = play.RateLimit()
+
+
+def play_all():
+    """What the game gets (see play.py): only the parts it needs."""
+    photos = read_json(PHOTOS_FILE, {"photos": []})
+    with _lock_:
+        work = load_work()
+    people = read_json("people.json", {"people": {}, "all": []})
+    return play.build_data(photos, work, read_results(), read_json("corrections.json", {}), people.get("all", []), read_json("age_per_photo.json", {}),
+                           people_photos(), (read_json("immich_data.json", {"photos": {}}) or {}).get("photos", {}), read_json("place_assignment.json", {}),
+                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version())
+
+
+def handle_vote(data_):
+    """One answer of a player, added to the list (op "add") or the last answer of this player taken back (op "undo"). -> (answer, code)"""
+    if not isinstance(data_, dict):
+        return {"ok": False}, 400
+    player, op = play.clean_player(data_.get("player")), data_.get("op")
+    if not player or op not in ("add", "undo"):
+        return {"ok": False}, 400
+    if not RATE.allow():
+        return {"ok": False}, 429
+    with _lock_:
+        votes = read_json("game_votes.json", {"votes": []}).get("votes", [])
+        if op == "undo":
+            new = play.undo_last(votes, player)
+        else:
+            keys = {p["key"] for p in read_json(PHOTOS_FILE, {"photos": []}).get("photos", []) if "key" in p}
+            vote = play.validate_vote(data_.get("vote"), keys)
+            if vote is None:
+                return {"ok": False}, 400
+            new = play.add_vote(votes, vote, player, datetime.datetime.now().isoformat(timespec="seconds"))
+            if new is None:
+                return {"ok": False}, 507
+        write_json("game_votes.json", {"votes": new})
+    return {"ok": True, "votes": new}, 200
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
@@ -461,6 +501,22 @@ class Handler(BaseHTTPRequestHandler):
         messages.set_language(self.headers.get("X-Language"))
         url = urllib.parse.urlparse(self.path)
         path_, q = url.path, urllib.parse.parse_qs(url.query)
+        if path_ == "/play":   # the game lives under /play/ (relative addresses need the slash)
+            self.send_response(301)
+            self.send_header("Location", "/play/")
+            self.end_headers()
+            return
+        if path_.startswith("/play/"):   # play mode: only what play.ALLOWED_GET lets through
+            path_ = path_[len("/play"):]
+            if not play.ALLOWED_GET.match(path_):
+                self._send(404, b"not found", "text/plain")
+                return
+            if path_ == "/api/all":
+                self._json(play_all())
+                return
+            if path_ == "/api/gramps_places":
+                self._json(connections.gramps_orte(new_=False))
+                return
         if path_ in READ_ACCESS:
             self._json(read_json(*READ_ACCESS[path_]))
         elif path_ == "/api/all":
@@ -525,7 +581,15 @@ class Handler(BaseHTTPRequestHandler):
         if data_ is None:
             self._send(400, b"ungueltig", "text/plain")
             return
-        if path_ in WRITING and isinstance(data_, dict):
+        if path_.startswith("/play/"):   # play mode: only answers
+            path_ = path_[len("/play"):]
+            if path_ not in play.ALLOWED_POST:
+                self._send(404, b"not found", "text/plain")
+                return
+        if path_ == "/api/vote":
+            answer, code = handle_vote(data_)
+            self._json(answer, code)
+        elif path_ in WRITING and isinstance(data_, dict):
             file_path, required = WRITING[path_]
             if required and required not in data_:
                 self._send(400, b"ungueltig", "text/plain")

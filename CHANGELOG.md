@@ -3,6 +3,13 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.60 – 2026-11-04 – The game for several players (play mode)
+- New: the game can be played by several people at `/play/`. Everything it may reach lies under that path, checked against a fixed list on the server: the game gets only the photos, faces and estimates it needs (no settings, keys, birth dates, events), and the only thing it may send is one checked answer at a time. Anything else under `/play/` is "not found". Tests make sure of that.
+- Answers are now appended one by one (with the name of the player and the time) instead of the whole file being replaced, so two players cannot overwrite each other. "Undo" takes back the last answer of the same player. At most 240 answers per minute are accepted.
+- Each player chooses a name (kept in the browser, "Change player" in the bar). A real answer of anybody settles a question; "Don't know" only counts for the player who said it.
+- Play mode shows only the game: no results page, no way back to the full interface.
+- README: section about the game for several players and how to forward only `/play/`.
+
 ## 0.9.59 – 2026-11-04 – Game: photos of the same age in a sorted row
 - When sorting 3–5 photos you can say that the next photo is the same age as the one before ("Next one is the same age"): the ranks then read 1, 2, 2, 4, 5. Photos of the same rank are not put in an order to each other; they only count as younger or older than the others.
 
