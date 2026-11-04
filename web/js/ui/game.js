@@ -273,7 +273,7 @@ function questionHtml(q) {
   if (q.type === "sort") {
     const done = q.order.length === q.items.length, ranks = ranksOf(q);
     return `<div class="game-q">${tr("Put the photos of {name} in order, youngest first.", {name: esc(q.name)})}</div>
-      <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${ranks[at]}</span>` : ""}${thumb(f.key)}</div>`; }).join("")}</div>
+      <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${ranks[at]}</span>` : ""}${thumb(f.key, `data-pair="${q.items.map((x) => esc(x.key)).join("|")}" data-i="${i}"`)}</div>`; }).join("")}</div>
       <div class="game-buttons">${btn("game-sort-same", "", "same", tr("Next one is the same age"), q.order.length && q.order.length < q.items.length ? "" : "disabled", q.same)}${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
       <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${done ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }

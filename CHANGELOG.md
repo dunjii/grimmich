@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.62 – 2026-11-04 – Game: swipe between the photos of a sorted row
+- When you open a photo of a row of 3–5 ("Sort from young to old") in the whole-photo view, you can now swipe (or use the arrow keys / the arrows on the screen) to the other photos of the row, like with a pair. The zoom stays.
+
 ## 0.9.61 – 2026-11-04 – Play mode with sign-in; hidden people
 - The game under `/play/` now needs a sign-in. Without it the server serves only the sign-in page, no photo, face or estimate. You create the players in the settings ("Game for several players"): a name, and Grimmich makes up a password that is shown once; give a new password, block or remove a player there. Players can change their own password and sign out.
 - The name of an answer now comes from the sign-in, never from the request. The name picker is gone in the game from outside (it stays on your own computer).
