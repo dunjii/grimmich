@@ -31,7 +31,8 @@ export function constraints() {
       if (v.older === "a") pairs.push([v.b, v.a]);
       else if (v.older === "b") pairs.push([v.a, v.b]);
     } else if (t === "sort" && Array.isArray(v.keys)) {
-      for (let i = 0; i + 1 < v.keys.length; i++) pairs.push([v.keys[i], v.keys[i + 1]]);   // from young to old
+      const rk = Array.isArray(v.ranks) && v.ranks.length === v.keys.length ? v.ranks : v.keys.map((_, i) => i + 1);   // ranks like 1, 2, 2, 4: the same rank = same age
+      for (let i = 0; i < v.keys.length; i++) for (let j = i + 1; j < v.keys.length; j++) if (rk[i] < rk[j]) pairs.push([v.keys[i], v.keys[j]]);   // from young to old
     } else if (t === "anchor" && v.ay) {
       if (v.rel === "before") narrow(v.key, -Infinity, v.ay);
       else if (v.rel === "after") narrow(v.key, v.ay, Infinity);

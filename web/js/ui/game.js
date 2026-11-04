@@ -86,7 +86,7 @@ function pickSort(last, wish) {
   for (let i = 0; ps.length && i < 200; i++) {
     const p = rnd(ps), n = Math.min(p.photos.length, 3 + Math.floor(Math.random() * 3));
     const items = p.photos.slice().sort(() => Math.random() - 0.5).slice(0, n);
-    if (wanted(last, `sort|${items.map((f) => f.key).sort().join("|")}`, wish)) return {type: "sort", pid: p.id, name: p.name, items, order: []};
+    if (wanted(last, `sort|${items.map((f) => f.key).sort().join("|")}`, wish)) return {type: "sort", pid: p.id, name: p.name, items, order: [], ties: []};
   }
   return null;
 }
@@ -153,7 +153,7 @@ const ICON = {
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-9 7"/>',
 };
 const icon = (n) => `<svg class="game-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[n]}</svg>`;
-const btn = (action, w, name, text, extra = "") => `<button class="game-btn" data-a="${action}" ${w ? `data-w="${w}"` : ""} ${extra} title="${text}">${icon(name)}<span>${text}</span></button>`;
+const btn = (action, w, name, text, extra = "", on = false) => `<button class="game-btn ${on ? "on" : ""}" data-a="${action}" ${w ? `data-w="${w}"` : ""} ${extra} title="${text}">${icon(name)}<span>${text}</span></button>`;
 
 const thumb = (key, extra = "") => `<button class="game-thumb" data-a="game-view" data-key="${esc(key)}" ${extra} title="${tr("Show whole photo")}"><img src="${image(key)}" alt="${tr("Show whole photo")}"></button>`;
 const faceBg = (f) => (f.box ? faceStyle(f.key, f.box) : `background-image:url(${image(f.key)});background-size:cover;`);
@@ -214,6 +214,8 @@ function placeSheet(q) {
 
 // Suggestions for a face without a name: people on the other photos of the same series (not on this photo), then names
 // you gave in the game before.
+// Ranks of a sorted row, ties allowed: 1, 2, 2, 4, 5 (q.ties[i] = same age as the one before)
+const ranksOf = (q) => { const r = []; q.order.forEach((_, i) => { r.push(q.ties[i] && i > 0 ? r[i - 1] : i + 1); }); return r; };
 function nameChips(q) {
   const e = unitFromKey(q.f.key), mates = new Set(e ? e.keys.filter((k) => k !== q.f.key) : []), out = [], seen = new Set();
   const add = (name, reason) => { if (name && !seen.has(name) && out.length < 6) { seen.add(name); out.push({name, reason}); } };
@@ -263,10 +265,10 @@ function questionHtml(q) {
       <div class="game-buttons">${btn("game-pick", "before", "before", tr("Earlier"))}${btn("game-pick", "same", "same", tr("About the same time"))}${btn("game-pick", "after", "after", tr("Later"))}${unknown}${undo}</div>`;
   }
   if (q.type === "sort") {
-    const done = q.order.length === q.items.length;
+    const done = q.order.length === q.items.length, ranks = ranksOf(q);
     return `<div class="game-q">${tr("Put the photos of {name} in order, youngest first.", {name: esc(q.name)})}</div>
-      <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${at + 1}</span>` : ""}${thumb(f.key)}</div>`; }).join("")}</div>
-      <div class="game-buttons">${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
+      <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${ranks[at]}</span>` : ""}${thumb(f.key)}</div>`; }).join("")}</div>
+      <div class="game-buttons">${btn("game-sort-same", "", "same", tr("Next one is the same age"), q.order.length && q.order.length < q.items.length ? "" : "disabled", q.same)}${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
       <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${done ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }
   if (q.type === "decade") {
@@ -474,10 +476,12 @@ export const actions = {
     const q = ui.game;
     if (!q || q.type !== "sort") return;
     const i = +el.dataset.i, at = q.order.indexOf(i);
-    if (at >= 0) q.order.splice(at, 1); else q.order.push(i);
+    if (at >= 0) { q.order.splice(at, 1); q.ties.splice(at, 1); }
+    else { q.ties.push(!!q.same && q.order.length > 0); q.order.push(i); q.same = false; }
     draw();
   },
-  "game-sort-reset": () => { if (ui.game && ui.game.type === "sort") { ui.game.order = []; draw(); } },
+  "game-sort-reset": () => { if (ui.game && ui.game.type === "sort") { ui.game.order = []; ui.game.ties = []; ui.game.same = false; draw(); } },
+  "game-sort-same": () => { if (ui.game && ui.game.type === "sort") { ui.game.same = !ui.game.same; draw(); } },
   "game-decade": (el) => {
     const q = ui.game, d = +el.dataset.d;
     if (q && q.type === "decade" && d) return answer({type: "decade", key: q.key, from: d, to: d + 9});
@@ -494,7 +498,7 @@ export const actions = {
   "game-save": async () => {
     if (ui.game && ui.game.type === "sort") {
       const q = ui.game;
-      return q.order.length === q.items.length ? answer({type: "sort", pid: q.pid, keys: q.order.map((i) => q.items[i].key)}) : undefined;
+      return q.order.length === q.items.length ? answer({type: "sort", pid: q.pid, keys: q.order.map((i) => q.items[i].key), ranks: ranksOf(q)}) : undefined;
     }
     if (ui.game && ui.game.type === "place") {
       const c = ui.game.choice;
@@ -520,7 +524,7 @@ export const actions = {
     else if (v.type === "sort") {
       const p = people().find((x) => x.id === v.pid);
       const items = p ? v.keys.map((k) => p.photos.find((f) => f.key === k)).filter(Boolean) : [];
-      ui.game = items.length === v.keys.length ? {type: "sort", pid: p.id, name: p.name, items: items.slice().sort(() => Math.random() - 0.5), order: []} : null;
+      ui.game = items.length === v.keys.length ? {type: "sort", pid: p.id, name: p.name, items: items.slice().sort(() => Math.random() - 0.5), order: [], ties: []} : null;
     }
     else if (v.type === "place") ui.game = {type: "place", key: v.key, choice: null};
     else {

@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.59 – 2026-11-04 – Game: photos of the same age in a sorted row
+- When sorting 3–5 photos you can say that the next photo is the same age as the one before ("Next one is the same age"): the ranks then read 1, 2, 2, 4, 5. Photos of the same rank are not put in an order to each other; they only count as younger or older than the others.
+
 ## 0.9.58 – 2026-11-03 – Estimates from the rows for photos without AI estimate; legend and FAQ
 - A photo without an AI estimate gets an estimate when you sorted it into a row between two fixed anchors: the year comes from its place in the row, the span is the two anchors. The detail view says so. Photos in no row stay without an estimate.
 - New page "Help" (settings window, button "Help"): legend of the states (anchor, draft, estimate, warning) and of the marks on the tiles, and questions with answers (how a year comes about, what is written to Immich and Gramps, playing on the phone, …).
