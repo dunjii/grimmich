@@ -96,9 +96,15 @@ x-casaos:
 
 ## The game for several players
 
-The game ("Who is older?") can be played by several people. Open `/play/` (for example `http://zimaboard:8765/play/`), choose or type your name, and answer. Everything the game may reach lies under `/play/`: the server hands out only the photos, faces and estimates the game needs (no settings, keys, birth dates or Gramps events) and accepts only single, checked answers. Answers are appended to the list together with the player's name, they never replace the file. Nothing is written to Immich or Gramps.
+The game ("Who is older?") can be played by several people. Open `/play/` (for example `http://zimaboard:8765/play/`) and sign in with a name and a password. You create the players yourself: gear icon → "Game for several players" → enter a name → Grimmich makes up a password and shows it **once**; you pass it on in person (no e-mail server is needed). The same page lets you give a new password, block or remove a player. Players can change their own password and sign out ("Account" in the game).
 
-If you put Grimmich behind a reverse proxy or a tunnel for people outside your network, forward **only** the path `/play/`. Note that the game shows your photos, so anybody who can open it sees them; there is no login yet.
+Everything the game may reach lies under `/play/`, checked against a fixed list on the server. Without signing in, only the sign-in page is served: no photo, face or estimate. After signing in the server hands out only what the game needs (no settings, keys, birth dates or Gramps events) and accepts only single, checked answers. Answers are appended to the list with the name of the signed-in player (a name in the request is ignored) and never replace the file. Nothing is written to Immich or Gramps.
+
+**Hidden people (optional).** In the same settings section you can switch on a list of people who are not shown in the game from outside: no photo with them is handed out, not even by address. Faces that Immich does not recognise cannot be hidden this way. On your own computer nothing is hidden.
+
+**Protection.** Passwords are stored only as salted scrypt hashes. Sign-in is slowed down after wrong passwords (per name, per address and in total); asking for many addresses that do not exist is slowed down too; `/play/robots.txt` and a `noindex` header ask search engines to stay away. A request that arrives through Tailscale Funnel can only reach `/play/`.
+
+**Making it reachable from outside.** Forward **only** the path `/play/` (with Tailscale Funnel, for example, only that path). Never forward the whole address: the rest of Grimmich has no sign-in because it is meant for your own network. Use HTTPS (Funnel provides it); then the sign-in cookie is marked "Secure" automatically.
 
 ## Where is the data?
 

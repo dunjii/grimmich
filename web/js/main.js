@@ -25,6 +25,7 @@ import {actions as aSimilar} from "./ui/hints.js";
 import {actions as aEvent, eventHtml} from "./ui/event.js";
 import {actions as aPlaces} from "./ui/places.js";
 import {gameHtml, actions as aGame, startOnPhone} from "./ui/game.js";
+import {checkSignIn} from "./ui/login.js";
 import {grAnchor} from "./gramps.js";
 import {tr, translatePage, setLanguage} from "./language.js";
 
@@ -173,6 +174,7 @@ document.addEventListener("keydown", (ev) => {
 // ------------------------------------------------------------------ Start
 (async function start() {
   translatePage();
+  if (PLAY) { const me = await checkSignIn(); if (!me) return; S.signedIn = me; }   // from outside only after signing in
   try { await loading(); }
   catch (e) { $("middle").innerHTML = '<div class="box warn">' + tr("The data could not be loaded. Is Grimmich still running?") + '</div>'; return; }
   if (PLAY) { ui.view = "game"; draw(); return; }   // play mode: only the game

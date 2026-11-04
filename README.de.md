@@ -96,9 +96,15 @@ x-casaos:
 
 ## Das Spiel für mehrere Spieler
 
-Das Spiel („Wer ist älter?“) können mehrere Personen spielen. Öffne `/play/` (zum Beispiel `http://zimaboard:8765/play/`), wähle oder tippe deinen Namen und beantworte die Fragen. Alles, was das Spiel erreichen darf, liegt unter `/play/`: Der Server liefert nur die Fotos, Gesichter und Schätzungen, die das Spiel braucht (keine Einstellungen, Schlüssel, Geburtsdaten oder Gramps-Ereignisse), und nimmt nur einzelne, geprüfte Antworten an. Die Antworten werden mit dem Spielernamen an die Liste angehängt und ersetzen nie die Datei. Nach Immich oder Gramps wird nichts geschrieben.
+Das Spiel („Wer ist älter?“) können mehrere Personen spielen. Öffne `/play/` (zum Beispiel `http://zimaboard:8765/play/`) und melde dich mit Name und Passwort an. Die Spieler legst du selbst an: Zahnrad → „Spiel für mehrere Spieler“ → Namen eingeben → Grimmich denkt sich ein Passwort aus und zeigt es **einmal** an; du gibst es persönlich weiter (einen Mailserver braucht es nicht). Auf derselben Seite vergibst du neue Passwörter, sperrst oder entfernst Spieler. Spieler können ihr Passwort selbst ändern und sich abmelden („Konto“ im Spiel).
 
-Wenn du Grimmich für Leute außerhalb deines Netzes hinter einen Reverse-Proxy oder einen Tunnel stellst, leite **nur** den Pfad `/play/` weiter. Das Spiel zeigt deine Fotos, wer es öffnen kann, sieht sie also; eine Anmeldung gibt es noch nicht.
+Alles, was das Spiel erreichen darf, liegt unter `/play/` und wird auf dem Server gegen eine feste Liste geprüft. Ohne Anmeldung wird nur die Anmeldeseite ausgeliefert: kein Foto, kein Gesicht, keine Schätzung. Nach der Anmeldung liefert der Server nur, was das Spiel braucht (keine Einstellungen, Schlüssel, Geburtsdaten oder Gramps-Ereignisse), und nimmt nur einzelne, geprüfte Antworten an. Die Antworten werden mit dem Namen des angemeldeten Spielers an die Liste angehängt (ein Name in der Anfrage wird ignoriert) und ersetzen nie die Datei. Nach Immich oder Gramps wird nichts geschrieben.
+
+**Verborgene Personen (optional).** In demselben Bereich der Einstellungen kannst du eine Liste von Personen einschalten, die im Spiel von außen nicht gezeigt werden: Kein Foto mit ihnen wird ausgeliefert, auch nicht über die Adresse. Gesichter, die Immich nicht erkennt, lassen sich so nicht verbergen. Auf deinem eigenen Rechner wird nichts verborgen.
+
+**Schutz.** Passwörter werden nur als gesalzene scrypt-Hashes gespeichert. Nach falschen Passwörtern wird die Anmeldung gebremst (pro Name, pro Adresse und insgesamt); auch wer viele nicht vorhandene Adressen abfragt, wird gebremst. `/play/robots.txt` und ein `noindex`-Header bitten Suchmaschinen, wegzubleiben. Eine Anfrage, die über Tailscale Funnel hereinkommt, erreicht nur `/play/`.
+
+**Von außen erreichbar machen.** Leite **nur** den Pfad `/play/` weiter (bei Tailscale Funnel zum Beispiel nur diesen Pfad). Gib niemals die ganze Adresse frei: Der Rest von Grimmich hat keine Anmeldung, weil er für dein eigenes Netz gedacht ist. Nutze HTTPS (Funnel liefert es); dann wird das Anmelde-Cookie automatisch als „Secure“ markiert.
 
 ## Wo liegen die Daten?
 

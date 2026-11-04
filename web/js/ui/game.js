@@ -10,6 +10,7 @@ import {unitFromKey, placeFrom, immichDate} from "../model.js";
 import {suggestions, norm} from "./places.js";
 import {peopleOn} from "./event.js";
 import {tr} from "../language.js";
+import {signOut, changePassword} from "./login.js";
 
 const narrow = () => window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
 const pairId = (a, b) => [a, b].sort().join("|");
@@ -376,15 +377,26 @@ function playerHtml() {
     <div class="game-answer"><input class="game-input" id="game-player-input" placeholder="${esc(tr("Your name"))}" maxlength="60" autocomplete="off">
       <button class="game-btn primary" data-a="game-player-new">${tr("Start")}</button></div></div>`;
 }
+// From outside: the own account (change password, sign out)
+function accountHtml() {
+  return `<div class="game-q">${esc(S.player)}</div>
+    <form id="account-form" class="login-form">
+      <input class="game-input" id="account-old" type="password" placeholder="${esc(tr("Old password"))}" maxlength="200" autocomplete="current-password" required>
+      <input class="game-input" id="account-new" type="password" placeholder="${esc(tr("New password (at least 8 characters)"))}" maxlength="100" minlength="8" autocomplete="new-password" required>
+      <button class="game-btn primary" type="submit">${tr("Change password")}</button>
+      <div class="quiet login-note" id="account-note" role="alert"></div>
+    </form>
+    <div class="game-answer"><button class="game-btn" data-a="game-signout">${tr("Sign out")}</button></div>`;
+}
 export function gameHtml() {
   if (!S.grPlaces) loadGrampsPlaces(false);
   if (!S.player) return playerHtml();
   if (ui.game === undefined || ui.game === null) ui.game = pickQuestion();
   const q = ui.game, n = S.game.votes.filter((v) => v.player === S.player).length;
-  const note = narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
-  const body = ui.gameResults ? resultsHtml() : q ? questionHtml(q)
+  const note = !PLAY && narrow() && !recall("fullView", false) ? `<span class="quiet game-hint">${tr("The full interface is made for large screens.")}</span>` : "";
+  const body = PLAY && ui.gameAccount ? accountHtml() : ui.gameResults ? resultsHtml() : q ? questionHtml(q)
     : `<div class="empty game-empty">${people().length || unnamed().length ? tr("All questions answered. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
-  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="quiet">${esc(S.player)}</span><button class="small" data-a="game-player-change">${tr("Change player")}</button><span class="space"></span>
+  return `<div class="game-full ${ui.gameResults ? "results" : ""}"><div class="game-bar"><b>${tr("Game")}</b><span class="quiet">${tr("{n} {n:answer|answers} so far", {n})}</span>${note}<span class="quiet">${esc(S.player)}</span>${PLAY ? `<button class="small" data-a="game-account">${ui.gameAccount ? tr("Back to game") : tr("Account")}</button>` : `<button class="small" data-a="game-player-change">${tr("Change player")}</button>`}<span class="space"></span>
       ${PLAY ? "" : `<button data-a="game-results">${ui.gameResults ? tr("Back to game") : tr("Results")}</button><button data-a="game-leave">${tr("Back to Grimmich")}</button>`}</div>${body}
     <div class="quiet game-foot">${tr("Nothing is written to Immich or Gramps. Your answers stay in Grimmich.")}</div></div>`;
 }
@@ -463,6 +475,8 @@ async function answer(v) {
 }
 
 export const actions = {
+  "game-account": () => { ui.gameAccount = !ui.gameAccount; draw(); },
+  "game-signout": () => signOut(),
   "game-view": (el) => {
     const d = el.dataset;
     if (d.pair) viewer(d.pair.split("|").map((key) => ({key})), +d.i || 0);
@@ -560,6 +574,16 @@ export const actions = {
   },
 };
 
+document.addEventListener("submit", async (ev) => {
+  if (ev.target.id !== "account-form") return;
+  ev.preventDefault();
+  const note = document.getElementById("account-note");
+  try {
+    const {status, body} = await changePassword(document.getElementById("account-old").value, document.getElementById("account-new").value);
+    if (body.ok) { ui.gameAccount = false; draw(); return; }
+    note.textContent = status === 429 ? tr("Too many attempts. Please wait a few minutes.") : body.error === "short" ? tr("The new password must have at least 8 characters.") : tr("The old password is wrong.");
+  } catch (e) { note.textContent = tr("The server did not respond."); }
+});
 document.addEventListener("keydown", (ev) => {
   if (ui.view !== "game" || document.querySelector(".game-viewer")) return;
   if (ev.key === "Enter" && ev.target.id === "game-player-input") { ev.preventDefault(); actions["game-player-new"](); return; }

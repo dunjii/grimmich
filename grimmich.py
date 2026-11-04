@@ -17,6 +17,7 @@ import re
 import subprocess
 import sys
 import threading
+import time
 import urllib.parse
 import urllib.request
 from collections import deque
@@ -35,6 +36,7 @@ import run_check as run_check_mod  # noqa: E402
 from immich import Immich  # noqa: E402
 import connections  # noqa: E402
 import face_crops  # noqa: E402
+import auth  # noqa: E402
 import play  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
@@ -430,6 +432,87 @@ def start_job(name, args):
 # ------------------------------------------------------------------ Server
 
 RATE = play.RateLimit()
+PLAYERS_FILE = "players.json"
+_players_lock = threading.Lock()
+LOGIN_BY_NAME, LOGIN_BY_IP, LOGIN_ALL = auth.FailLimit(8, 900), auth.FailLimit(20, 900), auth.FailLimit(100, 900)   # wrong passwords: per name, per address, in total
+UNKNOWN_PATHS = auth.FailLimit(40, 60)   # a source asking for many addresses that do not exist (scanners) is slowed down
+_HIDDEN = {"t": 0.0, "sig": None, "value": (frozenset(), frozenset(), frozenset())}
+
+
+def players_doc():
+    """The accounts (see auth.py); the secret for the cookies is made once and kept."""
+    with _players_lock:
+        raw = read_json(PLAYERS_FILE, {})
+        doc = auth.prepared(raw)
+        if not isinstance(raw, dict) or raw.get("secret") != doc["secret"]:
+            write_json(PLAYERS_FILE, doc)
+        return doc
+
+
+def change_players(fn):
+    """Applies fn(doc) -> (doc, result) to the accounts under a lock and saves the new document."""
+    with _players_lock:
+        doc, result = fn(auth.prepared(read_json(PLAYERS_FILE, {})))
+        write_json(PLAYERS_FILE, doc)
+        _HIDDEN["sig"] = None
+    return result
+
+
+def hidden():
+    """(photo keys, person ids, names) that are not shown to players from outside (only when the list is switched on)."""
+    doc = players_doc()
+    ids = tuple(sorted(doc["excluded"])) if doc["exclude_on"] else ()
+    if not ids:
+        return frozenset(), frozenset(), frozenset()
+    if _HIDDEN["sig"] == ids and time.time() - _HIDDEN["t"] < 30:
+        return _HIDDEN["value"]
+    pp = people_photos()
+    keys, names = set(), set()
+    for p in (pp.get("people", []) if pp.get("ok") else []):
+        if p["id"] in ids:
+            keys |= {f["key"] for f in p["photos"]}
+            names.add(p["name"])
+    _HIDDEN.update(t=time.time(), sig=ids, value=(frozenset(keys), frozenset(ids), frozenset(names)))
+    return _HIDDEN["value"]
+
+
+def players_view():
+    """For the settings page: who may play, and what is hidden. No password hashes."""
+    doc = players_doc()
+    return {"ok": True, "players": auth.public_list(doc), "exclude_on": doc["exclude_on"], "excluded": doc["excluded"], "hidden_count": len(hidden()[0])}
+
+
+def players_change(data_):
+    """One change of the accounts from the settings page. A new password is only returned here, once."""
+    op, key = data_.get("op"), data_.get("key")
+    state = {"password": None, "name": None, "error": None}
+
+    def run(doc):
+        if op == "add":
+            doc, state["password"], state["error"] = auth.add_player(doc, data_.get("name"), datetime.datetime.now().isoformat(timespec="seconds"))
+            state["name"] = play.clean_text(data_.get("name"), 40)
+        elif op == "reset" and key in doc["players"]:
+            doc, state["password"] = auth.reset_password(doc, key)
+            state["name"] = doc["players"][key]["name"]
+        elif op == "block" and key in doc["players"]:
+            doc = auth.set_blocked(doc, key, data_.get("blocked") is True)
+        elif op == "remove" and key in doc["players"]:
+            doc = auth.remove_player(doc, key)
+        elif op == "exclude":
+            ids = data_.get("people")
+            doc["exclude_on"] = data_.get("on") is True
+            doc["excluded"] = sorted({i for i in (ids if isinstance(ids, list) else []) if play.clean_text(i, 80, allow_empty=False)})
+        else:
+            state["error"] = "unknown"
+        return doc, None
+
+    change_players(run)
+    out = players_view()
+    if state["error"]:
+        return {"ok": False, "error": state["error"]}, 400
+    if state["password"]:
+        out.update(password=state["password"], password_for=state["name"])
+    return out, 200
 
 
 def play_all():
@@ -438,16 +521,17 @@ def play_all():
     with _lock_:
         work = load_work()
     people = read_json("people.json", {"people": {}, "all": []})
-    return play.build_data(photos, work, read_results(), read_json("corrections.json", {}), people.get("all", []), read_json("age_per_photo.json", {}),
+    hidden_keys, hidden_people, hidden_names = hidden()
+    return play.build_data(photos, work, read_results(), read_json("corrections.json", {}), [n for n in people.get("all", []) if n not in hidden_names], read_json("age_per_photo.json", {}),
                            people_photos(), (read_json("immich_data.json", {"photos": {}}) or {}).get("photos", {}), read_json("place_assignment.json", {}),
-                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version())
+                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version(), hidden_keys, hidden_people)
 
 
-def handle_vote(data_):
+def handle_vote(data_, signed_in=None):
     """One answer of a player, added to the list (op "add") or the last answer of this player taken back (op "undo"). -> (answer, code)"""
     if not isinstance(data_, dict):
         return {"ok": False}, 400
-    player, op = play.clean_player(data_.get("player")), data_.get("op")
+    player, op = signed_in or play.clean_player(data_.get("player")), data_.get("op")   # from outside the name comes from the sign-in, never from the request
     if not player or op not in ("add", "undo"):
         return {"ok": False}, 400
     if not RATE.allow():
@@ -458,6 +542,8 @@ def handle_vote(data_):
             new = play.undo_last(votes, player)
         else:
             keys = {p["key"] for p in read_json(PHOTOS_FILE, {"photos": []}).get("photos", []) if "key" in p}
+            if signed_in:
+                keys -= hidden()[0]
             vote = play.validate_vote(data_.get("vote"), keys)
             if vote is None:
                 return {"ok": False}, 400
@@ -472,16 +558,39 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, *args):
         pass
 
-    def _send(self, code, data_, type_):
+    def _send(self, code, data_, type_, headers=()):
         self.send_response(code)
         self.send_header("Content-Type", type_)
         self.send_header("Content-Length", str(len(data_)))
-        self.send_header("Cache-Control", "max-age=3600" if type_ == "image/jpeg" else "no-store")
+        # pictures are only kept in the browser, not in shared caches (from outside they are for signed-in players only)
+        self.send_header("Cache-Control", "private, max-age=3600" if type_ == "image/jpeg" and self.path.startswith("/play/") else "max-age=3600" if type_ == "image/jpeg" else "no-store")
+        if self.path.startswith("/play"):
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+            self.send_header("X-Content-Type-Options", "nosniff")
+        for name, value in headers:
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(data_)
 
-    def _json(self, obj, code=200):
-        self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json")
+    def _json(self, obj, code=200, headers=()):
+        self._send(code, json.dumps(obj, ensure_ascii=False).encode("utf-8"), "application/json", headers)
+
+    def _ip(self):
+        """Where the request comes from (behind a tunnel the address is in X-Forwarded-For)."""
+        forwarded = (self.headers.get("X-Forwarded-For") or "").split(",")[0].strip()
+        return forwarded or self.client_address[0]
+
+    def _secure(self):
+        return (self.headers.get("X-Forwarded-Proto") or "").lower() == "https"
+
+    def _player(self):
+        """(key, entry) of the signed-in player, or None."""
+        token = auth.cookie_value(self.headers.get("Cookie"))
+        return auth.read_token(players_doc(), token) if token else None
+
+    def _from_funnel(self, path_):
+        """A request that came in through Tailscale Funnel may only reach /play/ (everything else is for you alone)."""
+        return bool(self.headers.get("Tailscale-Funnel-Request")) and not (path_ == "/play" or path_.startswith("/play/"))
 
     def _file(self, path_):
         type_ = mimetypes.guess_type(path_)[0] or "application/octet-stream"
@@ -491,7 +600,12 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, f.read(), type_)
 
     def _body(self):
-        length = int(self.headers.get("Content-Length") or 0)
+        try:
+            length = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            return None
+        if self.path.startswith("/play/") and length > 100000:   # from outside nobody needs more than a short answer
+            return None
         try:
             return json.loads(self.rfile.read(length).decode("utf-8") or "{}")
         except ValueError:
@@ -506,10 +620,28 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header("Location", "/play/")
             self.end_headers()
             return
-        if path_.startswith("/play/"):   # play mode: only what play.ALLOWED_GET lets through
+        if self._from_funnel(path_):
+            self._send(404, b"not found", "text/plain")
+            return
+        if path_.startswith("/play/"):   # play mode: only what play.ALLOWED_GET lets through, data only for signed-in players
             path_ = path_[len("/play"):]
+            ip = self._ip()
+            if UNKNOWN_PATHS.blocked(ip):
+                self._send(429, b"too many requests", "text/plain")
+                return
             if not play.ALLOWED_GET.match(path_):
+                UNKNOWN_PATHS.fail(ip)
                 self._send(404, b"not found", "text/plain")
+                return
+            if path_ == "/robots.txt":
+                self._send(200, play.ROBOTS, "text/plain")
+                return
+            me = self._player()
+            if path_ == "/api/me":
+                self._json({"ok": True, "name": me[1]["name"]} if me else {"ok": False}, 200 if me else 401)
+                return
+            if play.LOGIN_NEEDED.match(path_) and not me:
+                self._json({"ok": False, "login": True}, 401)
                 return
             if path_ == "/api/all":
                 self._json(play_all())
@@ -517,8 +649,16 @@ class Handler(BaseHTTPRequestHandler):
             if path_ == "/api/gramps_places":
                 self._json(connections.gramps_orte(new_=False))
                 return
+            if path_.startswith(("/photos/", "/crops/")):   # photos with hidden people do not exist for players
+                name = os.path.basename(urllib.parse.unquote(path_.split("/", 2)[2]))
+                m = re.match(r"^(.+)_(\d+)_(\d+)_(\d+)_(\d+)_(\d+)\.jpg$", name) if path_.startswith("/crops/") else None
+                if (m.group(1) if m else name[:-4]) in hidden()[0]:
+                    self._send(404, b"not found", "text/plain")
+                    return
         if path_ in READ_ACCESS:
             self._json(read_json(*READ_ACCESS[path_]))
+        elif path_ == "/api/players":
+            self._json(players_view())
         elif path_ == "/api/all":
             self._json(everything())
         elif path_ == "/api/work":
@@ -574,6 +714,55 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(404, b"not found", "text/plain")
 
+    def _play_post(self, path_, data_, ip):
+        """Sign in, sign out, change the own password, give an answer (only for signed-in players)."""
+        if not isinstance(data_, dict):
+            self._json({"ok": False}, 400)
+            return
+        if path_ == "/api/login":
+            name, password = data_.get("name"), data_.get("password")
+            key = auth.name_key(name) if isinstance(name, str) else None
+            if any(limit.blocked(k) for limit, k in ((LOGIN_BY_NAME, key or ""), (LOGIN_BY_IP, ip), (LOGIN_ALL, "all"))):
+                self._json({"ok": False, "wait": True}, 429)
+                return
+            found = auth.sign_in(players_doc(), name, password)
+            if found is None:
+                for limit, k in ((LOGIN_BY_NAME, key or ""), (LOGIN_BY_IP, ip), (LOGIN_ALL, "all")):
+                    limit.fail(k)
+                self._json({"ok": False}, 401)
+                return
+            LOGIN_BY_NAME.clear(found)
+            doc = players_doc()
+            self._json({"ok": True, "name": doc["players"][found]["name"]}, 200, [("Set-Cookie", auth.cookie_header(auth.make_token(doc, found), self._secure()))])
+            return
+        if path_ == "/api/logout":
+            self._json({"ok": True}, 200, [("Set-Cookie", auth.cookie_header("", self._secure(), clear=True))])
+            return
+        me = self._player()
+        if not me:
+            self._json({"ok": False, "login": True}, 401)
+            return
+        key, entry = me
+        if path_ == "/api/password":
+            if LOGIN_BY_NAME.blocked("pw:" + key):
+                self._json({"ok": False, "wait": True}, 429)
+                return
+            result = {}
+
+            def run(doc):
+                doc, result["error"] = auth.change_own_password(doc, key, data_.get("old"), data_.get("new"))
+                return doc, None
+            change_players(run)
+            if result["error"]:
+                if result["error"] == "wrong":
+                    LOGIN_BY_NAME.fail("pw:" + key)
+                self._json({"ok": False, "error": result["error"]}, 400)
+                return
+            self._json({"ok": True}, 200, [("Set-Cookie", auth.cookie_header(auth.make_token(players_doc(), key), self._secure()))])
+            return
+        answer, code = handle_vote(data_, signed_in=entry["name"])   # the name comes from the sign-in, never from the request
+        self._json(answer, code)
+
     def do_POST(self):
         messages.set_language(self.headers.get("X-Language"))
         path_ = urllib.parse.urlparse(self.path).path
@@ -581,13 +770,23 @@ class Handler(BaseHTTPRequestHandler):
         if data_ is None:
             self._send(400, b"ungueltig", "text/plain")
             return
-        if path_.startswith("/play/"):   # play mode: only answers
+        if self._from_funnel(path_):
+            self._send(404, b"not found", "text/plain")
+            return
+        if path_.startswith("/play/"):   # play mode: only sign-in and answers
             path_ = path_[len("/play"):]
-            if path_ not in play.ALLOWED_POST:
+            ip = self._ip()
+            if path_ not in play.ALLOWED_POST or UNKNOWN_PATHS.blocked(ip):
+                UNKNOWN_PATHS.fail(ip)
                 self._send(404, b"not found", "text/plain")
                 return
+            self._play_post(path_, data_, ip)
+            return
         if path_ == "/api/vote":
             answer, code = handle_vote(data_)
+            self._json(answer, code)
+        elif path_ == "/api/players" and isinstance(data_, dict):
+            answer, code = players_change(data_)
             self._json(answer, code)
         elif path_ in WRITING and isinstance(data_, dict):
             file_path, required = WRITING[path_]

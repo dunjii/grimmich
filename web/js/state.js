@@ -70,7 +70,7 @@ export async function loading() {
   S.immichData = (a.immich_data || {}).photos || {};
   S.version = a.version || "";
   S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? a.game_votes : {votes: []};
-  S.player = recall("player", "");
+  S.player = S.signedIn || recall("player", "");   // from outside the name comes from the sign-in
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
   S.ez = a.event_assignment && typeof a.event_assignment === "object" ? a.event_assignment : {};

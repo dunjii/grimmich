@@ -6,8 +6,10 @@ export const esc = (t) => String(t ?? "").replace(/[&<>"']/g, (c) => ({"&": "&am
 export const BASE = location.pathname === "/play" || location.pathname.startsWith("/play/") ? "/play" : "";
 export const PLAY = BASE !== "";
 export const image = (key) => BASE + "/photos/" + encodeURIComponent(key) + ".jpg";
-export const fetchIt = async (path) => (await fetch(BASE + path, {headers: {"X-Language": language}})).json();
-export const send = async (path, data) => (await fetch(BASE + path, {method: "POST", headers: {"X-Language": language}, body: JSON.stringify(data)})).json();
+// From outside, a missing or expired sign-in (401) leads back to the sign-in page.
+const answerOf = (r) => { if (PLAY && r.status === 401) location.reload(); return r.json(); };
+export const fetchIt = async (path) => answerOf(await fetch(BASE + path, {headers: {"X-Language": language}}));
+export const send = async (path, data) => answerOf(await fetch(BASE + path, {method: "POST", headers: {"X-Language": language}, body: JSON.stringify(data)}));
 export const median = (a) => { const s = a.slice().sort((x, y) => x - y); return s[Math.floor(s.length / 2)]; };
 export const newId = () => Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36) + Math.floor(Math.random() * 1296).toString(36);
 export const p2 = (x) => String(x).padStart(2, "0");

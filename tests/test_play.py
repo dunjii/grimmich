@@ -86,11 +86,28 @@ class TestData(unittest.TestCase):
         self.assertEqual(d["connection"], {"immich": {}, "gramps": {}, "gramps_write": {}, "written": {}})
         self.assertEqual(d["work"]["series"][0]["photos"], ["F1_abc123"])
 
+    def test_hidden_photos_and_people_are_left_out(self):
+        pp = {"ok": True, "people": [{"id": "p1", "name": "Anna", "birth": None, "photos": [{"key": "F1_abc123", "box": [1, 2, 3, 4, 5, 6]}, {"key": "F2_abc123", "box": [1, 2, 3, 4, 5, 6]}]},
+                                     {"id": "p2", "name": "Ben", "birth": None, "photos": [{"key": "F1_abc123", "box": [1, 2, 3, 4, 5, 6]}]}],
+              "unnamed": [{"key": "F1_abc123", "box": [1, 2, 3, 4, 5, 6]}, {"key": "F3_abc123", "box": [1, 2, 3, 4, 5, 6]}]}
+        votes = [{"type": "decade", "key": "F1_abc123", "from": 1950, "to": 1959, "player": "x"}, {"type": "decade", "key": "F2_abc123", "from": 1950, "to": 1959, "player": "x"},
+                 {"type": "sort", "pid": "p", "keys": ["F2_abc123", "F1_abc123", "F3_abc123"], "player": "x"}]
+        d = play.build_data({"photos": [{"key": k} for k in sorted(KEYS)]}, {"series": [{"id": "S1", "photos": ["F1_abc123", "F2_abc123"]}]}, [{"key": "F1_abc123", "year": 1950}, {"key": "F2_abc123", "year": 1951}],
+                            {}, ["Anna", "Ben"], {"F1_abc123": [{"name": "Ben", "age": 3}]}, pp, {"F1_abc123": {"date": "1950-01-01"}}, {"F1_abc123": {}}, {}, votes, "1.0",
+                            hidden_keys={"F1_abc123"}, hidden_people={"p2"})
+        text = json.dumps(d)
+        self.assertNotIn("F1_abc123", text)
+        self.assertEqual([p["id"] for p in d["people_photos"]["people"]], ["p1"])
+        self.assertEqual([f["key"] for f in d["people_photos"]["people"][0]["photos"]], ["F2_abc123"])
+        self.assertEqual([u["key"] for u in d["people_photos"]["unnamed"]], ["F3_abc123"])
+        self.assertEqual(d["work"]["series"][0]["photos"], ["F2_abc123"])
+        self.assertEqual(len(d["game_votes"]["votes"]), 1)   # the answers that touch a hidden photo are not handed out either
+
     def test_allowed_addresses(self):
-        for ok in ("/", "/style.css", "/js/main.js", "/js/ui/game.js", "/api/all", "/api/languages", "/api/language/de", "/photos/F1_abc123.jpg", "/crops/F1_1_1_1_1_1_1.jpg"):
+        for ok in ("/", "/style.css", "/js/main.js", "/js/ui/game.js", "/api/all", "/api/languages", "/api/language/de", "/photos/F1_abc123.jpg", "/crops/F1_1_1_1_1_1_1.jpg", "/api/me", "/robots.txt"):
             self.assertTrue(play.ALLOWED_GET.match(ok), ok)
         for no in ("/api/connection", "/api/work", "/api/job", "/api/corrections", "/api/order", "/api/gramps_events", "/api/write_preview", "/grimmich.py",
-                   "/js/../index.html", "/js/%2e%2e/x.js", "/js/main.py", "/api/people", "/photos/../x.jpg", "/play/api/all"):
+                   "/js/../index.html", "/js/%2e%2e/x.js", "/js/main.py", "/api/people", "/photos/../x.jpg", "/play/api/all", "/api/players", "/api/players.json"):
             self.assertFalse(play.ALLOWED_GET.match(no), no)
 
 
@@ -104,60 +121,234 @@ class TestServer(unittest.TestCase):
             json.dump({"photos": [{"key": k} for k in sorted(KEYS)]}, f)
         with open("immich.env", "w", encoding="utf-8") as f:
             f.write("IMMICH_API_KEY=TOP-SECRET-KEY\n")
+        os.makedirs(os.path.join("series_output", "photos"))
+        for k in KEYS:
+            with open(os.path.join("series_output", "photos", k + ".jpg"), "wb") as f:
+                f.write(b"\xff\xd8jpeg")
         cls.server = ThreadingHTTPServer(("127.0.0.1", 0), grimmich.Handler)
         threading.Thread(target=cls.server.serve_forever, daemon=True).start()
         cls.port = cls.server.server_address[1]
+        cls.passwords = {}
+        for name in ("Anna", "Ben"):
+            cls.passwords[name] = grimmich.players_change({"op": "add", "name": name})[0]["password"]
 
     @classmethod
     def tearDownClass(cls):
         cls.server.shutdown()
         os.chdir(ORIGINAL)
 
-    def call(self, method, path, body=None):
+    def setUp(self):
+        for limit in (grimmich.UNKNOWN_PATHS, grimmich.LOGIN_BY_NAME, grimmich.LOGIN_BY_IP, grimmich.LOGIN_ALL):
+            limit.fails.clear()
+        grimmich.RATE.times.clear()
+
+    def raw(self, method, path, body=None, cookie=None, headers=None):
         c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
-        c.request(method, path, body=json.dumps(body) if body is not None else None)
+        h = dict(headers or {})
+        if cookie:
+            h["Cookie"] = cookie
+        c.request(method, path, body=json.dumps(body) if body is not None else None, headers=h)
         r = c.getresponse()
         data = r.read()
+        out = (r.status, data, r)
         c.close()
-        return r.status, data
+        return out
 
-    def test_the_game_page_and_its_data(self):
+    def call(self, method, path, body=None, cookie=None, headers=None):
+        status, data, _ = self.raw(method, path, body, cookie, headers)
+        return status, data
+
+    def login(self, name="Anna", password=None):
+        status, data, r = self.raw("POST", "/play/api/login", {"name": name, "password": password or self.passwords[name]})
+        self.assertEqual(status, 200, data)
+        return r.getheader("Set-Cookie").split(";")[0]
+
+    def test_the_game_page_is_free_but_its_data_needs_a_sign_in(self):
         status, data = self.call("GET", "/play/")
         self.assertEqual(status, 200)
         self.assertIn(b"<html", data.lower())
-        status, data = self.call("GET", "/play/api/all")
+        self.assertEqual(self.call("GET", "/play")[0], 301)
+        for path in ("/play/api/all", "/play/api/gramps_places", "/play/photos/F1_abc123.jpg", "/play/crops/F1_1_1_1_1_1_1.jpg", "/play/api/me"):
+            self.assertEqual(self.call("GET", path)[0], 401, path)
+        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "add", "vote": {"type": "decade", "key": "F1_abc123", "from": 1950, "to": 1959}, "player": "Anna"})[0], 401)
+        self.assertEqual(self.call("POST", "/play/api/password", {"old": "a", "new": "bbbbbbbbb"})[0], 401)
+
+    def test_signed_in_player_gets_the_data(self):
+        cookie = self.login()
+        status, data = self.call("GET", "/play/api/all", cookie=cookie)
         self.assertEqual(status, 200)
         self.assertNotIn(b"TOP-SECRET-KEY", data)
-        self.assertEqual(self.call("GET", "/play")[0], 301)
+        self.assertNotIn(b"scrypt", data)
+        self.assertEqual(json.loads(self.call("GET", "/play/api/me", cookie=cookie)[1])["name"], "Anna")
+        self.assertEqual(self.call("GET", "/play/photos/F1_abc123.jpg", cookie=cookie)[0], 200)
+
+    def test_cookie_is_safe_and_responses_say_no_indexing(self):
+        status, data, r = self.raw("POST", "/play/api/login", {"name": "anna", "password": self.passwords["Anna"]}, headers={"X-Forwarded-Proto": "https"})
+        cookie = r.getheader("Set-Cookie")
+        for part in ("HttpOnly", "SameSite=Lax", "Secure", "Path=/play/"):
+            self.assertIn(part, cookie)
+        self.assertIn("noindex", r.getheader("X-Robots-Tag"))
+        status, data, r = self.raw("GET", "/play/robots.txt")
+        self.assertEqual((status, data), (200, b"User-agent: *\nDisallow: /\n"))
+
+    def test_wrong_logins_are_refused_and_slowed_down(self):
+        for name, pw in (("Anna", "wrong"), ("Nobody", "x"), ("", ""), (None, None)):
+            self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": pw})[0], 401)
+        for _ in range(8):
+            self.call("POST", "/play/api/login", {"name": "Ben", "password": "wrong"})
+        status, data = self.call("POST", "/play/api/login", {"name": "Ben", "password": self.passwords["Ben"]})
+        self.assertEqual(status, 429)   # even the right password waits
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": "Anna", "password": self.passwords["Anna"]})[0], 200)   # other players are not affected
+
+    def test_a_flood_of_unknown_addresses_is_slowed_down(self):
+        codes = [self.call("GET", f"/play/wp-admin/{i}.php")[0] for i in range(45)]
+        self.assertEqual(codes[0], 404)
+        self.assertEqual(codes[-1], 429)
 
     def test_nothing_else_is_reachable_under_play(self):
-        for path in ("/play/api/connection", "/play/api/work", "/play/api/job", "/play/api/corrections", "/play/api/order", "/play/api/write_preview",
-                     "/play/api/gramps_events?h=x", "/play/api/people", "/play/immich.env", "/play/grimmich.py", "/play/js/../index.html", "/play/js/%2e%2e/index.html"):
-            self.assertEqual(self.call("GET", path)[0], 404, path)
-        for path in ("/play/api/work", "/play/api/corrections", "/play/api/order", "/play/api/connection", "/play/api/job", "/play/api/game_votes", "/play/api/connection_test"):
-            self.assertEqual(self.call("POST", path, {"series": []})[0], 404, path)
+        cookie = self.login()
+        for path in ("/play/api/connection", "/play/api/work", "/play/api/job", "/play/api/corrections", "/play/api/order", "/play/api/write_preview", "/play/api/players",
+                     "/play/api/gramps_events?h=x", "/play/api/people", "/play/immich.env", "/play/grimmich.py", "/play/players.json", "/play/js/../index.html", "/play/js/%2e%2e/index.html"):
+            self.assertEqual(self.call("GET", path, cookie=cookie)[0], 404, path)
+        for path in ("/play/api/work", "/play/api/corrections", "/play/api/order", "/play/api/connection", "/play/api/job", "/play/api/game_votes", "/play/api/connection_test", "/play/api/players"):
+            self.assertEqual(self.call("POST", path, {"series": []}, cookie=cookie)[0], 404, path)
 
     def test_old_whole_file_route_is_gone(self):
         self.assertEqual(self.call("POST", "/api/game_votes", {"votes": []})[0], 404)
 
-    def test_answers_are_appended_and_can_be_taken_back(self):
+    def test_the_management_pages_are_not_for_funnel(self):
+        self.assertEqual(self.call("GET", "/api/players")[0], 200)   # on your own computer
+        funnel = {"Tailscale-Funnel-Request": "?1"}
+        for path in ("/api/players", "/", "/api/all", "/api/connection"):
+            self.assertEqual(self.call("GET", path, headers=funnel)[0], 404, path)
+        self.assertEqual(self.call("POST", "/api/players", {"op": "add", "name": "Eve"}, headers=funnel)[0], 404)
+        self.assertEqual(self.call("GET", "/play/", headers=funnel)[0], 200)
+
+    def test_the_settings_page_never_gets_hashes(self):
+        status, data = self.call("GET", "/api/players")
+        self.assertEqual(status, 200)
+        self.assertNotIn(b"scrypt", data)
+        self.assertNotIn(self.passwords["Anna"].encode(), data)
+        self.assertEqual({p["name"] for p in json.loads(data)["players"]} >= {"Anna", "Ben"}, True)
+
+    def test_answers_come_with_the_name_of_the_sign_in(self):
+        anna, ben = self.login("Anna"), self.login("Ben")
         vote = {"type": "decade", "key": "F1_abc123", "from": 1950, "to": 1959}
-        s, d = self.call("POST", "/play/api/vote", {"op": "add", "vote": vote, "player": "Anna"})
+        s, d = self.call("POST", "/play/api/vote", {"op": "add", "vote": vote, "player": "Mallory"}, cookie=anna)   # a name in the request is ignored
         self.assertEqual(s, 200)
-        s, d = self.call("POST", "/play/api/vote", {"op": "add", "vote": vote, "player": "Ben"})
+        s, d = self.call("POST", "/play/api/vote", {"op": "add", "vote": vote}, cookie=ben)
         votes = json.loads(d)["votes"]
         self.assertEqual([v["player"] for v in votes if v.get("key") == "F1_abc123"][-2:], ["Anna", "Ben"])
-        s, d = self.call("POST", "/play/api/vote", {"op": "undo", "player": "Anna"})
+        self.assertNotIn("Mallory", [v["player"] for v in votes])
+        s, d = self.call("POST", "/play/api/vote", {"op": "undo"}, cookie=anna)   # takes back only the own answer
         votes = json.loads(d)["votes"]
         self.assertNotIn("Anna", [v["player"] for v in votes])
         self.assertIn("Ben", [v["player"] for v in votes])
 
     def test_bad_answers_are_refused(self):
-        good = {"type": "decade", "key": "F1_abc123", "from": 1950, "to": 1959}
-        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "add", "vote": good})[0], 400)   # no player
-        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "add", "vote": {"type": "who", "key": "../../x", "name": "A"}, "player": "A"})[0], 400)
-        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "delete", "player": "A"})[0], 400)
-        self.assertEqual(self.call("POST", "/play/api/vote", [1, 2])[0], 400)
+        cookie = self.login()
+        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "add", "vote": {"type": "who", "key": "../../x", "name": "A"}}, cookie=cookie)[0], 400)
+        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "delete"}, cookie=cookie)[0], 400)
+        self.assertEqual(self.call("POST", "/play/api/vote", [1, 2], cookie=cookie)[0], 400)
+
+    def test_big_requests_from_outside_are_refused(self):
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": "x" * 200000, "password": "y"})[0], 400)
+
+    def test_changing_blocking_and_removing(self):
+        name = "Carla"
+        password = grimmich.players_change({"op": "add", "name": name})[0]["password"]
+        cookie = self.login(name, password)
+        self.assertEqual(self.call("GET", "/play/api/me", cookie=cookie)[0], 200)
+        # wrong old password / too short
+        self.assertEqual(self.call("POST", "/play/api/password", {"old": "nope", "new": "long-enough-1"}, cookie=cookie)[0], 400)
+        self.assertEqual(self.call("POST", "/play/api/password", {"old": password, "new": "short"}, cookie=cookie)[0], 400)
+        s, d, r = self.raw("POST", "/play/api/password", {"old": password, "new": "long-enough-1"}, cookie=cookie)
+        self.assertEqual(s, 200)
+        fresh = r.getheader("Set-Cookie").split(";")[0]
+        self.assertEqual(self.call("GET", "/play/api/me", cookie=cookie)[0], 401)   # the old cookie ends with the new password
+        self.assertEqual(self.call("GET", "/play/api/me", cookie=fresh)[0], 200)
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": password})[0], 401)
+        # block, unblock, new password, remove (as you do in the settings)
+        grimmich.players_change({"op": "block", "key": "carla", "blocked": True})
+        self.assertEqual(self.call("GET", "/play/api/me", cookie=fresh)[0], 401)
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": "long-enough-1"})[0], 401)
+        grimmich.players_change({"op": "block", "key": "carla", "blocked": False})
+        again = grimmich.players_change({"op": "reset", "key": "carla"})[0]["password"]
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": again})[0], 200)
+        grimmich.players_change({"op": "remove", "key": "carla"})
+        self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": again})[0], 401)
+
+    def test_adding_players_checks_the_name(self):
+        self.assertEqual(grimmich.players_change({"op": "add", "name": "anna"})[1], 400)   # exists (not case sensitive)
+        self.assertEqual(grimmich.players_change({"op": "add", "name": "  "})[1], 400)
+        self.assertEqual(grimmich.players_change({"op": "nonsense"})[1], 400)
+
+    def test_signing_out_ends_the_cookie_in_the_browser(self):
+        s, d, r = self.raw("POST", "/play/api/logout", {}, cookie=self.login())
+        self.assertIn("Max-Age=0", r.getheader("Set-Cookie"))
+
+
+class TestHiddenPeople(unittest.TestCase):
+    """The list of people who are not shown from outside: no photo with them reaches a player, not even by address."""
+    @classmethod
+    def setUpClass(cls):
+        cls.folder = tempfile.mkdtemp()
+        os.chdir(cls.folder)
+        with open("photos.json", "w", encoding="utf-8") as f:
+            json.dump({"photos": [{"key": k} for k in sorted(KEYS)]}, f)
+        box = [10, 10, 50, 50, 100, 100]
+        with open("immich_state.json", "w", encoding="utf-8") as f:
+            json.dump({"people": {"p1": {"name": "Kid Test"}, "p2": {"name": "Anna Test"}},
+                       "photos": {"F1_abc123": {"faces": [{"p": "p1", "b": box}, {"p": "p2", "b": box}]}, "F2_abc123": {"faces": [{"p": "p2", "b": box}]}, "F3_abc123": {"faces": [{"p": "p2", "b": box}]}}}, f)
+        os.makedirs(os.path.join("series_output", "photos"))
+        for k in KEYS:
+            with open(os.path.join("series_output", "photos", k + ".jpg"), "wb") as f:
+                f.write(b"\xff\xd8jpeg")
+        cls.server = ThreadingHTTPServer(("127.0.0.1", 0), grimmich.Handler)
+        threading.Thread(target=cls.server.serve_forever, daemon=True).start()
+        cls.port = cls.server.server_address[1]
+        cls.password = grimmich.players_change({"op": "add", "name": "Anna"})[0]["password"]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        os.chdir(ORIGINAL)
+
+    def call(self, method, path, body=None, cookie=None):
+        c = http.client.HTTPConnection("127.0.0.1", self.port, timeout=10)
+        c.request(method, path, body=json.dumps(body) if body is not None else None, headers={"Cookie": cookie} if cookie else {})
+        r = c.getresponse()
+        data = r.read()
+        c.close()
+        return r.status, data, r
+
+    def cookie(self):
+        return self.call("POST", "/play/api/login", {"name": "Anna", "password": self.password})[2].getheader("Set-Cookie").split(";")[0]
+
+    def test_switch_and_list(self):
+        cookie = self.cookie()
+        vote = {"op": "add", "vote": {"type": "decade", "key": "F1_abc123", "from": 1950, "to": 1959}}
+        # switched off: everything is there
+        grimmich.players_change({"op": "exclude", "on": False, "people": ["p1"]})
+        keys = {p["key"] for p in json.loads(self.call("GET", "/play/api/all", cookie=cookie)[1])["photos"]["photos"]}
+        self.assertEqual(keys, KEYS)
+        self.assertEqual(self.call("GET", "/play/photos/F1_abc123.jpg", cookie=cookie)[0], 200)
+        # switched on with the child in the list: photos with the child are gone for players
+        view = grimmich.players_change({"op": "exclude", "on": True, "people": ["p1"]})[0]
+        self.assertEqual((view["exclude_on"], view["hidden_count"]), (True, 1))
+        data = json.loads(self.call("GET", "/play/api/all", cookie=cookie)[1])
+        self.assertEqual({p["key"] for p in data["photos"]["photos"]}, KEYS - {"F1_abc123"})
+        self.assertNotIn("Kid Test", json.dumps(data))
+        self.assertNotIn("F1_abc123", json.dumps(data))
+        self.assertEqual(self.call("GET", "/play/photos/F1_abc123.jpg", cookie=cookie)[0], 404)
+        self.assertEqual(self.call("GET", "/play/crops/F1_abc123_100_100_10_10_40.jpg", cookie=cookie)[0], 404)
+        self.assertEqual(self.call("GET", "/play/photos/F2_abc123.jpg", cookie=cookie)[0], 200)
+        self.assertEqual(self.call("POST", "/play/api/vote", vote, cookie=cookie)[0], 400)   # no answers about hidden photos either
+        # on your own computer nothing is hidden
+        self.assertEqual({p["key"] for p in json.loads(self.call("GET", "/api/all")[1])["photos"]["photos"]}, KEYS)
+        # switched off again
+        grimmich.players_change({"op": "exclude", "on": False, "people": ["p1"]})
+        self.assertEqual(self.call("GET", "/play/photos/F1_abc123.jpg", cookie=cookie)[0], 200)
 
 
 if __name__ == "__main__":

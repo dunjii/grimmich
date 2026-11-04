@@ -10,9 +10,11 @@ import threading
 import time
 
 # what may be asked for under /play/ (everything else is "not found")
-ALLOWED_GET = re.compile(r"^/$|^/(style\.css|favicon\.svg|favicon\.png)$|^/js/(?!.*\.\.)[\w./-]+\.js$|^/api/(all|languages|gramps_places)$"
+ALLOWED_GET = re.compile(r"^/$|^/(style\.css|favicon\.svg|favicon\.png|robots\.txt)$|^/js/(?!.*\.\.)[\w./-]+\.js$|^/api/(all|languages|gramps_places|me)$"
                          r"|^/api/language/[\w-]+$|^/photos/[^/]+\.jpg$|^/crops/[^/]+\.jpg$")
-ALLOWED_POST = {"/api/vote"}   # the game does not need anything else
+ALLOWED_POST = {"/api/vote", "/api/login", "/api/logout", "/api/password"}   # the game does not need anything else
+LOGIN_NEEDED = re.compile(r"^/api/(all|gramps_places|vote|password)$|^/photos/|^/crops/")   # everything with data or answers
+ROBOTS = b"User-agent: *\nDisallow: /\n"
 
 TYPES = {None, "older", "who", "place", "anchor", "sort", "decade"}
 MAX_VOTES = 200000
@@ -124,15 +126,25 @@ class RateLimit:
             return True
 
 
-def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version):
+def vote_keys(vote):
+    """All photo keys an answer refers to."""
+    keys = [vote.get(f) for f in ("key", "a", "b", "anchor")]
+    keys += vote.get("keys") if isinstance(vote.get("keys"), list) else []
+    return {k for k in keys if isinstance(k, str)}
+
+
+def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version, hidden_keys=frozenset(), hidden_people=frozenset()):
     """What the game gets: the same shape as the full interface expects at start, but only the parts the game needs.
     Not included: connection data and keys, write preview, order, assignments to Gramps, events, birth dates, descriptions."""
-    keys = {p["key"] for p in photos.get("photos", []) if isinstance(p, dict) and "key" in p}
+    keys = {p["key"] for p in photos.get("photos", []) if isinstance(p, dict) and "key" in p} - set(hidden_keys)   # hidden = photos with people who are not to be shown
+    votes = [v for v in votes if isinstance(v, dict) and not (vote_keys(v) & set(hidden_keys))]
     series = [{"id": s.get("id"), "photos": [k for k in s.get("photos", []) if k in keys]} for s in work.get("series", []) if isinstance(s, dict)]
     people = {"ok": False, "text": ""}
     if people_photos.get("ok"):
-        people = {"ok": True, "people": [{"id": p["id"], "name": p["name"], "birth": None, "photos": p["photos"]} for p in people_photos.get("people", [])],
-                  "unnamed": people_photos.get("unnamed", [])}
+        people = {"ok": True, "people": [{"id": p["id"], "name": p["name"], "birth": None, "photos": [f for f in p["photos"] if f["key"] in keys]}
+                                         for p in people_photos.get("people", []) if p["id"] not in hidden_people],
+                  "unnamed": [u for u in people_photos.get("unnamed", []) if u.get("key") in keys]}
+        people["people"] = [p for p in people["people"] if p["photos"]]
     own = {k: {"year": c.get("year"), "decimal_year": c.get("decimal_year"), "from": c.get("from"), "to": c.get("to"), "source": c.get("source")}
            for k, c in (corrections or {}).items() if k in keys and isinstance(c, dict) and c.get("source") in ("confirmed", "draft", "manual")}
     return {

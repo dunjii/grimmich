@@ -1,6 +1,6 @@
 // Gear wheel: connections (Immich, Gramps), assign people, single steps and log.
 import {S, ui, draw, saveAssign, mark} from "../state.js";
-import {$, esc, fetchIt, send} from "../util.js";
+import {$, esc, fetchIt, send, toast} from "../util.js";
 import {loadGrampsPeople, grCandidates, grStatus, GR_STATUS, grName, yearFromText} from "../gramps.js";
 import {startJob} from "../job.js";
 import {modal, closeIt} from "./dialog.js";
@@ -67,6 +67,7 @@ export function openSettings() {
           <div id="vt-gramps_schreiben">${testRows("gramps_schreiben")}</div></details>
         <div id="vt-probe">${testRows("probe")}</div></div></div>
     <div class="quiet">${tr("Keys and passwords are only stored on this computer and are never shown again.")}</div>
+    <details class="expand"><summary data-a="pl-open">${tr("Game for several players")}</summary><div id="players-box">${pl ? playersHtml() : ""}</div></details>
     <details class="expand" ${j.rc !== null && j.rc !== 0 ? "open" : ""}><summary>${tr("Single steps and settings")}</summary>
       <div class="bar-strip"><span class="quiet">${tr("Language")}</span><select id="language-pick">${languages.map((l) => `<option value="${l.code}" ${language === l.code ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></div>
       <div class="bar-strip"><span class="quiet">${tr("Threshold for series matching – person")}</span><input type="number" id="sp" step="0.01" min="0.5" max="0.99" value="${ui.thresholdPerson}">
@@ -92,6 +93,35 @@ async function saveConnection(kindVal) {
   return r;
 }
 const showTest = (kindVal, z) => { connResult[kindVal] = z; const el = $("vt-" + kindVal); if (el) el.innerHTML = testRows(kindVal); };
+
+
+// ------------------------------------------------------------------ Game for several players: accounts and hidden people
+let pl = null, plNote = null, plAsk = null;   // answer of /api/players, a new password to show once, an account waiting for "really remove?"
+function playersHtml() {
+  if (!pl) return `<div class="quiet">${tr("Checking …")}</div>`;
+  const people = (S.pf && S.pf.ok ? S.pf.people : []).filter((p) => p.photos.length >= 1).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  const rows = pl.players.map((p) => `<tr><td>${esc(p.name)}</td><td>${p.blocked ? `<span class="tag warn">${tr("blocked")}</span>` : ""}</td><td class="pl-buttons">
+      <button class="small" data-a="pl-reset" data-key="${esc(p.key)}">${tr("New password")}</button>
+      <button class="small" data-a="pl-block" data-key="${esc(p.key)}" data-blocked="${p.blocked ? "0" : "1"}">${p.blocked ? tr("Unblock") : tr("Block")}</button>
+      ${plAsk === p.key ? `<button class="small warn" data-a="pl-remove" data-key="${esc(p.key)}">${tr("Really remove")}</button><button class="small" data-a="pl-ask" data-key="">${tr("Cancel")}</button>` : `<button class="small" data-a="pl-ask" data-key="${esc(p.key)}">${tr("Remove")}</button>`}</td></tr>`).join("");
+  return `<div class="quiet">${tr("Players sign in at the address /play/ with a name and a password. Only /play/ may be shared on the internet, never the whole address.")}</div>
+    ${plNote ? `<div class="box pl-password"><b>${esc(plNote.name)}</b>: <code>${esc(plNote.password)}</code><div class="quiet">${tr("This password is shown only now. Pass it on in person.")}</div></div>` : ""}
+    ${pl.players.length ? `<div class="table-frame"><table class="to-tab"><tbody>${rows}</tbody></table></div>` : `<div class="quiet">${tr("No players yet.")}</div>`}
+    <div class="bar-strip"><input id="pl-name" maxlength="40" placeholder="${esc(tr("Name of the new player"))}" autocomplete="off"><button class="small primary" data-a="pl-add">${tr("Add player")}</button></div>
+    <label class="tick-box"><input type="checkbox" data-a="pl-exclude" ${pl.exclude_on ? "checked" : ""}><span>${tr("Do not show photos of the chosen people in the game from outside")}${pl.exclude_on ? ` <span class="quiet">${tr("({n} {n:photo|photos} hidden)", {n: pl.hidden_count})}</span>` : ""}</span></label>
+    ${pl.exclude_on ? `<div class="table-frame pl-people">${people.map((p) => `<label class="tick-box"><input type="checkbox" class="pl-person" data-a="pl-person" data-id="${esc(p.id)}" ${pl.excluded.includes(p.id) ? "checked" : ""}><span>${esc(p.name)}</span></label>`).join("") || `<div class="quiet">${tr("No people loaded yet.")}</div>`}</div>
+      <div class="quiet">${tr("Faces that Immich does not recognise cannot be hidden this way.")}</div>` : ""}`;
+}
+const playersDraw = () => { const el = $("players-box"); if (el) el.innerHTML = playersHtml(); };
+async function playersDo(data) {
+  try {
+    const r = await send("/api/players", data);
+    if (!r.ok) { toast(r.error === "exists" ? tr("There is already a player with this name.") : r.error === "name" ? tr("Please enter a name.") : tr("That did not work.")); return; }
+    pl = r; plNote = r.password ? {name: r.password_for, password: r.password} : null; plAsk = null;
+  } catch (e) { toast(tr("The server did not respond.")); }
+  playersDraw();
+}
+const playersLoad = async () => { try { pl = await fetchIt("/api/players"); playersDraw(); } catch (e) { toast(tr("The server did not respond.")); } };
 
 // ------------------------------------------------------------------ Connect Immich people with Gramps
 let toWork = {};
@@ -147,6 +177,14 @@ export const actions = {
     await saveConnection("gramps"); showTest("probe", "laeuft");
     try { const r = await send("/api/gramps_probe", {}); showTest("probe", [{ok: r.ok, text: r.text}]); } catch (e) { showTest("probe", [{ok: false, text: tr("The server did not respond.")}]); }
   },
+  "pl-open": () => { plNote = null; plAsk = null; playersLoad(); },
+  "pl-add": () => playersDo({op: "add", name: val("pl-name")}),
+  "pl-reset": (el) => playersDo({op: "reset", key: el.dataset.key}),
+  "pl-block": (el) => playersDo({op: "block", key: el.dataset.key, blocked: el.dataset.blocked === "1"}),
+  "pl-ask": (el) => { plAsk = el.dataset.key || null; playersDraw(); },
+  "pl-remove": (el) => playersDo({op: "remove", key: el.dataset.key}),
+  "pl-exclude": (el) => playersDo({op: "exclude", on: el.checked, people: pl.excluded}),
+  "pl-person": () => playersDo({op: "exclude", on: true, people: [...document.querySelectorAll(".pl-person:checked")].map((x) => x.dataset.id)}),
   "only": async (el) => {
     ui.thresholdPerson = parseFloat(val("sp")) || 0.72; ui.thresholdAll = parseFloat(val("sg")) || 0.80;
     closeIt(); ui.settings = false;

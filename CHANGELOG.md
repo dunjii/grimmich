@@ -3,6 +3,15 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.61 – 2026-11-04 – Play mode with sign-in; hidden people
+- The game under `/play/` now needs a sign-in. Without it the server serves only the sign-in page, no photo, face or estimate. You create the players in the settings ("Game for several players"): a name, and Grimmich makes up a password that is shown once; give a new password, block or remove a player there. Players can change their own password and sign out.
+- The name of an answer now comes from the sign-in, never from the request. The name picker is gone in the game from outside (it stays on your own computer).
+- Passwords are stored only as salted scrypt hashes; the sign-in cookie is `HttpOnly`, `SameSite=Lax`, `Secure` behind HTTPS, and stops working when the password is changed or the player is blocked or removed.
+- Slowed down: wrong passwords (8 per name, 20 per address, 100 in total per 15 minutes; the same wrong answer for unknown names and wrong passwords), and sources that ask for many addresses that do not exist. Requests to `/play/` are limited to 100 KB. `/play/robots.txt` and a `noindex` header keep search engines away.
+- A request that comes in through Tailscale Funnel (header `Tailscale-Funnel-Request`) can only reach `/play/`; the rest of Grimmich is answered with "not found" there.
+- New optional list of hidden people (settings): no photo with them is handed out to players from outside, not even by address; answers about such photos are refused. On your own computer nothing is hidden.
+- Tests: new `tests/test_auth.py`, extended `tests/test_play.py` (sign-in needed everywhere, name from the sign-in, blocking/removing/password change, hidden people, Funnel, flood of unknown addresses), local `tests/ui_play_test.py`.
+
 ## 0.9.60 – 2026-11-04 – The game for several players (play mode)
 - New: the game can be played by several people at `/play/`. Everything it may reach lies under that path, checked against a fixed list on the server: the game gets only the photos, faces and estimates it needs (no settings, keys, birth dates, events), and the only thing it may send is one checked answer at a time. Anything else under `/play/` is "not found". Tests make sure of that.
 - Answers are now appended one by one (with the name of the player and the time) instead of the whole file being replaced, so two players cannot overwrite each other. "Undo" takes back the last answer of the same player. At most 240 answers per minute are accepted.
