@@ -11,6 +11,8 @@ import {suggestions, norm} from "./places.js";
 import {peopleOn} from "./event.js";
 import {tr} from "../language.js";
 import {signOut, changePassword} from "./login.js";
+import {activeVotes} from "../refine.js";
+import {snapshot, changes, voteKeys, improvedBy} from "../impact.js";
 
 const narrow = () => window.matchMedia && window.matchMedia("(max-width: 760px)").matches;
 const pairId = (a, b) => [a, b].sort().join("|");
@@ -23,7 +25,7 @@ function people() { return (S.pf && S.pf.ok ? S.pf.people : []).filter((p) => p.
 const unnamed = () => (S.pf && S.pf.ok ? S.pf.unnamed || [] : []);
 
 // ---- what has been answered: the latest answer per question; "unknown" comes back now and then
-const qid = (v) => (v.type === "anchor" ? `anchor|${v.key}|${v.anchor}` : v.type === "sort" ? `sort|${[...v.keys].sort().join("|")}` : v.type && v.type !== "older" ? `${v.type}|${v.key}` : `older|${pairId(v.a, v.b)}`);
+export const qid = (v) => (v.type === "anchor" ? `anchor|${v.key}|${v.anchor}` : v.type === "sort" ? `sort|${[...v.keys].sort().join("|")}` : v.type && v.type !== "older" ? `${v.type}|${v.key}` : `older|${pairId(v.a, v.b)}`);
 const answerOf = (v) => (v.type === "who" ? (v.name ? "x" : "unknown") : v.type === "year" ? (v.year ? "x" : "unknown") : v.type === "place" ? (v.place ? "x" : "unknown") : v.type === "anchor" ? v.rel : v.type === "sort" ? (v.keys.length && !v.unknown ? "x" : "unknown") : v.type === "decade" ? (v.from ? "x" : "unknown") : v.older);
 // A real answer of anybody settles a question; “don't know” only counts for the player who said it (old answers without player for everybody).
 function lastAnswers() {
@@ -406,7 +408,7 @@ function accountHtml() {
 
 // ---- what the player did (own answers) and what others confirmed
 // A comparable form of an answer: the same text for the same opinion (null for "don't know" and empty answers).
-function signature(v) {
+export function signature(v) {
   const t = v.type || "older";
   if (t === "older") return v.older === "a" ? "k:" + v.a : v.older === "b" ? "k:" + v.b : v.older === "same" ? "same" : null;
   if (t === "who") return v.name ? "n:" + norm(v.name) : null;
@@ -416,14 +418,15 @@ function signature(v) {
   if (t === "sort") return v.keys && !v.unknown ? "s:" + v.keys.map((k, i) => `${k}=${(v.ranks || [])[i] ?? i + 1}`).sort().join(",") : null;
   return null;
 }
-function myStats() {
-  const mine = S.game.votes.filter((v) => v.player === S.player);
-  const latest = new Map();   // latest answer per question and player
-  S.game.votes.forEach((v) => { if (v.player) latest.set(qid(v) + "|" + v.player, v); });
+export const myStats = () => statsOf(S.player);
+export function statsOf(player) {
+  const mine = S.game.votes.filter((v) => v.player === player);
+  const latest = new Map();   // latest answer per question and player (answers of hidden players do not count as confirmation)
+  activeVotes().forEach((v) => { if (v.player) latest.set(qid(v) + "|" + v.player, v); });
   let confirmed = 0;
   new Set(mine.map(qid)).forEach((id) => {
-    const my = latest.get(id + "|" + S.player), sig = my && signature(my);
-    if (sig && [...latest.entries()].some(([k, o]) => k.startsWith(id + "|") && o.player !== S.player && signature(o) === sig)) confirmed++;
+    const my = latest.get(id + "|" + player), sig = my && signature(my);
+    if (sig && [...latest.entries()].some(([k, o]) => k.startsWith(id + "|") && o.player !== player && signature(o) === sig)) confirmed++;
   });
   const real = (v) => signature(v) !== null;
   return {n: mine.length, confirmed, who: mine.filter((v) => v.type === "who" && real(v)).length, place: mine.filter((v) => v.type === "place" && real(v)).length,
@@ -437,6 +440,11 @@ const badges = () => [
   {id: "eyes", icon: "👁️", name: tr("Sharp eyes"), sub: tr("5 answers confirmed by others"), test: (s) => s.confirmed >= 5},
   {id: "chronicle", icon: "📜", name: tr("Family chronicler"), sub: tr("100 answers"), test: (s) => s.n >= 100},
 ];
+function impactHtml() {   // "thanks to you": the photo that changed most
+  const best = ui.impact && ui.impact[0];
+  if (!best) return "";
+  return `<div class="game-impact"><img src="${image(best.key)}" alt="" loading="lazy"><span>${tr("Thanks to you, this photo is now placed in {range} (before: {old}).", {range: rangeText(best.after), old: best.before.year ? rangeText(best.before) : tr("no estimate")})}</span></div>`;
+}
 function doneHtml() {
   const st = myStats(), fresh = ui.fresh || [];
   const card = (num, label) => `<div class="game-stat"><b>${num}</b><span class="quiet">${label}</span></div>`;
@@ -444,7 +452,7 @@ function doneHtml() {
   return `<div class="game-done"><div class="game-confetti" aria-hidden="true">${confetti}</div>
     <div class="game-q">${tr("Thank you, {name}!", {name: esc(S.player)})} 🎉</div>
     <div class="quiet game-center">${tr("This is what you did for the family photos")}</div>
-    <div class="game-stats">${card(st.n, tr("Answers"))}${card(st.who + st.place, tr("Names and places"))}${card(st.confirmed, tr("confirmed by others"))}</div>
+    <div class="game-stats">${card(st.n, tr("Answers"))}${card(st.who + st.place, tr("Names and places"))}${card(st.confirmed, tr("confirmed by others"))}${card(ui.impact ? ui.impact.length : 0, tr("photos dated more precisely"))}</div>${impactHtml()}
     <div class="game-q game-h">${tr("Your badges")}</div>
     <div class="game-badges">${badges().map((b) => { const on = b.test(st); return `<div class="game-badge-card ${on ? "on" : ""} ${on && fresh.includes(b.id) ? "fresh" : ""}"><span class="game-medal">${b.icon}${on && fresh.includes(b.id) ? '<i aria-hidden="true">✨</i>' : ""}</span><b>${b.name}</b><small>${b.sub}</small></div>`; }).join("")}</div>
     <div class="login-form game-done-buttons"><button class="game-btn primary" data-a="game-again">${tr("Keep playing")}</button>
@@ -468,6 +476,17 @@ function fitBar() {
 }
 window.addEventListener("resize", fitBar);
 
+// How many of the photos have a real answer from anybody (nobody sees who answered what)
+function progressHtml() {
+  const total = Object.keys(S.photos).length;
+  if (!total) return "";
+  const done = new Set();
+  activeVotes().forEach((v) => { if (signature(v) !== null) voteKeys(v).forEach((k) => { if (S.photos[k]) done.add(k); }); });
+  const pct = Math.round((100 * done.size) / total);
+  return `<div class="game-progress" role="img" aria-label="${esc(tr("{done} of {total} photos have answers", {done: done.size, total}))}"><div class="game-progress-bar"><i style="width:${pct}%"></i></div>
+    <span class="quiet">${tr("{done} of {total} photos have answers", {done: done.size, total})}</span></div>`;
+}
+
 export function gameHtml() {
   if (!S.grPlaces) loadGrampsPlaces(false);
   if (!S.player) return playerHtml();
@@ -476,7 +495,8 @@ export function gameHtml() {
   const body = ui.gameDone ? doneHtml() : ui.gameAccount ? accountHtml() : ui.gameResults ? resultsHtml() : q ? questionHtml(q)
     : `<div class="empty game-empty">${people().length || unnamed().length ? tr("All questions answered. Nice!") : tr("Not enough photos of named people yet. Please click “Refresh” first.")}</div>`;
   requestAnimationFrame(fitBar);
-  return `<div class="game-full ${ui.gameResults ? "results" : ""}">${barHtml()}${body}
+  return `<div class="game-full ${ui.gameResults ? "results" : ""}">${barHtml()}${!ui.gameDone && !ui.gameAccount && !ui.gameResults && ui.feedback ? `<div class="game-feedback" role="status">${esc(ui.feedback)}</div>` : ""}${body}
+    ${!ui.gameDone && !ui.gameAccount && !ui.gameResults ? progressHtml() : ""}
     <div class="quiet game-foot">${tr("Thank you for helping to date our old photos. Every answer counts.")}</div></div>`;
 }
 
@@ -546,9 +566,25 @@ const stamp = () => new Date().toISOString().slice(0, 19);
 // No automatic focus on phones and tablets: the keyboard would open at every question with an input.
 const touch = () => window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 const focusInput = () => { if (!touch()) setTimeout(() => { const i = document.getElementById("game-input"); if (i) i.focus(); }, 50); };
+const rangeText = (s) => (s.from === s.to ? `${s.year}` : `${s.from}–${s.to}`);
+// A short sentence about what the answer changed (only when something really changed)
+function feedbackFor(v, before) {
+  const ch = changes(before, snapshot([...before.keys()]));
+  if (!ch.length) return tr("Thanks, noted.");
+  if (ch.length > 1) return tr("Thanks to this, {n} photos are now dated more precisely.", {n: ch.length});
+  const c = ch[0], r = rangeText(c.after);
+  if (!c.before.year) return tr("Thanks to this, a photo now has an estimate: {range}.", {range: r});
+  const p = {range: r, old: rangeText(c.before)};
+  return c.gain > 0 ? tr("Thanks to this, a photo is now narrowed down to {range} (before: {old}).", p) : tr("Thanks to this, a photo moved to {range} (before: {old}).", p);
+}
 async function answer(v) {
+  const keys = signature(v) !== null ? voteKeys(v).filter((k) => S.photos[k]) : [];
+  const before = keys.length ? snapshot(keys) : null;
   S.game.votes.push({...v, player: S.player, t: stamp()});
   mark();   // the estimates are recomputed with the new answer
+  const t0 = Date.now();
+  ui.feedback = before ? feedbackFor(v, before) : tr("Thanks, noted.");
+  if (Date.now() - t0 > 600) ui.feedback = tr("Thanks, noted.");
   ui.game = null; draw(); focusInput();
   await sendVote("add", v);
 }
@@ -558,9 +594,10 @@ export const actions = {
   "game-done": () => {   // the own evaluation; badges that are new since the last time sparkle
     const st = myStats(), now = badges().filter((b) => b.test(st)).map((b) => b.id), key = "badges." + S.player, seen = recall(key, []);
     ui.fresh = now.filter((id) => !seen.includes(id)); remember(key, now);
+    try { ui.impact = improvedBy(S.player); } catch (e) { ui.impact = []; }
     ui.gameDone = true; ui.gameAccount = false; ui.gameResults = false; draw();
   },
-  "game-again": () => { ui.gameDone = false; ui.fresh = []; draw(); },
+  "game-again": () => { ui.gameDone = false; ui.impact = null; ui.fresh = []; draw(); },
   "game-signout": () => signOut(),
   "game-view": (el) => {
     const d = el.dataset;

@@ -133,7 +133,7 @@ def vote_keys(vote):
     return {k for k in keys if isinstance(k, str)}
 
 
-def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version, hidden_keys=frozenset(), hidden_people=frozenset()):
+def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version, hidden_keys=frozenset(), hidden_people=frozenset(), muted=()):
     """What the game gets: the same shape as the full interface expects at start, but only the parts the game needs.
     Not included: connection data and keys, write preview, order, assignments to Gramps, events, birth dates, descriptions."""
     keys = {p["key"] for p in photos.get("photos", []) if isinstance(p, dict) and "key" in p} - set(hidden_keys)   # hidden = photos with people who are not to be shown
@@ -159,7 +159,7 @@ def build_data(photos, work, rows, corrections, names, age, people_photos, immic
         "connection": {"immich": {}, "gramps": {}, "gramps_write": {}, "written": {}},
         "write_preview": None, "write_status": {}, "job": {"running": False},
         "provenance_albums": {"albums": []}, "provenance": {"pages": {}}, "inbox": {"seen": []},
-        "game_votes": {"votes": votes},
+        "game_votes": {"votes": votes, "muted": list(muted)},
         "immich_data": {"photos": {k: {"date": v.get("date"), "camera": bool(v.get("camera"))} for k, v in (immich_data or {}).items() if k in keys and isinstance(v, dict) and v.get("date")}},
         "gramps_preview": None, "gramps_written": {}, "gramps_status": {"key_set": False, "result": None}, "event_assignment": {},
         "kinds": {k: {"kind": v.get("kind")} for k, v in (kinds or {}).items() if k in keys and isinstance(v, dict) and v.get("kind")},

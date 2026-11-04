@@ -3,10 +3,16 @@
 //  - order: “this one is older”, a sorted row of 3–5 photos say which photo is earlier than which
 import {S} from "./state.js";
 
+// The answers that count: the answers of hidden players (S.game.muted, names) are left out everywhere.
+export function activeVotes() {
+  const muted = S.game.muted;
+  return muted && muted.length ? S.game.votes.filter((v) => !muted.includes(v.player)) : S.game.votes;
+}
+
 // Latest answer per question wins (the same question can be answered again later).
 function latest() {
   const m = new Map();
-  S.game.votes.forEach((v) => {
+  activeVotes().forEach((v) => {
     const t = v.type || "older";
     const id = t === "older" ? `o|${[v.a, v.b].sort().join("|")}` : t === "anchor" ? `a|${v.key}|${v.anchor}` : t === "sort" ? `s|${[...(v.keys || [])].sort().join("|")}` : `${t}|${v.key}`;
     m.set(id, v);
@@ -14,11 +20,11 @@ function latest() {
   return [...m.values()];
 }
 
-let ver = -1, cache = null;
+let ver = "", cache = null, verVotes = null;
 // {bounds: key -> {lo, hi}, pairs: [[youngerKey, olderKey]]}, recomputed when the answers change
 export function constraints() {
-  const n = S.game.votes.length;
-  if (cache && ver === n) return cache;
+  const n = S.game.votes.length + "|" + (S.game.muted || []).join("|");   // the same list of answers (also changed in place) and the same hidden players
+  if (cache && ver === n && verVotes === S.game.votes) return cache;
   const bounds = {}, pairs = [];
   const narrow = (key, lo, hi) => {
     const b = bounds[key] || (bounds[key] = {lo: -Infinity, hi: Infinity});
@@ -39,7 +45,7 @@ export function constraints() {
       else if (v.rel === "same") narrow(v.key, v.ay - 3, v.ay + 3);
     } else if (t === "decade" && v.from && v.to) narrow(v.key, v.from, v.to);
   });
-  cache = {bounds, pairs}; ver = n;
+  cache = {bounds, pairs}; ver = n; verVotes = S.game.votes;
   return cache;
 }
 export const hasAnswers = () => { const c = constraints(); return Object.keys(c.bounds).length > 0 || c.pairs.length > 0; };

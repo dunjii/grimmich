@@ -100,6 +100,10 @@ The game ("Who is older?") can be played by several people. Open `/play/` (for e
 
 Everything the game may reach lies under `/play/`, checked against a fixed list on the server. Without signing in, only the sign-in page is served: no photo, face or estimate. After signing in the server hands out only what the game needs (no settings, keys, birth dates or Gramps events) and accepts only single, checked answers. Answers are appended to the list with the name of the signed-in player (a name in the request is ignored) and never replace the file. Nothing is written to Immich or Gramps.
 
+**Evaluation and hiding players.** On the full interface the task list has "Game evaluation": who answered how much, what the answers changed in the estimates and where they contradict your rows. "Hide answers" takes all answers of one player out of every estimate at once (nothing is deleted).
+
+**Backup.** Once a day Grimmich copies the database to the folder `backups` next to it and keeps the last 14 copies (`GRIMMICH_BACKUPS=0` switches it off). The copy lies on the same disk, so please keep your own backup of the whole device as well.
+
 **Hidden people (optional).** In the same settings section you can switch on a list of people who are not shown in the game from outside: no photo with them is handed out, not even by address. Faces that Immich does not recognise cannot be hidden this way. On your own computer nothing is hidden.
 
 **Protection.** Passwords are stored only as salted scrypt hashes. Sign-in is slowed down after wrong passwords (per name, per address and in total); asking for many addresses that do not exist is slowed down too; `/play/robots.txt` and a `noindex` header ask search engines to stay away. A request that arrives through Tailscale Funnel can only reach `/play/`.

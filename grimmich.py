@@ -37,6 +37,7 @@ from immich import Immich  # noqa: E402
 import connections  # noqa: E402
 import face_crops  # noqa: E402
 import auth  # noqa: E402
+import backup  # noqa: E402
 import play  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
@@ -269,7 +270,7 @@ def everything():
         "age": read_json("age_per_photo.json", {}), "people_photos": people_photos(), "order": read_json("order.json", {}),
         "assignment": read_json("assignment.json", {}), "connection": connections.status(), "write_preview": read_json("write_preview.json", None),
         "write_status": write_status(), "job": JOB.status(), "provenance_albums": read_json("provenance_albums.json", {"albums": []}),
-        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": read_json("game_votes.json", {"votes": []}),
+        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": {**read_json("game_votes.json", {"votes": []}), "muted": muted_names()},
         "immich_data": read_json("immich_data.json", {"photos": {}}),
         "gramps_preview": read_json("gramps_preview.json", None), "gramps_written": read_json("gramps_written.json", {}),
         "gramps_status": grampsstatus(), "event_assignment": read_json("event_assignment.json", {}), "kinds": read_json("kinds.json", {}), "places": read_json("place_assignment.json", {}), "version": version(),
@@ -476,10 +477,15 @@ def hidden():
     return _HIDDEN["value"]
 
 
+def muted_names(player=None):
+    """Names of players whose answers are hidden (they count nowhere); a player always sees and counts his own."""
+    return [n for n in players_doc()["muted"] if n != player]
+
+
 def players_view():
     """For the settings page: who may play, and what is hidden. No password hashes."""
     doc = players_doc()
-    return {"ok": True, "players": auth.public_list(doc), "exclude_on": doc["exclude_on"], "excluded": doc["excluded"], "hidden_count": len(hidden()[0])}
+    return {"ok": True, "players": auth.public_list(doc), "exclude_on": doc["exclude_on"], "excluded": doc["excluded"], "muted": doc["muted"], "hidden_count": len(hidden()[0])}
 
 
 def players_change(data_):
@@ -498,6 +504,10 @@ def players_change(data_):
             doc = auth.set_blocked(doc, key, data_.get("blocked") is True)
         elif op == "remove" and key in doc["players"]:
             doc = auth.remove_player(doc, key)
+        elif op == "mute":
+            name = play.clean_player(data_.get("name"))
+            if name:
+                doc["muted"] = sorted(({*doc["muted"], name}) if data_.get("muted") is True else ({*doc["muted"]} - {name}))
         elif op == "exclude":
             ids = data_.get("people")
             doc["exclude_on"] = data_.get("on") is True
@@ -515,7 +525,7 @@ def players_change(data_):
     return out, 200
 
 
-def play_all():
+def play_all(player=None):
     """What the game gets (see play.py): only the parts it needs."""
     photos = read_json(PHOTOS_FILE, {"photos": []})
     with _lock_:
@@ -524,7 +534,7 @@ def play_all():
     hidden_keys, hidden_people, hidden_names = hidden()
     return play.build_data(photos, work, read_results(), read_json("corrections.json", {}), [n for n in people.get("all", []) if n not in hidden_names], read_json("age_per_photo.json", {}),
                            people_photos(), (read_json("immich_data.json", {"photos": {}}) or {}).get("photos", {}), read_json("place_assignment.json", {}),
-                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version(), hidden_keys, hidden_people)
+                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version(), hidden_keys, hidden_people, muted_names(player))
 
 
 def handle_vote(data_, signed_in=None):
@@ -551,7 +561,7 @@ def handle_vote(data_, signed_in=None):
             if new is None:
                 return {"ok": False}, 507
         write_json("game_votes.json", {"votes": new})
-    return {"ok": True, "votes": new}, 200
+    return {"ok": True, "votes": new, "muted": muted_names(signed_in)}, 200
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -644,7 +654,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._json({"ok": False, "login": True}, 401)
                 return
             if path_ == "/api/all":
-                self._json(play_all())
+                self._json(play_all(me[1]["name"]))
                 return
             if path_ == "/api/gramps_places":
                 self._json(connections.gramps_orte(new_=False))
@@ -832,6 +842,7 @@ def main():
         sys.exit(tx("Port {port} is in use. Is Grimmich (or the old interface) already running in another terminal window?", port=PORT))
     print(tx("Grimmich is running: http://localhost:{port}", port=PORT))
     print(tx("Quit with Ctrl+C."))
+    backup.start(storage.DB_FILE_NAME)
     try:  # quitting without a terminal (menu starter) arrives as signal TERM; treat it like Ctrl+C
         import signal
         signal.signal(signal.SIGTERM, signal.default_int_handler)

@@ -36,7 +36,8 @@ export function listHtml() {
     + (f !== "warnings" ? task(z.series, tr("Series to review"), tr("Do the photos belong together?"), {action: "go-task", task: "series", view: "task"})
       + task(z.without, tr("No estimate"), tr("not datable yet or not calculated"), {action: "go-task", task: "without", view: "task"})
       + task(z.cards, tr("Cards and documents"), z.cardsOpen ? tr("{n} without date", {n: z.cardsOpen}) : tr("all dated"), {action: "go-task", task: "cards", view: "task"})
-      + task(z.changedFlag, tr("Changed in Immich"), tr("Names, assignment or image changed"), {action: "go-task", task: "changed", view: "task"}) : "");
+      + task(z.changedFlag, tr("Changed in Immich"), tr("Names, assignment or image changed"), {action: "go-task", task: "changed", view: "task"}) : "")
+    + (f === "all" ? task(S.game.votes.length, tr("Game evaluation"), tr("Who answered how much, what the answers changed"), {action: "go-gameeval", view: "gameeval"}) : "");
   const peopleList = peopleState().filter((x) => f === "all" || (f === "warnings" && x.warn) || (f === "open" && !x.done));
   const line = (x0) => { const x = {...x0, p: personOf(x0.p.id) || x0.p}; return `<button class="row ${ui.view === "person" && ui.personId === x.p.id ? "active" : ""}" data-a="go-person" data-pid="${esc(x.p.id)}">
       <div class="top"><b>${esc(shortName(x.p.name))}</b><span>${tr("{geburt}{n} {n:photo|photos}", {geburt: x.p.birth !== null ? (x.p.birthSource === "geschätzt" ? tr("c. *{geburt}", {geburt: Math.round(x.p.birth)}) : "*" + Math.floor(x.p.birth)) + " · " : "", n: x.p.photos.length})}</span></div>

@@ -25,6 +25,7 @@ import {actions as aSimilar} from "./ui/hints.js";
 import {actions as aEvent, eventHtml} from "./ui/event.js";
 import {actions as aPlaces} from "./ui/places.js";
 import {gameHtml, actions as aGame, startOnPhone} from "./ui/game.js";
+import {gameEvalHtml, actions as aGameEval} from "./ui/gameeval.js";
 import {checkSignIn} from "./ui/login.js";
 import {grAnchor} from "./gramps.js";
 import {tr, translatePage, setLanguage} from "./language.js";
@@ -36,7 +37,7 @@ function startHtml() {
   return '<div class="empty large-empty"><h1>' + tr("Choose a person or a task on the left") + '</h1></div>';
 }
 function middleHtml() {
-  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml}[ui.view]?.() ?? startHtml();
+  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml, gameeval: gameEvalHtml}[ui.view]?.() ?? startHtml();
 }
 let calcSig = "", calcNo = 0;
 async function calcSeries() {
@@ -54,7 +55,7 @@ function drawAll() {
   const scroll = {list: $("list").scrollTop, detail: $("detail").scrollTop};
   document.body.classList.toggle("write", write_it);
   frame.classList.toggle("list-closed", !ui.listOpen);
-  frame.classList.toggle("no-detail", ui.view === "start" || ui.view === "write");
+  frame.classList.toggle("no-detail", ui.view === "start" || ui.view === "write" || ui.view === "gameeval");
   frame.classList.toggle("detail-empty", !(ui.focusKey && unitOf(ui.focusKey)));   // nothing chosen: narrow column
   const searchFocus = document.activeElement && document.activeElement.id === "search-field", searchPos = searchFocus ? document.activeElement.selectionStart : 0;
   $("handle").innerHTML = write_it ? "" : `<button data-a="${ui.listOpen ? "list-close" : "list-open"}" title="${ui.listOpen ? tr("Collapse work list") : tr("Open work list")}" aria-label="${ui.listOpen ? tr("Collapse work list") : tr("Open work list")}">${ui.listOpen ? "◂" : "▸"}</button>`;
@@ -143,7 +144,7 @@ const aNavigation = {
   "gr-marker": (el) => grAnchor(el.dataset.pid, el.dataset.ev, el.dataset.part),
   "vb-leer": () => {},
 };
-const ACTION_TEXT = {...aGame, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
+const ACTION_TEXT = {...aGame, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
 
 window.__grimmichActions = ACTION_TEXT;   // for the search: jumps through the same actions as the buttons
 document.addEventListener("click", async (ev) => {

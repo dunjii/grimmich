@@ -29,7 +29,7 @@ export const S = {
   grPlaces: null,                    // {liste, nachH, ohne}: alle Orte aus Gramps
   similar: {},                        // similar photos per photo (response of the server)
   grP: null, grEv: {},             // Gramps: Personenliste, Ereignisse je Immich-Person
-  game: {votes: []},                 // answers of the game: {type?, ...}; older: {a, b, pid, older: a|b|same|unknown|different}, who, year, place
+  game: {votes: [], muted: []},                 // answers of the game: {type?, ...}; older: {a, b, pid, older: a|b|same|unknown|different}, who, year, place
   ver: 0,                          // counts changes so that derived data is recomputed
 };
 
@@ -69,7 +69,7 @@ export async function loading() {
   S.inbox = a.inbox || {seen: []};
   S.immichData = (a.immich_data || {}).photos || {};
   S.version = a.version || "";
-  S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? a.game_votes : {votes: []};
+  S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? {votes: a.game_votes.votes, muted: a.game_votes.muted || []} : {votes: [], muted: []};
   S.player = S.signedIn || recall("player", "");   // from outside the name comes from the sign-in
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
@@ -96,7 +96,7 @@ export const savePages = () => send("/api/provenance", {pages: S.pages, order: S
 export async function sendVote(op, vote) {
   try {
     const r = await send("/api/vote", {op, vote, player: S.player});
-    if (r && r.ok) { S.game = {votes: r.votes}; mark(); } else problem();
+    if (r && r.ok) { S.game = {votes: r.votes, muted: r.muted || []}; mark(); } else problem();
   } catch (e) { problem(); }
 }
 export const saveInbox = () => send("/api/inbox", S.inbox).catch(problem);

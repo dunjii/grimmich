@@ -3,6 +3,15 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.65 – 2026-11-04 – Game: what the answers do, evaluation page, hiding players, daily backup
+- After each answer a short line says what it changed ("Thanks to this, a photo is now narrowed down to 1950–1956 (before: 1944–1962)"); only when something really changed, otherwise "Thanks, noted.".
+- Under the question a small bar shows the family progress: how many photos already have real answers from anybody.
+- The "Done" page has a fourth number, "photos dated more precisely" (photos whose span became at least 2 years narrower, or got an estimate, because of your answers), and names the photo that changed most.
+- New page "Game evaluation" under the tasks on the left (full interface only): per player answers, last answer, answers confirmed by others and, on a click on "Calculate effect", the photos each player dated more precisely; all photos the answers changed (before / after); contradictions between answers and your rows.
+- Hide a player: all his answers are taken out of every estimate at once, nothing is deleted, they can be shown again. A signed-in player always still sees and counts his own answers.
+- Daily backup: Grimmich copies grimmich.db once a day to the folder `backups` next to it and keeps the last 14 copies (3 if the database is larger than 2 GB). `GRIMMICH_BACKUPS=0` switches it off, `GRIMMICH_BACKUPS_KEEP` sets the number. The copy lies on the same disk: it protects against a wrong click, not against a broken disk.
+- Tests: `tests/test_backup.py`, hidden answers in `tests/test_play.py`, evaluation page in `tests/ui_game_test.py`.
+
 ## 0.9.64 – 2026-11-04 – Game: new look (bar, account, search window, "Done")
 - New bar in one row: logo and name, "Account", and "Done ✓" with a yellow number (your answers so far) at its corner. On narrow screens it shrinks step by step: first only the tick, then "Account" as an icon, last without the name.
 - "Account" is there on your own computer too: change player, results, back to Grimmich. From outside it holds password and sign out. The name of the player is shown there, not in the bar.

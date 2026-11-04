@@ -21,7 +21,7 @@ _SCRYPT = {"n": 2 ** 14, "r": 8, "p": 1, "maxmem": 64 * 1024 * 1024}
 
 
 def empty():
-    return {"players": {}, "secret": "", "exclude_on": False, "excluded": []}
+    return {"players": {}, "secret": "", "exclude_on": False, "excluded": [], "muted": []}
 
 
 def prepared(doc):

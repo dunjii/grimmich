@@ -278,6 +278,25 @@ class TestServer(unittest.TestCase):
         grimmich.players_change({"op": "remove", "key": "carla"})
         self.assertEqual(self.call("POST", "/play/api/login", {"name": name, "password": again})[0], 401)
 
+    def test_hidden_answers_are_listed_and_a_player_keeps_his_own(self):
+        cookie = self.login("Anna")
+        key = sorted(KEYS)[0]
+        self.assertEqual(self.call("POST", "/play/api/vote", {"op": "add", "vote": {"type": "decade", "key": key, "from": 1940, "to": 1949}}, cookie=cookie)[0], 200)
+        r = grimmich.players_change({"op": "mute", "name": "Anna", "muted": True})[0]
+        self.assertEqual(r["muted"], ["Anna"])
+        r = grimmich.players_change({"op": "mute", "name": "Ben", "muted": True})[0]
+        self.assertEqual(r["muted"], ["Anna", "Ben"])
+        try:
+            self.assertEqual(grimmich.everything()["game_votes"]["muted"], ["Anna", "Ben"])   # you see all of it
+            status, data = self.call("GET", "/play/api/all", cookie=cookie)
+            self.assertEqual(json.loads(data)["game_votes"]["muted"], ["Ben"])   # Anna herself still counts for Anna
+            status, data = self.call("POST", "/play/api/vote", {"op": "add", "vote": {"type": "decade", "key": key, "from": 1950, "to": 1959}}, cookie=cookie)
+            self.assertEqual(json.loads(data)["muted"], ["Ben"])
+        finally:
+            grimmich.players_change({"op": "mute", "name": "Anna", "muted": False})
+            grimmich.players_change({"op": "mute", "name": "Ben", "muted": False})
+        self.assertEqual(grimmich.players_view()["muted"], [])
+
     def test_adding_players_checks_the_name(self):
         self.assertEqual(grimmich.players_change({"op": "add", "name": "anna"})[1], 400)   # exists (not case sensitive)
         self.assertEqual(grimmich.players_change({"op": "add", "name": "  "})[1], 400)

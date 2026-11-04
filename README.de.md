@@ -100,6 +100,10 @@ Das Spiel („Wer ist älter?“) können mehrere Personen spielen. Öffne `/pla
 
 Alles, was das Spiel erreichen darf, liegt unter `/play/` und wird auf dem Server gegen eine feste Liste geprüft. Ohne Anmeldung wird nur die Anmeldeseite ausgeliefert: kein Foto, kein Gesicht, keine Schätzung. Nach der Anmeldung liefert der Server nur, was das Spiel braucht (keine Einstellungen, Schlüssel, Geburtsdaten oder Gramps-Ereignisse), und nimmt nur einzelne, geprüfte Antworten an. Die Antworten werden mit dem Namen des angemeldeten Spielers an die Liste angehängt (ein Name in der Anfrage wird ignoriert) und ersetzen nie die Datei. Nach Immich oder Gramps wird nichts geschrieben.
 
+**Auswertung und Spieler ausblenden.** In der vollen Oberfläche gibt es in der Aufgabenliste die „Spiel-Auswertung“: wer wie viel geantwortet hat, was die Antworten in den Schätzungen verändert haben und wo sie deinen Reihen widersprechen. „Antworten ausblenden“ nimmt alle Antworten eines Spielers sofort aus allen Schätzungen (es wird nichts gelöscht).
+
+**Sicherung.** Einmal am Tag kopiert Grimmich die Datenbank in den Ordner `backups` neben ihr und behält die letzten 14 Kopien (`GRIMMICH_BACKUPS=0` schaltet es ab). Die Kopie liegt auf derselben Platte; bitte sichere das ganze Gerät zusätzlich selbst.
+
 **Verborgene Personen (optional).** In demselben Bereich der Einstellungen kannst du eine Liste von Personen einschalten, die im Spiel von außen nicht gezeigt werden: Kein Foto mit ihnen wird ausgeliefert, auch nicht über die Adresse. Gesichter, die Immich nicht erkennt, lassen sich so nicht verbergen. Auf deinem eigenen Rechner wird nichts verborgen.
 
 **Schutz.** Passwörter werden nur als gesalzene scrypt-Hashes gespeichert. Nach falschen Passwörtern wird die Anmeldung gebremst (pro Name, pro Adresse und insgesamt); auch wer viele nicht vorhandene Adressen abfragt, wird gebremst. `/play/robots.txt` und ein `noindex`-Header bitten Suchmaschinen, wegzubleiben. Eine Anfrage, die über Tailscale Funnel hereinkommt, erreicht nur `/play/`.
