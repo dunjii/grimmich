@@ -12,3 +12,5 @@ ultralytics
 # needed by the face and person detector model (otherwise ultralytics installs it by itself at the first run)
 omegaconf
 timm
+# needed by the code of the MiVOLO model (preparing the images), see docker/install_mivolo.py
+scipy

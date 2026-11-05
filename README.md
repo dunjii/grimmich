@@ -140,7 +140,7 @@ The models are not part of Grimmich. They are downloaded from Hugging Face on fi
 
 | Component | Purpose | License |
 |---|---|---|
-| [MiVOLO v2](https://huggingface.co/iitolstykh/mivolo_v2) (code and model) | age estimation | Apache-2.0 |
+| [MiVOLO v2](https://huggingface.co/iitolstykh/mivolo_v2) (code and model) and the [MiVOLO](https://github.com/WildChlamydia/MiVOLO) package (copied into the Docker image at build time, pinned commit) | age estimation | Apache-2.0 |
 | [YOLO Face & Person Detector](https://huggingface.co/iitolstykh/YOLO-Face-Person-Detector) with [Ultralytics](https://www.ultralytics.com) | finding faces and people | AGPL-3.0 |
 | [DINOv2 small](https://huggingface.co/facebook/dinov2-small) | image comparison for series | Apache-2.0 |
 

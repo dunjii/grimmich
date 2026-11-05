@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.66 – 2026-11-05 – Docker image: the MiVOLO model can be loaded
+- The first estimate run in the Docker container stopped with "No module named 'mivolo'": the model's own code needs the package `mivolo` (only on GitHub), which the image never contained (on a laptop it had been installed by hand). Then `scipy` and two changes of the current `timm` (a renamed function, a new parameter in the middle of VOLO's list that shifted the values) came up.
+- New `docker/install_mivolo.py` copies the package (pinned to one commit) into the image and adapts those places; `scipy` is in the requirements.
+- The build check is stricter: it builds the MiVOLO network once with random weights and runs one image through it, so such a mismatch stops the build instead of the first estimate run. It does not check whether the model gives sensible years.
+- New test `tests/test_install_mivolo.py` (the adaptation and that a second run changes nothing).
+
 ## 0.9.65 – 2026-11-04 – Game: what the answers do, evaluation page, hiding players, daily backup
 - After each answer a short line says what it changed ("Thanks to this, a photo is now narrowed down to 1950–1956 (before: 1944–1962)"); only when something really changed, otherwise "Thanks, noted.".
 - Under the question a small bar shows the family progress: how many photos already have real answers from anybody.
