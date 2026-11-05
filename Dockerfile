@@ -33,7 +33,7 @@ RUN python -c "import torch, torchvision, ultralytics, timm, omegaconf; from tra
 COPY docker/install_mivolo.py /tmp/install_mivolo.py
 RUN python /tmp/install_mivolo.py && rm /tmp/install_mivolo.py
 # fail the build (not the first estimate run) if the MiVOLO code does not fit: build the network once with random weights and let one image through it
-RUN python -c "import torch; from mivolo.model.create_timm_model import create_model; from mivolo.data.misc import prepare_classification_images; m = create_model('mivolo_d1_384', pretrained=False).eval(); out = m(torch.zeros(1, 3, 224, 224)); print('mivolo ok', tuple(out.shape))"
+RUN python -c "import torch; from mivolo.model.create_timm_model import create_model; from mivolo.data.misc import prepare_classification_images; m = create_model('mivolo_d1_384', pretrained=False).eval(); out = m(torch.zeros(1, 3, 384, 384)); print('mivolo ok', tuple(out.shape))"
 
 COPY . .
 

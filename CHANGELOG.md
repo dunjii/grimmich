@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.68 – 2026-11-05 – Docker image: build check uses the right image size
+- The new build check of 0.9.66 fed a 224 pixel image to the 384 pixel network and stopped the build. It now uses 384 x 384.
+
 ## 0.9.67 – 2026-11-05 – Write page: the ticks "Source" and "Place" work again
 - In "What should be written?" the ticks "Date and tags", "Source" and "Place (GPS)" jumped back at once: since the English renaming (0.9.48) the page and the stored setting used different names, so a click was saved under a name nobody read. Fixed; settings you made earlier still count.
 - Test in `tests/ui_test.py`: the three ticks end up in the state.
