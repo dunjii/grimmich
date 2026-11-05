@@ -1184,6 +1184,17 @@
   "The answers and your rows contradict each other for these photos. Check them in the rows.": "Bei diesen Fotos widersprechen sich Antworten und deine Reihen. Prüfe sie in den Reihen.",
   "No contradictions.": "Keine Widersprüche.",
   "Game evaluation": "Spiel-Auswertung",
-  "Who answered how much, what the answers changed": "Wer wie viel geantwortet hat, was die Antworten verändert haben"
+  "Who answered how much, what the answers changed": "Wer wie viel geantwortet hat, was die Antworten verändert haben",
+  "AI models": "KI-Modelle",
+  "Check for new versions": "Auf neue Versionen prüfen",
+  "Model": "Modell",
+  "Not checked yet.": "Noch nicht geprüft.",
+  "The models are downloaded once, then Grimmich uses them from its data folder without asking the internet. Every model is fixed to the version Grimmich was tested with, so your estimates do not change by themselves.": "Die Modelle werden einmal heruntergeladen, danach nutzt Grimmich sie aus seinem Datenordner, ohne das Internet zu fragen. Jedes Modell ist auf die Version festgelegt, mit der Grimmich getestet wurde. Deine Schätzungen ändern sich also nicht von selbst.",
+  "There is a newer version. Nothing changes by itself: a newer model can give other years. A changed description alone also counts as a new version. Tell us if you want to switch.": "Es gibt eine neuere Version. Von selbst ändert sich nichts: Ein neueres Modell kann andere Jahre schätzen. Auch eine geänderte Beschreibung allein zählt als neue Version. Sag Bescheid, wenn du umstellen willst.",
+  "Version in use": "Verwendete Version",
+  "check failed": "Prüfung fehlgeschlagen",
+  "newer version:": "neuere Version:",
+  "up to date": "aktuell",
+  "Last check: {t}": "Letzte Prüfung: {t}"
  }
 }

@@ -67,6 +67,7 @@ export function openSettings() {
           <div id="vt-gramps_schreiben">${testRows("gramps_schreiben")}</div></details>
         <div id="vt-probe">${testRows("probe")}</div></div></div>
     <div class="quiet">${tr("Keys and passwords are only stored on this computer and are never shown again.")}</div>
+    <details class="expand"><summary data-a="mv-open">${tr("AI models")}</summary><div id="models-box">${mv ? modelsHtml() : ""}</div></details>
     <details class="expand"><summary data-a="pl-open">${tr("Game for several players")}</summary><div id="players-box">${pl ? playersHtml() : ""}</div></details>
     <details class="expand" ${j.rc !== null && j.rc !== 0 ? "open" : ""}><summary>${tr("Single steps and settings")}</summary>
       <div class="bar-strip"><span class="quiet">${tr("Language")}</span><select id="language-pick">${languages.map((l) => `<option value="${l.code}" ${language === l.code ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select></div>
@@ -94,6 +95,27 @@ async function saveConnection(kindVal) {
 }
 const showTest = (kindVal, z) => { connResult[kindVal] = z; const el = $("vt-" + kindVal); if (el) el.innerHTML = testRows(kindVal); };
 
+
+// ------------------------------------------------------------------ AI models: fixed versions and "check for new versions"
+let mv = null, mvBusy = false;   // answer of /api/models, a check is running
+const short = (h) => (h ? h.slice(0, 7) : "–");
+function modelsHtml() {
+  if (!mv) return `<div class="quiet">${tr("Checking …")}</div>`;
+  const rows = mv.models.map((m) => `<tr><td><b>${esc(m.name)}</b><div class="quiet">${esc(m.use)} · ${esc(m.license)}</div></td><td><code>${short(m.revision)}</code></td>
+    <td>${m.error ? `<span class="tag warn" title="${esc(m.error)}">${tr("check failed")}</span>` : m.new ? `<span class="tag warn">${tr("newer version:")} <code>${short(m.latest)}</code></span>` : m.latest ? `<span class="quiet">${tr("up to date")}</span>` : ""}</td></tr>`).join("");
+  const news = mv.models.some((m) => m.new);
+  return `<div class="quiet">${tr("The models are downloaded once, then Grimmich uses them from its data folder without asking the internet. Every model is fixed to the version Grimmich was tested with, so your estimates do not change by themselves.")}</div>
+    <div class="table-frame"><table class="to-tab"><thead><tr><th>${tr("Model")}</th><th>${tr("Version in use")}</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="bar-strip"><button class="small" data-a="mv-check" ${mvBusy ? "disabled" : ""}>${mvBusy ? tr("Checking …") : tr("Check for new versions")}</button>
+      <span class="quiet">${mv.checked ? tr("Last check: {t}", {t: mv.checked.replace("T", " ").slice(0, 16)}) : tr("Not checked yet.")}</span></div>
+    ${news ? `<div class="box info">${tr("There is a newer version. Nothing changes by itself: a newer model can give other years. A changed description alone also counts as a new version. Tell us if you want to switch.")}</div>` : ""}`;
+}
+const modelsDraw = () => { const el = $("models-box"); if (el) el.innerHTML = modelsHtml(); };
+async function modelsLoad(check) {
+  mvBusy = !!check; if (check) modelsDraw();
+  try { mv = check ? await send("/api/models_check", {}) : await fetchIt("/api/models"); } catch (e) { toast(tr("The server did not respond.")); }
+  mvBusy = false; modelsDraw();
+}
 
 // ------------------------------------------------------------------ Game for several players: accounts and hidden people
 let pl = null, plNote = null, plAsk = null;   // answer of /api/players, a new password to show once, an account waiting for "really remove?"
@@ -177,6 +199,8 @@ export const actions = {
     await saveConnection("gramps"); showTest("probe", "laeuft");
     try { const r = await send("/api/gramps_probe", {}); showTest("probe", [{ok: r.ok, text: r.text}]); } catch (e) { showTest("probe", [{ok: false, text: tr("The server did not respond.")}]); }
   },
+  "mv-open": () => modelsLoad(false),
+  "mv-check": () => modelsLoad(true),
   "pl-open": () => { plNote = null; plAsk = null; playersLoad(); },
   "pl-add": () => playersDo({op: "add", name: val("pl-name")}),
   "pl-reset": (el) => playersDo({op: "reset", key: el.dataset.key}),

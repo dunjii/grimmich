@@ -3,6 +3,11 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.3 – 2026-11-05 – Models fixed to tested versions, manual check for newer ones
+- The three models (MiVOLO v2, YOLO face/person detector, DINOv2 small) are loaded with a fixed version (commit hash). Once downloaded, they load from the data folder without any request to Hugging Face, and estimates cannot change silently when a model is updated there.
+- Settings → "AI models": shows the version in use per model and a button "Check for new versions". It only asks Hugging Face for the newest version and reports; it never changes or downloads anything. The result is remembered (`model_check.json`).
+- New tests `tests/test_model_versions.py` (every model has a full version, every loading call passes it, check incl. errors, endpoints) and a check in the settings UI test.
+
 ## 0.10.2 – 2026-11-05 – README: licence of the MiVOLO model corrected
 - The table of third-party components said "Apache-2.0" for the MiVOLO v2 model. Its Hugging Face page says **CC BY-NC 4.0** (non-commercial use only). Only the small MiVOLO package on GitHub (copied into the Docker image) is Apache-2.0. Grimmich does not ship the model; every installation downloads it. The other two models were not checked again (see below).
 

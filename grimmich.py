@@ -38,6 +38,7 @@ import connections  # noqa: E402
 import face_crops  # noqa: E402
 import auth  # noqa: E402
 import backup  # noqa: E402
+import model_versions  # noqa: E402
 import play  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
@@ -689,6 +690,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(connections.gramps_personen(new_=bool(q.get("new"))))
         elif path_ == "/api/gramps_places":
             self._json(connections.gramps_orte(new_=bool(q.get("new"))))
+        elif path_ == "/api/models":
+            self._json(model_versions.view(read_json("model_check.json", {})))
         elif path_ == "/api/gramps_events":
             self._json(connections.gramps_ereignisse((q.get("h") or [""])[0]))
         elif path_ == "/api/similar":
@@ -795,6 +798,10 @@ class Handler(BaseHTTPRequestHandler):
         if path_ == "/api/vote":
             answer, code = handle_vote(data_)
             self._json(answer, code)
+        elif path_ == "/api/models_check":
+            result = model_versions.check()
+            write_json("model_check.json", result)
+            self._json(model_versions.view(result))
         elif path_ == "/api/players" and isinstance(data_, dict):
             answer, code = players_change(data_)
             self._json(answer, code)

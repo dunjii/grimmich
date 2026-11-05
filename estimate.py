@@ -27,6 +27,7 @@ from immich import ApiError, Immich
 import addresses
 import torch
 from transformers import AutoImageProcessor, AutoModelForImageClassification
+from model_versions import revision as model_revision
 
 from calculation import (SERIES_DIFFERENCE, CORRELATION, SYSTEM_ERROR, decimal_year_value, sigma, _mean,  # noqa: F401
                      _span, order_violated, find_outliers, combine, combine_series)
@@ -190,11 +191,11 @@ def load_model():
     if _model is None:
         print(tx("Loading the MiVOLO model ..."))
         _model = AutoModelForImageClassification.from_pretrained(
-            MODEL_NAME, trust_remote_code=True, torch_dtype=torch.float32
+            MODEL_NAME, trust_remote_code=True, torch_dtype=torch.float32, revision=model_revision("mivolo")   # the fixed version: nothing asks the internet again
         )
         _model.eval()
         _processor = AutoImageProcessor.from_pretrained(
-            MODEL_NAME, trust_remote_code=True
+            MODEL_NAME, trust_remote_code=True, revision=model_revision("mivolo")
         )
     return _model, _processor
 
@@ -213,7 +214,7 @@ def load_detector():
             from ultralytics import YOLO
             print(tx("Loading the person detector ..."))
             path_ = hf_hub_download("iitolstykh/YOLO-Face-Person-Detector",
-                                   "yolov8x_person_face.pt")
+                                   "yolov8x_person_face.pt", revision=model_revision("detector"))
             original = torch.load
             torch.load = lambda *a, **k: original(*a, **{**k, "weights_only": False})
             try:

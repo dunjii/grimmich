@@ -37,6 +37,7 @@ import numpy as np
 import torch
 
 import estimate as S
+from model_versions import revision as model_revision
 import storage
 
 EMBED_MODEL = "facebook/dinov2-small"
@@ -64,8 +65,8 @@ def embedder():
     if _emb is None:
         from transformers import AutoImageProcessor, AutoModel
         print(tx("Loading the image comparison model (a download of about 90 MB the first time) ..."))
-        worker = AutoImageProcessor.from_pretrained(EMBED_MODEL)
-        mod = AutoModel.from_pretrained(EMBED_MODEL).eval()
+        worker = AutoImageProcessor.from_pretrained(EMBED_MODEL, revision=model_revision("dinov2"))
+        mod = AutoModel.from_pretrained(EMBED_MODEL, revision=model_revision("dinov2")).eval()
         _emb = (worker, mod)
     return _emb
 

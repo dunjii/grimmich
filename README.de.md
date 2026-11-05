@@ -145,6 +145,8 @@ Die Modelle gehören nicht zu Grimmich. Sie werden beim ersten Start von Hugging
 | [YOLO Face & Person Detector](https://huggingface.co/iitolstykh/YOLO-Face-Person-Detector) mit [Ultralytics](https://www.ultralytics.com) | Gesichter und Personen finden | AGPL-3.0 |
 | [DINOv2 small](https://huggingface.co/facebook/dinov2-small) | Bildvergleich für Serien | Apache-2.0 |
 
+Die drei Modelle werden einmal (bei der ersten Schätzung) in den Datenordner geladen und danach von dort genutzt, ohne das Internet zu fragen. Jedes ist auf eine getestete Version (Commit) festgelegt, Schätzungen ändern sich also nie unbemerkt. In den Einstellungen zeigt „KI-Modelle“ diese Versionen; der Knopf „Auf neue Versionen prüfen“ meldet nur, ob es bei Hugging Face neuere gibt, und ändert nichts.
+
 Stand der Prüfung: 05.11.2026 (Angaben auf den Modellseiten; die Seite von MiVOLO v2 nennt CC BY-NC 4.0, in einer früheren Fassung dieser Tabelle stand das falsch). Wegen dieser Lizenz ist das MiVOLO-Modell nur für die private, nicht-kommerzielle Nutzung gedacht, und Grimmich liefert es nicht mit: Jede Installation lädt es selbst herunter. Das ist keine Rechtsberatung. Wer Grimmich weitergibt,
 prüft die Lizenzen der Modelle bitte selbst noch einmal.
 
