@@ -3,6 +3,15 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.0 – 2026-11-05 – The game for several players, evaluation, working Docker image
+The versions 0.9.49 to 0.9.68 below are the way here; this is the summary.
+- **Game "Who is older?"** for phone and computer: older / younger, "Who is this?" (name choice), "Where was it taken?", before or after a dated photo, sorting 3–5 photos (ties by tapping again), decade. Whole-photo viewer with zoom and swipe, new bar with account and "Done ✓", own evaluation with badges.
+- **Everything counts together:** AI estimate, series, anchors, your rows and the game answers refine the estimates step by step; photos without an AI estimate get one from their place in a row. Nothing is written to Immich or Gramps without the usual preview.
+- **Several players, also from outside:** the game runs alone under `/play/` with sign-in (name and password you create yourself), rate limits, no search engines, optional list of people whose photos are not shown. Only `/play/` is to be shared on the internet (for example with Tailscale Funnel, which is not part of Grimmich).
+- **Feedback and evaluation:** after an answer a line says what it changed; family progress under the question; the page "Game evaluation" shows per player what the answers did and where they contradict your rows; a player's answers can be hidden and shown again.
+- **Daily backup** of the database next to it (last 14 copies).
+- **Docker image:** the MiVOLO model can now be loaded (package `mivolo`, adapted to the current `timm`, `scipy`), and the build checks it. Fixed on the write page: the ticks "Source" and "Place".
+
 ## 0.9.68 – 2026-11-05 – Docker image: build check uses the right image size
 - The new build check of 0.9.66 fed a 224 pixel image to the 384 pixel network and stopped the build. It now uses 384 x 384.
 
