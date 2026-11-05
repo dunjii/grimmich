@@ -140,11 +140,12 @@ Die Modelle gehören nicht zu Grimmich. Sie werden beim ersten Start von Hugging
 
 | Baustein | Wofür | Lizenz |
 |---|---|---|
-| [MiVOLO v2](https://huggingface.co/iitolstykh/mivolo_v2) (Code und Modell) und das Paket [MiVOLO](https://github.com/WildChlamydia/MiVOLO) (wird beim Bau ins Docker-Image kopiert, fester Stand) | Altersschätzung | Apache-2.0 |
+| [MiVOLO v2](https://huggingface.co/iitolstykh/mivolo_v2) (Modell und sein Code bei Hugging Face) | Altersschätzung | **CC BY-NC 4.0 (nur nicht-kommerzielle Nutzung)** |
+| Paket [MiVOLO](https://github.com/WildChlamydia/MiVOLO) (wird beim Bau ins Docker-Image kopiert, fester Stand) | wird vom Code des Modells gebraucht | Apache-2.0 |
 | [YOLO Face & Person Detector](https://huggingface.co/iitolstykh/YOLO-Face-Person-Detector) mit [Ultralytics](https://www.ultralytics.com) | Gesichter und Personen finden | AGPL-3.0 |
 | [DINOv2 small](https://huggingface.co/facebook/dinov2-small) | Bildvergleich für Serien | Apache-2.0 |
 
-Stand der Prüfung: 01.11.2026 (Angaben auf den Modellseiten). Das ist keine Rechtsberatung. Wer Grimmich weitergibt,
+Stand der Prüfung: 05.11.2026 (Angaben auf den Modellseiten; die Seite von MiVOLO v2 nennt CC BY-NC 4.0, in einer früheren Fassung dieser Tabelle stand das falsch). Wegen dieser Lizenz ist das MiVOLO-Modell nur für die private, nicht-kommerzielle Nutzung gedacht, und Grimmich liefert es nicht mit: Jede Installation lädt es selbst herunter. Das ist keine Rechtsberatung. Wer Grimmich weitergibt,
 prüft die Lizenzen der Modelle bitte selbst noch einmal.
 
 ## Eine Sprache hinzufügen

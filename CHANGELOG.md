@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.2 – 2026-11-05 – README: licence of the MiVOLO model corrected
+- The table of third-party components said "Apache-2.0" for the MiVOLO v2 model. Its Hugging Face page says **CC BY-NC 4.0** (non-commercial use only). Only the small MiVOLO package on GitHub (copied into the Docker image) is Apache-2.0. Grimmich does not ship the model; every installation downloads it. The other two models were not checked again (see below).
+
 ## 0.10.1 – 2026-11-05 – "Reload" of Gramps places and people works again
 - The buttons that fetch the Gramps places (in the place search) and the people (when assigning) fresh from Gramps sent `?neu=1` while the server waited for `?new=1` (a leftover of the English renaming, 0.9.48). So they always showed the list saved earlier and never asked Gramps. Fixed.
 - New test `tests/test_gramps_refresh.py` (it fails with the old address).
