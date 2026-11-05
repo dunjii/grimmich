@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.1 – 2026-11-05 – "Reload" of Gramps places and people works again
+- The buttons that fetch the Gramps places (in the place search) and the people (when assigning) fresh from Gramps sent `?neu=1` while the server waited for `?new=1` (a leftover of the English renaming, 0.9.48). So they always showed the list saved earlier and never asked Gramps. Fixed.
+- New test `tests/test_gramps_refresh.py` (it fails with the old address).
+
 ## 0.10.0 – 2026-11-05 – The game for several players, evaluation, working Docker image
 The versions 0.9.49 to 0.9.68 below are the way here; this is the summary.
 - **Game "Who is older?"** for phone and computer: older / younger, "Who is this?" (name choice), "Where was it taken?", before or after a dated photo, sorting 3–5 photos (ties by tapping again), decade. Whole-photo viewer with zoom and swipe, new bar with account and "Done ✓", own evaluation with badges.

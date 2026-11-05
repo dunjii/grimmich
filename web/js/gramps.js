@@ -21,7 +21,7 @@ export const grKind = (t) => GR_KIND[t] || t;
 
 // ---- Laden
 export async function loadGrampsPeople(fresh) {
-  const r = await fetchIt("/api/gramps_people" + (fresh ? "?neu=1" : ""));
+  const r = await fetchIt("/api/gramps_people" + (fresh ? "?new=1" : ""));
   S.grP = r.ok ? r : null;
   mark();
   return r;
@@ -32,7 +32,7 @@ export async function loadGrampsPlaces(fresh) {
   if (placeLoading || (S.grPlaces && !fresh)) return;
   placeLoading = true;
   try {
-    const r = await fetchIt("/api/gramps_places" + (fresh ? "?neu=1" : ""));
+    const r = await fetchIt("/api/gramps_places" + (fresh ? "?new=1" : ""));
     if (r.ok) { const byHandle = {}; r.places.forEach((o) => { byHandle[o.h] = o; }); S.grPlaces = {list: r.places, byHandle, without: r.without}; }
     else S.grPlaces = {errors: r.text, list: [], byHandle: {}, without: 0};
   } catch (e) { S.grPlaces = {errors: tr("The server did not respond."), list: [], byHandle: {}, without: 0}; }
