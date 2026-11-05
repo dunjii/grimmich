@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.9.67 – 2026-11-05 – Write page: the ticks "Source" and "Place" work again
+- In "What should be written?" the ticks "Date and tags", "Source" and "Place (GPS)" jumped back at once: since the English renaming (0.9.48) the page and the stored setting used different names, so a click was saved under a name nobody read. Fixed; settings you made earlier still count.
+- Test in `tests/ui_test.py`: the three ticks end up in the state.
+
 ## 0.9.66 – 2026-11-05 – Docker image: the MiVOLO model can be loaded
 - The first estimate run in the Docker container stopped with "No module named 'mivolo'": the model's own code needs the package `mivolo` (only on GitHub), which the image never contained (on a laptop it had been installed by hand). Then `scipy` and two changes of the current `timm` (a renamed function, a new parameter in the middle of VOLO's list that shifted the values) came up.
 - New `docker/install_mivolo.py` copies the package (pinned to one commit) into the image and adapts those places; `scipy` is in the requirements.

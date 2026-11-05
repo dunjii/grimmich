@@ -35,7 +35,8 @@ const remember = (k, w) => { try { localStorage.setItem("grimmich." + k, w); } c
 export const withWarning = () => readIt("mitWarnung", "0") === "1";
 export const setWithWarning = (onValue) => remember("mitWarnung", onValue ? "1" : "0");
 export const writeWhat = () => ({date: readIt("wasDatum", "1") === "1", source: readIt("wasQuelle", "0") === "1", place: readIt("wasOrt", "1") === "1"});
-export const setWhat = (fieldName, onValue) => remember("was" + fieldName[0].toUpperCase() + fieldName.slice(1), onValue ? "1" : "0");
+const WHAT_KEYS = {date: "wasDatum", source: "wasQuelle", place: "wasOrt"};   // the stored names stay as they were (German), so earlier settings still count
+export const setWhat = (fieldName, onValue) => { if (WHAT_KEYS[fieldName]) remember(WHAT_KEYS[fieldName], onValue ? "1" : "0"); };
 export const writeAlbum = () => { const id = readIt("schreibAlbum", ""); return S.albums.some((a) => a.id === id) ? id : ""; };
 export const setWriteAlbum = (id) => remember("schreibAlbum", id || "");
 export const writeSig = () => JSON.stringify([onlyConfirmedFlag(), writeAlbum(), writeWhat(), withWarning()]);
