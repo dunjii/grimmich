@@ -70,3 +70,11 @@ relatives (parents, children, partners), with a switch "Show all".
 4. Collect knowledge in any order and as often as you like: albums (order, page breaks), people (rows by appearance),
    series, events, places, game.
 5. Write: preview, test with 3 photos, then all, to Immich and to Gramps Web. Originals are backed up first.
+
+## Update 8 Nov 2026 (evening): dev paused, 0.10.4 instead
+
+The new person-centred interface (slice 1 "In life" on branch `dev`) was too much at once and is paused; `dev` stays as it is.
+What was taken over into 0.10.4 on `main`: the menu bar (Tasks, People, Albums, Series, Events, Places), Refresh in the header,
+a slimmer Inbox, an own page for one series, the basket (selection that stays across views) and rejected series suggestions
+that stay away. The open question behind 0.11 remains: how to keep structure over several thousand photos from about 15 albums
+(units of work are groups; every photo has one state; overviews by album and by time; a work queue sorted by what a confirmation clarifies most).

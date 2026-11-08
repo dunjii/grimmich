@@ -14,6 +14,7 @@ const legendItems = () => [
   ["", tr("Faded photo"), tr("The photo is no longer in the working or anchor album.")]
 ];
 const faqItems = () => [
+  [tr("What do I do in Immich first?"), tr("Do this in Immich first: put new scans in the working album, mirror or rotate them if needed, name people, enter dates of birth and correct wrong face assignments. Immich is only read here.")],
   [tr("How does a year come about?"), tr("Step by step, and each step builds on the one before: AI estimate and series, your game answers (before/after, decade), the rows “Sort by appearance” of all people (your order, fixed anchors, anchors without photo), then the order answers of the game. Everything is recomputed after every change.")],
   [tr("Why does a year change by itself?"), tr("Because it is an estimate. When you sort a photo, answer a question or confirm an anchor, Grimmich recomputes all estimates. Anchors and drafts never change by themselves.")],
   [tr("What happens when I confirm a year?"), tr("It becomes an anchor. It stays fixed and pulls the photos around it in the rows into line.")],

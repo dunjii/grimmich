@@ -57,21 +57,15 @@ function unprocessedGroups(unitsList) {
 export function inboxHtml() {
   const z = taskCounts(), j = S.job, fresh = taskUnits("new");
   const last = (j.rows || []).filter((l) => l && !l.startsWith("  ")).slice(-1)[0] || "";
-  const done = !j.running && j.name && j.rc === 0, problem = !j.running && j.name && j.rc !== null && j.rc !== 0;
+  const problem = !j.running && j.name && j.rc !== null && j.rc !== 0;
   const STEP_LABELS = {names: tr("Load names"), state: tr("Check changes in Immich"), estimate: tr("Estimate ages"), series: tr("Compare series"), provenance: tr("Read albums")};
   return `<div class="person-head"><div><h1>${tr("Inbox")}</h1><div class="quiet">${tr("New scans from the album “{Datierung}” and what has changed in Immich", {Datierung: esc(S.conn && S.conn.immich.album || tr("Scan-Datierung"))})}</div></div></div>
-    <div class="counts"><div class="count"><b>${Object.keys(S.photos).length}</b>${tr("Photos known")}</div>
-      <div class="count"><b>${S.newInfo && S.newInfo.ok ? z.inAlbum : "–"}</b>${tr("new scans in the album")}<br><span class="quiet">${S.newInfo && S.newInfo.ok ? `${tr("from {album} in the album", {album: S.newInfo.album})}` : esc(S.newInfo ? S.newInfo.text : tr("being checked …"))}</span></div>
-      <div class="count"><b>${z.changedFlag}</b>${tr("changed in Immich")}</div>
-      <div class="count"><b>${fresh.length}</b>${tr("Photos still unprocessed")}<br><span class="quiet">${tr("in no series, no confirmed year")}</span></div></div>
-    <div class="card"><div><b class="large2">${tr("Refresh")}</b><br><span class="quiet">${tr("Loads the names from Immich, checks changes there, reads the photo albums, estimates the age of new photos and compares them with the existing series.")}</span></div>
-      <button class="primary large" data-a="pipeline" id="pipeline-button" ${j.running ? "disabled" : ""}>${j.running ? tr("Running …") : tr("Refresh")}</button>
-      <div class="quiet" id="jobstatus">${j.running ? statusHtml(j, last, STEP_LABELS) : ""}</div></div>
-    ${done ? `<div class="box ok"><b>${tr("Done.")}</b> ${tr("{neu} new series suggestions.", {neu: j.new || 0})}</div>` : ""}
+    <div class="counts-line"><span><b>${fresh.length}</b> ${tr("Photos still unprocessed")}</span>
+      <span><b>${S.newInfo && S.newInfo.ok ? z.inAlbum : "–"}</b> ${tr("new scans in the album")}${S.newInfo && S.newInfo.ok ? "" : ` <span class="quiet">(${esc(S.newInfo ? S.newInfo.text : tr("being checked …"))})</span>`}</span>
+      <span><b>${z.changedFlag}</b> ${tr("changed in Immich")}</span></div>
+    ${j.running ? `<div class="box info" id="jobstatus">${statusHtml(j, last, STEP_LABELS)}</div>` : ""}
     ${problem ? '<div class="box warn">' + tr("The run ended with an error. You can find the log under the gear icon. Please send the last lines.") + '</div>' : ""}
-    <div class="box info">${tr("Do this in Immich first: put new scans in the working album, mirror or rotate them if needed, name people, enter dates of birth and correct wrong face assignments. Immich is only read here.")}</div>
-    <h3 class="subheading">${tr("Still unprocessed photos")}</h3>
-    <div class="quiet" style="margin-bottom:10px">${tr("A photo counts as processed once it is in a series or has a confirmed year. The rest are listed here, by album and in album order.")}</div>
+        <div class="quiet" style="margin-bottom:10px">${tr("A photo counts as processed once it is in a series or has a confirmed year. The rest are listed here, by album and in album order.")}</div>
     ${fresh.length ? unprocessedGroups(fresh) : '<div class="empty">' + tr("All processed. New scans will appear here after the next “Refresh”.") + '</div>'}`
 }
 

@@ -312,7 +312,6 @@
   "Loading from Gramps …": "Lade aus Gramps …",
   "Loading places from Gramps …": "Orte werden aus Gramps geladen …",
   "Loading …": "Lade …",
-  "Loads the names from Immich, checks changes there, reads the photo albums, estimates the age of new photos and compares them with the existing series.": "Lädt die Namen aus Immich, prüft Änderungen dort, liest die Fotoalben, schätzt das Alter neuer Fotos und vergleicht sie mit den bestehenden Serien.",
   "Log of the last run": "Protokoll des letzten Laufs",
   "Login at {url} as “{user}” works.": "Anmeldung bei {url} als „{user}“ funktioniert.",
   "Login not possible (response {code}). Is the address correct (without /api at the end)?": "Anmeldung nicht möglich (Antwort {code}). Stimmt die Adresse (ohne /api am Ende)?",
@@ -423,7 +422,6 @@
   "Photo {k}{e}. If the face does not match the name, correct the assignment in Immich and then click “Refresh” in Grimmich.": "Foto {k}{e}. Passt das Gesicht nicht zum Namen, korrigiere die Zuordnung in Immich und klicke danach in Grimmich auf „Aktualisieren“.",
   "Photo {nr}": "Foto {nr}",
   "Photos": "Fotos",
-  "Photos known": "Fotos bekannt",
   "Photos still unprocessed": "Fotos noch unbearbeitet",
   "Photos whose year you set yourself (not taken over from the AI) are compared. “+” means: the AI estimates the person older than they were. Nothing is changed here, it is only an evaluation.": "Verglichen werden Fotos, deren Jahr du selbst gesetzt hast (nicht von der KI übernommen). „+“ heißt: Die KI schätzt die Person älter als sie war. Hier wird nichts verändert, es ist nur eine Auswertung.",
   "Photos with confirmed year ({n}): mean error": "Fotos mit bestätigtem Jahr ({n}): mittlerer Fehler",
@@ -544,7 +542,6 @@
   "Stepsister": "Stiefschwester",
   "Stepson": "Stiefsohn",
   "Still empty. Drag faces here.": "Noch leer. Ziehe Gesichter hierher.",
-  "Still unprocessed photos": "Noch unbearbeitete Fotos",
   "Suggested correction": "Vorgeschlagene Korrektur",
   "Suggestion:": "Vorschlag:",
   "Suggestion: {n} {n:new photo probably belongs|new photos probably belong} here": "Vorschlag: {n} {n:neues Foto gehört|neue Fotos gehören} vermutlich dazu",
@@ -711,8 +708,6 @@
   "event links": "Ereignis-Verknüpfungen",
   "from": "von",
   "from Gramps": "aus Gramps",
-  "from {album} in the album": "von {album} im Album",
-  "in no series, no confirmed year": "in keiner Serie, ohne bestätigtes Jahr",
   "in series {id}": "in Serie {id}",
   "in {name}": "in {name}",
   "is being written": "wird geschrieben",
@@ -1207,6 +1202,7 @@
   "Refreshed. {neu} new series suggestions.": "Aktualisiert. {neu} neue Serienvorschläge.",
   "All series": "Serien",
   "This series does not exist any more.": "Diese Serie gibt es nicht mehr.",
-  "Take out of the basket": "Aus dem Korb nehmen"
+  "Take out of the basket": "Aus dem Korb nehmen",
+  "What do I do in Immich first?": "Was mache ich zuerst in Immich?"
  }
 }

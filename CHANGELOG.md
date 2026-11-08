@@ -3,9 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
-## Unreleased (branch `ui-menu`) – Menu bar instead of the start page
+## 0.10.4 – 2026-11-08 – Menu bar, basket for series, own series page
 - New **menu bar** under the header: Tasks · People · Albums · Series · Events · Places. The left column lists only what the chosen entry stands for; finished people, albums and series are at the bottom of their list.
-- **Refresh** moved into the header (progress shows on the button, a message appears when done). The big start page is no longer needed; the old Inbox is still under Tasks.
+- **Refresh** moved into the header (progress shows on the button, a message appears when done). The Inbox page is slimmer (counts, unprocessed photos by album); the Immich hint moved to the Help page (“What do I do in Immich first?”). A click on the logo still opens the Inbox.
 - The selection bar became the **basket**: it stays across Albums, People, Series and so on, survives a reload, shows what is collected as chips (click × to take one out) and has the buttons “Merge into one series” and “Clear selection”.
 - **Rejected series suggestions stay away**: photos removed from a series, and series dissolved with “discard”, are remembered as pairs that do not belong together. A suggestion that looks a little different next time (one more photo) no longer brings them back. New test `tests/test_series_rejected.py`.
 - New page for **one series** (menu entry Series, also from the search); the menu stays on Series.
