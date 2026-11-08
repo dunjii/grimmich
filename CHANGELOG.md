@@ -3,7 +3,8 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
-## 0.10.5 – 2026-11-08 – Why does a date from Immich not count?
+## 0.10.5 – 2026-11-08 – Dates you set in Immich are recognised again
+- **Fix**: a capture date you set by hand in Immich was ignored (and could have been overwritten when writing). Reason: Immich moves its `fileCreatedAt` along when you change the date, so Grimmich saw “no difference to the scan date”. The scan date now comes from the file's modification date or the day the photo was added to Immich, which do not change. This applies to reading and writing.
 - For photos whose Immich capture date does **not** count as set by you, the photo panel now says why (“Immich: capture date …, scan date …, only n days apart”, camera data in the working album, or written by Grimmich). Grimmich reads this at every Refresh. New test `tests/test_date_check.py`.
 
 ## 0.10.4 – 2026-11-08 – Menu bar, basket for series, own series page

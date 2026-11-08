@@ -8,7 +8,7 @@ import immich_state  # noqa: E402
 
 
 def photo(date, scan, **kw):
-    return {"id": "abcdef123456", "originalFileName": "x.tif", "fileCreatedAt": scan + "T10:00:00Z",
+    return {"id": "abcdef123456", "originalFileName": "x.tif", "fileModifiedAt": scan + "T10:00:00Z", "fileCreatedAt": scan + "T10:00:00Z",
             "exifInfo": {"dateTimeOriginal": date + "T00:00:00Z", **kw}}
 
 
@@ -24,6 +24,11 @@ class DateCheckTest(unittest.TestCase):
         p = photo("2026-11-02", "2026-11-02")
         self.assertEqual(self.why(p), "close")
         self.assertIsNone(immich_state.hand_date(p, "x_abcdef", {}))
+
+    def test_immich_moves_fileCreatedAt_along(self):
+        # after you change the date in Immich, fileCreatedAt shows the new date too; the file's own date stays
+        p = photo("1927-07-01", "2026-11-02"); p["fileCreatedAt"] = "1927-07-01T00:00:00Z"
+        self.assertEqual(self.why(p), "set")
 
     def test_camera_data_does_not_count(self):
         self.assertEqual(self.why(photo("1951-06-01", "2026-11-02", make="EPSON")), "camera")

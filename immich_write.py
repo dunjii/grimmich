@@ -49,6 +49,15 @@ ART_TAGS = {k: _NAMES["tag_" + k] for k in ("postcard", "greeting_card", "docume
 ART_ALL = sorted({w for k in ART_TAGS for w in naming.variants("tag_" + k)})   # all spellings, for reading and removing
 BLOCK_START = "[GRM]"   # one block per photo; the marker is language independent and never changes
 BLOCK_END = "[/GRM]"
+def scan_date(asset):
+    """The day the photo was scanned/imported. Not fileCreatedAt: Immich moves that along when you change the capture date,
+    so it would always look 'unchanged'. The file's modification date and the day it was added to Immich stay put."""
+    for k in ("fileModifiedAt", "createdAt", "fileCreatedAt", "localDateTime"):
+        if asset.get(k):
+            return asset[k][:10]
+    return ""
+
+
 DEVIATION_DAYS = 2   # how far the capture date may deviate from the scan date before we assume 'set by yourself'
 
 
@@ -268,7 +277,7 @@ def plan(entry_row, asset, written):
     # Grimmich writes nothing there). The original is saved before every write.
     camera = bool(exif.get("make") or exif.get("model"))
     if not by_us and not camera:
-        scan = (asset.get("fileCreatedAt") or asset.get("localDateTime") or "")[:10]
+        scan = scan_date(asset)
         if old_date_value and scan:
             try:
                 distance = abs((datetime.fromisoformat(old_date_value[:10]) - datetime.fromisoformat(scan)).days)

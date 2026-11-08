@@ -16,7 +16,7 @@ from datetime import datetime
 
 import estimate as S
 import storage
-from immich_write import DEVIATION_DAYS, ESTIMATED_ALL, OPEN_ALL, any_of, has_block, WRITTEN
+from immich_write import DEVIATION_DAYS, scan_date, ESTIMATED_ALL, OPEN_ALL, any_of, has_block, WRITTEN
 
 STATE = "immich_state.json"
 CHANGES = "changes.json"
@@ -58,7 +58,7 @@ def date_check(photo, key, written):
     (camera data in the working album), "close" (not more than DEVIATION_DAYS from the scan date), "set" (counts)."""
     exif = photo.get("exifInfo") or {}
     date_ = (exif.get("dateTimeOriginal") or "")[:10]
-    scan = (photo.get("fileCreatedAt") or photo.get("localDateTime") or "")[:10]
+    scan = scan_date(photo)
     info = {"d": date_, "s": scan, "why": "nodate"}
     if not date_ or not scan:
         return info
