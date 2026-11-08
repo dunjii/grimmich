@@ -70,3 +70,19 @@ relatives (parents, children, partners), with a switch "Show all".
 4. Collect knowledge in any order and as often as you like: albums (order, page breaks), people (rows by appearance),
    series, events, places, game.
 5. Write: preview, test with 3 photos, then all, to Immich and to Gramps Web. Originals are backed up first.
+
+## Update 8 Nov 2026: direction for the dev branch
+
+Work happens on the branch `dev`, not on `main`. `main` stays at the tested 0.10.x until the owner says so.
+A manual build of `dev` produces only the image tag `ghcr.io/dunjii/grimmich:dev`, never `latest`.
+
+The owner chose the combined design B (life lines) + D (check view) + E (phone) as the basis. The clickable draft is
+`docs/design-0.11-draft.html` (static, example data). It replaces the earlier idea of only a new header and a sidebar per tab:
+the header with tabs becomes the shell around this working surface.
+
+- Life lines: one row per person on a time axis, photos as dots, Gramps events as diamonds, gaps and contradictions marked;
+  a click opens the check view. Cases are sorted by what a confirmation clarifies most.
+- Check view: one photo in the middle with all evidence around it (people, Gramps events, series, estimate, game answers,
+  anchors, page neighbours); the output block below says what goes where (Immich / Gramps) with "That is right" and one Undo.
+- Phone: the same check view, small, four questions (who, when, where, what happened); it only collects confirmations,
+  writing stays on the computer.

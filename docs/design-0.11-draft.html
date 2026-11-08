@@ -1,0 +1,335 @@
+<title>Grimmich Arbeitsfläche</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one working surface. Lebenslinien find the case, the Prüfansicht settles it, the phone shows the same Prüfansicht small. */
+:root{
+  --bg:#f4f0e6; --card:#fffdf8; --card2:#faf7ef; --line:#dcd5c6; --line2:#cfc7b4;
+  --fg:#1d2a2e; --mute:#5f6359; --accent:#1f5f73; --accent-d:#174a5a; --accent-bg:#dcebef; --accent-line:#8fb7c3;
+  --ok:#2f6b3f; --ok-bg:#eef5ef; --ok-line:#cfe3d3; --warn:#b4540a; --warn-bg:#fbe9d5; --warn-line:#d9a36b;
+  --bad:#a02020; --bad-bg:#f6dede;
+  --photo1:#cdbd9c; --photo2:#a8946b; --ink:#4a3a28;
+  --serif:Newsreader,"Iowan Old Style","Palatino Linotype",Georgia,serif; --sans:Inter,system-ui,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#161d20; --card:#1e282c; --card2:#1a2326; --line:#324047; --line2:#40525a;
+  --fg:#e8e6df; --mute:#9aa49f; --accent:#6fb3c8; --accent-d:#9ccddc; --accent-bg:#20363e; --accent-line:#3d6a78;
+  --ok:#7fc08f; --ok-bg:#1d2e22; --ok-line:#355a40; --warn:#e8a05a; --warn-bg:#352616; --warn-line:#7a5428;
+  --bad:#ef8a8a; --bad-bg:#3a2020; --photo1:#5b5240; --photo2:#3e3828; --ink:#d8c9ab; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161d20; --card:#1e282c; --card2:#1a2326; --line:#324047; --line2:#40525a;
+  --fg:#e8e6df; --mute:#9aa49f; --accent:#6fb3c8; --accent-d:#9ccddc; --accent-bg:#20363e; --accent-line:#3d6a78;
+  --ok:#7fc08f; --ok-bg:#1d2e22; --ok-line:#355a40; --warn:#e8a05a; --warn-bg:#352616; --warn-line:#7a5428;
+  --bad:#ef8a8a; --bad-bg:#3a2020; --photo1:#5b5240; --photo2:#3e3828; --ink:#d8c9ab; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 var(--sans);
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:30px}h2{font-size:21px}h3{font-size:17px}h4{font-size:14.5px}
+button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line2);background:var(--card);border-radius:8px;padding:0 14px;min-height:38px;font-weight:500}
+button:hover{border-color:var(--accent)}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+button.small{min-height:30px;padding:0 10px;font-size:12.5px;border-radius:6px}
+.quiet{color:var(--mute)}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mute)}
+
+/* intro flow */
+.intro{display:flex;flex-direction:column;gap:12px}
+.flow{display:grid;grid-template-columns:1fr auto 1.25fr auto 1fr;gap:10px;align-items:stretch}
+.flow>div.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.flow>div.mid{background:var(--accent-bg);border-color:var(--accent-line)}
+.flow .arrow{align-self:center;color:var(--mute);font-size:20px}
+.flow ul{margin:6px 0 0;padding-left:18px}.flow li{margin:2px 0}
+@media(max-width:820px){.flow{grid-template-columns:1fr}.flow .arrow{transform:rotate(90deg);justify-self:center}}
+
+/* tabs */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:0}
+.tabs button{border:0;border-bottom:3px solid transparent;border-radius:8px 8px 0 0;background:none;min-height:42px;color:var(--mute)}
+.tabs button[aria-selected=true]{color:var(--accent-d);border-bottom-color:var(--accent);background:var(--accent-bg)}
+.note{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--mute);max-width:80ch}
+
+/* app frame */
+.app{background:var(--card2);border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+.topbar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--card)}
+.topbar .mark{font:600 20px var(--serif)}
+.topbar nav{display:flex;gap:2px;flex-wrap:wrap}
+.topbar nav span{padding:6px 12px;border-radius:8px;color:var(--mute);font-weight:500}
+.topbar nav span.on{background:var(--accent-bg);color:var(--accent-d)}
+.topbar .sp{flex:1}
+.pill{display:inline-block;border-radius:12px;padding:0 9px;font-size:12px;background:var(--card2);border:1px solid var(--line);color:var(--mute)}
+.pill.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.pill.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.pill.bad{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
+.pill.info{background:var(--accent-bg);border-color:var(--accent-line);color:var(--accent-d)}
+
+/* Lebenslinien */
+.life{display:grid;grid-template-columns:220px minmax(0,1fr)}
+.life aside{padding:16px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:10px;background:var(--card)}
+.case{border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--card2);cursor:pointer;text-align:left;min-height:0;font-weight:400;width:100%}
+.case b{display:block}.case.on{border-color:var(--accent);background:var(--accent-bg)}
+.lifemain{padding:16px;min-width:0}
+.scroll{overflow-x:auto;padding-bottom:6px}
+#lifeChart{min-width:760px;position:relative}
+.axis{position:relative;height:22px;margin-left:120px;border-bottom:1px solid var(--line2)}
+.axis span{position:absolute;top:0;font-size:11.5px;color:var(--mute);transform:translateX(-50%);font-variant-numeric:tabular-nums}
+.lrow{display:flex;align-items:center;height:62px;border-bottom:1px dashed var(--line)}
+.lname{flex:0 0 120px;font-weight:600;line-height:1.2}.lname small{display:block;font-weight:400;color:var(--mute)}
+.lane{position:relative;flex:1;height:100%}
+.lifebar{position:absolute;top:28px;height:6px;border-radius:3px;background:var(--accent-line)}
+.gap{position:absolute;top:14px;height:34px;border:1.5px dashed var(--warn);background:var(--warn-bg);border-radius:6px;font-size:11.5px;color:var(--warn);padding:2px 6px;overflow:hidden;white-space:nowrap;opacity:.95}
+.dot{position:absolute;top:20px;width:22px;height:22px;margin-left:-11px;border-radius:50%;border:2px solid var(--accent);background:var(--card);padding:0;min-height:0}
+.dot.ok{background:var(--ok);border-color:var(--ok)}
+.dot.bad{background:var(--bad);border-color:var(--bad)}
+.dot.sel{outline:3px solid var(--accent-line);outline-offset:2px}
+.ev{position:absolute;top:2px;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:var(--warn);border-radius:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:12.5px;color:var(--mute)}
+.legend i{display:inline-block;width:12px;height:12px;vertical-align:-2px;margin-right:5px;border-radius:50%;border:2px solid var(--accent);background:var(--card)}
+.legend i.ok{background:var(--ok);border-color:var(--ok)}.legend i.bad{background:var(--bad);border-color:var(--bad)}
+.legend i.ev{border:0;background:var(--warn);border-radius:2px;transform:rotate(45deg);position:static;margin-left:0;width:11px;height:11px;margin-right:6px}
+.legend i.gp{border:1.5px dashed var(--warn);background:var(--warn-bg);border-radius:3px}
+@media(max-width:820px){.life{grid-template-columns:1fr}.life aside{border-right:0;border-bottom:1px solid var(--line)}}
+
+/* Prüfansicht */
+.check{display:grid;grid-template-columns:260px minmax(0,1fr) 260px;gap:0}
+.col{padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.col+.col{border-left:1px solid var(--line)}
+.stage{padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.photo{position:relative;aspect-ratio:4/3;max-height:430px;width:100%;border-radius:6px;border:6px solid var(--card);box-shadow:0 6px 18px rgba(30,20,5,.25);overflow:hidden;
+  background:radial-gradient(ellipse at 50% 120%,var(--photo2) 0 40%,transparent 41%),linear-gradient(160deg,var(--photo1),var(--photo2))}
+.person{position:absolute;border:2px solid var(--accent);border-radius:6px;background:rgba(31,95,115,.08);transition:.15s}
+.person span{position:absolute;left:-2px;top:-24px;font-size:11.5px;background:var(--accent);color:var(--bg);padding:1px 7px;border-radius:5px;white-space:nowrap}
+.person.hot{border-color:var(--warn);background:rgba(180,84,10,.2);box-shadow:0 0 0 4px rgba(180,84,10,.25)}
+.person.hot span{background:var(--warn)}
+.proposal{display:flex;flex-wrap:wrap;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 11px;transition:.15s}
+.card.hot{border-color:var(--warn);background:var(--warn-bg)}
+.card h4{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.card .sub{color:var(--mute);font-size:12.5px;margin-top:2px}
+.strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.thumb{flex:0 0 56px;height:44px;border-radius:4px;background:linear-gradient(160deg,var(--photo1),var(--photo2));position:relative;font-size:10.5px;color:var(--ink);display:flex;align-items:flex-end;padding:2px 3px;border:2px solid transparent}
+.thumb.cur{border-color:var(--accent)}
+.out{border-top:1px solid var(--line);background:var(--card);padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.orow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.4fr) auto;gap:6px 14px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card2)}
+.orow.done{background:var(--ok-bg);border-color:var(--ok-line)}
+.orow b{display:block}
+.targets{display:flex;gap:6px;flex-wrap:wrap}
+.orow button.confirm{background:var(--card);border-color:var(--ok);color:var(--ok);font-weight:600}
+.orow.done button.confirm{background:var(--ok);color:var(--bg)}
+.undo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:var(--mute);min-height:30px}
+.undo a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline}
+@media(max-width:1000px){.check{grid-template-columns:1fr}.col+.col{border-left:0;border-top:1px solid var(--line)}.orow{grid-template-columns:1fr}}
+
+/* phone */
+.phonewrap{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.phone{width:360px;max-width:100%;border:10px solid #1b2124;border-radius:34px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
+.phone .ph-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 8px}
+.phone .ph-top b{font:600 18px var(--serif)}
+.phone .body{padding:0 14px 12px;display:flex;flex-direction:column;gap:10px}
+.phone .photo{max-height:210px;aspect-ratio:3/2}
+.q4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.q4 button{min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:12px;font-weight:600}
+.q4 button.set{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.q4 button small{font-weight:400;color:var(--mute);font-size:11.5px}
+.ph-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px 16px;border-top:1px solid var(--line);background:var(--card);font-size:12.5px;color:var(--mute)}
+.explain{flex:1 1 320px;max-width:520px;display:flex;flex-direction:column;gap:10px}
+.explain ul{margin:0;padding-left:18px}.explain li{margin:4px 0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:8px;z-index:20;max-width:90vw;opacity:0;pointer-events:none;transition:.2s}
+.toast.show{opacity:1}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <div>
+      <div class="eyebrow">Entwurf 0.11 · B, D und E zusammen</div>
+      <h1>Eine Arbeitsfläche für alle Fragen an die Alben</h1>
+    </div>
+    <div class="flow" aria-label="Was hineingeht und was herauskommt">
+      <div class="box"><h4>Hinein</h4><ul>
+        <li>Scans und Albumseiten (Immich)</li><li>Personen, Gesichter, bekannte Daten (Immich)</li><li>Personen, Ereignisse, Orte (Gramps)</li><li>KI-Altersschätzung, Spielantworten</li></ul></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="box mid"><h4>Arbeitsfläche</h4><ul>
+        <li><b>Lebenslinien</b> zeigen, wo eine Person Lücken oder Widersprüche hat</li><li><b>Prüfansicht</b>: ein Foto, alle Belege drum herum</li><li><b>Handy</b>: dieselbe Prüfansicht, klein, mit vier Fragen</li></ul></div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="box"><h4>Heraus</h4><ul>
+        <li>Bestätigtes Jahr, Ort, Ereignis</li><li>nach Immich (Datum, Ort, Beschreibung)</li><li>nach Gramps (Medien, Ereignis-Verknüpfung)</li><li>immer mit Vorschau und Rückgängig</li></ul></div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Ansichten">
+    <button role="tab" id="t-life" aria-selected="true" data-tab="life">1 · Lebenslinien (B)</button>
+    <button role="tab" id="t-check" aria-selected="false" data-tab="check">2 · Prüfansicht (D)</button>
+    <button role="tab" id="t-phone" aria-selected="false" data-tab="phone">3 · Handy (E)</button>
+  </div>
+
+  <!-- ============== 1 Lebenslinien ============== -->
+  <section id="p-life" aria-labelledby="t-life">
+    <p class="note" style="margin:0 0 12px">Eine Zeile je Person, Zeitachse nach Jahren. Punkte sind Fotos, Rauten sind Gramps-Ereignisse. Orange Flächen sind Lücken, rote Punkte Widersprüche. Ein Klick auf einen Punkt öffnet die Prüfansicht für dieses Foto.</p>
+    <div class="app">
+      <div class="topbar"><span class="mark">Grimmich</span><nav><span>Start</span><span class="on">Lebenslinien</span><span>Alben</span><span>Serien</span><span>Spiel</span></nav><span class="sp"></span><span class="pill">● Immich</span><span class="pill">● Gramps</span><button class="small">↻ Aktualisieren</button><button class="small primary" id="writeBtn1">Schreiben (3)</button></div>
+      <div class="life">
+        <aside>
+          <h4>Nächste Fälle</h4>
+          <button class="case" data-open="1"><b>Otto, Lücke 1946–1951</b><span class="quiet">Hochzeit 1951 hat kein Foto</span></button>
+          <button class="case" data-open="2"><b>Hans, Foto nach Tod</b><span class="quiet">ca. 1961, gestorben 1957</span></button>
+          <button class="case on" data-open="0"><b>Taufe Otto 1944</b><span class="quiet">3 Belege passen, 1 Foto offen</span></button>
+          <div class="quiet" style="font-size:12.5px">Sortiert nach Gewinn: was eine Bestätigung am meisten klärt, steht oben.</div>
+        </aside>
+        <div class="lifemain"><div class="scroll"><div id="lifeChart"></div></div>
+          <div class="legend"><span><i></i>Schätzung</span><span><i class="ok"></i>bestätigt</span><span><i class="bad"></i>Widerspruch</span><span><i class="ev"></i>Gramps-Ereignis</span><span><i class="gp"></i>Lücke</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 2 Prüfansicht ============== -->
+  <section id="p-check" aria-labelledby="t-check" hidden>
+    <p class="note" style="margin:0 0 12px">Ein Foto steht in der Mitte, alles, was dazu etwas sagt, ist drumherum angeordnet. Fährst du über einen Beleg, leuchtet auf, worauf er sich bezieht. Unten steht, was herauskommt und wohin es geht.</p>
+    <div class="app">
+      <div class="topbar"><span class="mark">Grimmich</span><nav><span>Start</span><span>Lebenslinien</span><span class="on">Prüfen</span><span>Alben</span><span>Serien</span><span>Spiel</span></nav><span class="sp"></span><span class="quiet">Album 2 · Seite 4 · Foto 3</span><button class="small" id="back">← Lebenslinien</button><button class="small primary" id="writeBtn2">Schreiben (3)</button></div>
+      <div class="check">
+        <div class="col">
+          <div class="eyebrow">Wer</div>
+          <div class="card" data-hl="otto"><h4>Otto Meyer <span class="pill info">Gesicht 1</span></h4><div class="sub">*1921 · KI: 22 ± 4 Jahre → <b>1943</b></div></div>
+          <div class="card" data-hl="clara"><h4>Clara Meyer <span class="pill info">Gesicht 2</span></h4><div class="sub">*1924 · KI: 19 ± 4 Jahre → <b>1943</b></div></div>
+          <div class="card" data-hl="greta"><h4>Greta? <span class="pill warn">unbenannt</span></h4><div class="sub">Gesicht ähnelt Greta auf 2 Fotos der Serie</div><div style="margin-top:6px"><button class="small">Greta bestätigen</button></div></div>
+          <div class="eyebrow" style="margin-top:6px">Aus Gramps</div>
+          <div class="card" data-hl="event"><h4>Taufe Otto, 1944 <span class="pill ok">passt</span></h4><div class="sub">Otto und Clara beteiligt, Jahr liegt in der Spanne</div></div>
+        </div>
+        <div class="stage">
+          <div class="photo" role="img" aria-label="Fotoplatzhalter: drei Personen an einem Tisch">
+            <div class="person" data-hl="otto" style="left:14%;top:34%;width:20%;height:34%"><span>Otto</span></div>
+            <div class="person" data-hl="clara" style="left:42%;top:30%;width:19%;height:36%"><span>Clara</span></div>
+            <div class="person" data-hl="greta" style="left:68%;top:38%;width:17%;height:30%"><span>Greta?</span></div>
+          </div>
+          <div class="proposal">
+            <span class="pill info">Vorschlag Jahr: 1944 ± 1</span><span class="pill info">Ort: Posen (aus Serie)</span><span class="pill info">Ereignis: Taufe Otto</span>
+          </div>
+          <div class="eyebrow">Seite 4 im Album</div>
+          <div class="strip" aria-label="Fotos derselben Albumseite"><div class="thumb">1943</div><div class="thumb">ca. 1944</div><div class="thumb cur">dieses</div><div class="thumb">?</div><div class="thumb">1945</div></div>
+        </div>
+        <div class="col">
+          <div class="eyebrow">Rundherum</div>
+          <div class="card" data-hl="series"><h4>Serie S038 <span class="pill">6 Fotos</span></h4><div class="sub">Ein Jahr für alle: 1944. Ort Posen.</div></div>
+          <div class="card" data-hl="ki"><h4>KI-Schätzung <span class="pill">ca. 1943</span></h4><div class="sub">Spanne 1941 bis 1946</div></div>
+          <div class="card" data-hl="game"><h4>Spiel <span class="pill ok">3 Antworten</span></h4><div class="sub">„Älter als Foto 2“ (2×), „Nach Ankerfoto 1943“</div></div>
+          <div class="card" data-hl="anchor"><h4>Anker in der Nähe</h4><div class="sub">Foto in Immich mit Datum 12.06.1944, 2 Seiten weiter</div></div>
+          <div class="card"><h4>Widersprüche</h4><div class="sub ok" style="color:var(--ok)">keine</div></div>
+        </div>
+      </div>
+      <div class="out" aria-live="polite">
+        <div class="eyebrow">Das kommt heraus</div>
+        <div class="orow" data-out="year"><div><b>Jahr 1944</b><span class="quiet">aus Serie, Anker und Spiel</span></div><div class="targets"><span class="pill">Immich: Datum</span><span class="pill">Immich: Beschreibung</span></div><button class="confirm small" data-confirm="year">Das stimmt</button></div>
+        <div class="orow" data-out="place"><div><b>Ort Posen</b><span class="quiet">Gramps-Ort mit GPS</span></div><div class="targets"><span class="pill">Immich: Ort</span><span class="pill">Gramps: Foto am Ort</span></div><button class="confirm small" data-confirm="place">Das stimmt</button></div>
+        <div class="orow" data-out="event"><div><b>Ereignis Taufe Otto</b><span class="quiet">ein Foto kann mehrere Ereignisse belegen</span></div><div class="targets"><span class="pill">Gramps: Ereignis verknüpfen</span></div><button class="confirm small" data-confirm="event">Das stimmt</button></div>
+        <div class="undo"><span id="undoText">Noch nichts bestätigt. Nach Immich oder Gramps wird erst nach der Schreibvorschau geschrieben.</span><a id="undoLink" role="button" tabindex="0" hidden>Rückgängig</a><span class="sp" style="flex:1"></span><button class="primary small" id="nextBtn">Nächstes Foto →</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== 3 Handy ============== -->
+  <section id="p-phone" aria-labelledby="t-phone" hidden>
+    <p class="note" style="margin:0 0 12px">Dieselbe Prüfansicht auf dem Handy: ein Foto, vier Fragen (Wer, Wann, Wo, Was war da?), darunter die passenden Vorschläge aus Gramps. Ein Tipp bestätigt, und es landet im selben Schreiben wie am Rechner.</p>
+    <div class="phonewrap">
+      <div class="phone" aria-label="Handy-Ansicht">
+        <div class="ph-top"><b>Grimmich</b><span class="pill info">Album 2 · S. 4 · Foto 3</span></div>
+        <div class="body">
+          <div class="photo"><div class="person" style="left:14%;top:34%;width:20%;height:34%"><span>Otto</span></div><div class="person" style="left:42%;top:30%;width:19%;height:36%"><span>Clara</span></div><div class="person" style="left:68%;top:38%;width:17%;height:30%"><span>Greta?</span></div></div>
+          <div class="q4">
+            <button data-q><span>Wer</span><small>Greta?</small></button>
+            <button data-q class="set"><span>Wann ✓</span><small>1944 ± 1</small></button>
+            <button data-q><span>Wo</span><small>Posen?</small></button>
+            <button data-q><span>Was war da?</span><small>Taufe Otto</small></button>
+          </div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h4>Taufe Otto, 1944</h4><div class="sub">Gramps · Otto und Clara beteiligt</div></div><button class="small primary" data-q>Ja</button></div>
+          <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h4>Ort: Posen</h4><div class="sub">2 Fotos derselben Serie liegen dort</div></div><button class="small primary" data-q>Ja</button></div>
+        </div>
+        <div class="ph-foot"><span id="phoneLast">Letzte Änderung: Jahr 1944</span><a style="color:var(--accent);font-weight:600" id="phoneUndo" role="button" tabindex="0">Rückgängig</a><button class="small primary">Nächstes Foto</button></div>
+      </div>
+      <div class="explain">
+        <h3>Was am Handy anders ist</h3>
+        <ul>
+          <li>Nur die Prüfansicht, keine Lebenslinien. Die Fälle kommen als Stapel, sortiert nach Gewinn.</li>
+          <li>Notiz oder Sprachnotiz zum Foto bleibt möglich, sie wandert als Hinweis zum Foto.</li>
+          <li>Schreiben geht nie vom Handy aus. Es sammelt Bestätigungen, die Vorschau macht der Rechner.</li>
+          <li>Das Spiel bleibt getrennt. Es fragt anonym und schnell, die Prüfansicht fragt gezielt.</li>
+        </ul>
+        <h3>Wie alles zusammenhängt</h3>
+        <ul>
+          <li>Jede Bestätigung verschiebt Schätzungen der Serie, der Reihe und der Lebenslinie.</li>
+          <li>Gramps-Daten kommen hinein (Ereignisse, Orte) und bestätigte Funde gehen wieder hinaus.</li>
+          <li>Rückgängig gibt es an derselben Stelle in allen drei Ansichten.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+  var toastT;function toast(t){var e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){e.classList.remove('show')},2200)}
+
+  /* tabs */
+  function show(tab){
+    ['life','check','phone'].forEach(function(n){$('#p-'+n).hidden=n!==tab;$('#t-'+n).setAttribute('aria-selected',String(n===tab))});
+    try{history.replaceState(null,'','#'+tab)}catch(e){}
+  }
+  $$('.tabs button').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.tab)})});
+  $('#back').addEventListener('click',function(){show('life')});
+  var h=(location.hash||'').slice(1);if(['life','check','phone'].indexOf(h)>-1)show(h);
+
+  /* Lebenslinien */
+  var Y0=1890,Y1=1965;
+  var people=[
+    {n:'Hans Dalitz',s:'*1898 † 1957',b:1898,d:1957,photos:[[1925,'ok'],[1932,''],[1938,''],[1949,''],[1961,'bad']],ev:[1925],gap:[1939,1948,'Lücke 1939–48']},
+    {n:'Otto Meyer',s:'*1921',b:1921,d:null,photos:[[1943,''],[1944,'sel'],[1944.6,''],[1945,'ok'],[1956,''],[1958,'']],ev:[1938,1944,1951],gap:[1946,1955,'Lücke 1946–55, Hochzeit 1951 ohne Foto']},
+    {n:'Clara Meyer',s:'*1924',b:1924,d:null,photos:[[1943,''],[1944,'sel'],[1945,''],[1951.3,'']],ev:[1944,1951],gap:[1952,1960,'keine Fotos 1952–60']},
+    {n:'Greta Unbekannt',s:'ca. *1946',b:1946,d:null,photos:[[1950,''],[1953,''],[1957,'']],ev:[],gap:null}
+  ];
+  var pos=function(y){return (y-Y0)/(Y1-Y0)*100};
+  var html='<div class="axis">';for(var y=1890;y<=1960;y+=10)html+='<span style="left:'+pos(y)+'%">'+y+'</span>';html+='</div>';
+  people.forEach(function(p,i){
+    html+='<div class="lrow"><div class="lname">'+p.n+'<small>'+p.s+'</small></div><div class="lane">';
+    html+='<div class="lifebar" style="left:'+pos(p.b)+'%;width:'+(pos(p.d||Y1)-pos(p.b))+'%"></div>';
+    if(p.gap)html+='<div class="gap" style="left:'+pos(p.gap[0])+'%;width:'+(pos(p.gap[1])-pos(p.gap[0]))+'%" title="'+p.gap[2]+'">'+p.gap[2]+'</div>';
+    p.ev.forEach(function(e){html+='<div class="ev" style="left:'+pos(e)+'%" title="Gramps-Ereignis '+e+'"></div>'});
+    p.photos.forEach(function(f){var cls=f[1]==='sel'?'sel':f[1];html+='<button class="dot '+cls+'" data-open="'+(f[1]==='bad'?2:0)+'" style="left:'+pos(f[0])+'%" aria-label="Foto '+Math.round(f[0])+'"></button>'});
+    html+='</div></div>';
+  });
+  $('#lifeChart').innerHTML=html;
+  $$('[data-open]').forEach(function(b){b.addEventListener('click',function(){show('check');$('#p-check').scrollIntoView({block:'start',behavior:'smooth'})})});
+
+  /* Prüfansicht: hover highlight */
+  $$('[data-hl]').forEach(function(el){
+    var k=el.dataset.hl;
+    function on(){$$('[data-hl="'+k+'"]').forEach(function(x){x.classList.add('hot')})}
+    function off(){$$('[data-hl="'+k+'"]').forEach(function(x){x.classList.remove('hot')})}
+    el.addEventListener('mouseenter',on);el.addEventListener('mouseleave',off);
+  });
+
+  /* confirm + undo */
+  var stack=[],names={year:'Jahr 1944',place:'Ort Posen',event:'Ereignis Taufe Otto'};
+  function count(){return 3+stack.length}
+  function refresh(){
+    $$('[data-out]').forEach(function(r){r.classList.toggle('done',stack.indexOf(r.dataset.out)>-1);$('button',r).textContent=stack.indexOf(r.dataset.out)>-1?'Bestätigt ✓':'Das stimmt'});
+    var last=stack[stack.length-1];
+    $('#undoText').textContent=last?('Bestätigt: '+names[last]+'. Verschiebt 3 Schätzungen in der Serie, 1 Widerspruch weniger.'):'Noch nichts bestätigt. Nach Immich oder Gramps wird erst nach der Schreibvorschau geschrieben.';
+    $('#undoLink').hidden=!last;
+    $('#writeBtn1').textContent=$('#writeBtn2').textContent='Schreiben ('+count()+')';
+    $('#phoneLast').textContent=last?('Letzte Änderung: '+names[last]):'Letzte Änderung: Jahr 1944';
+  }
+  $$('[data-confirm]').forEach(function(b){b.addEventListener('click',function(){
+    var k=b.dataset.confirm,i=stack.indexOf(k);
+    if(i>-1)stack.splice(i,1);else{stack.push(k);toast('Vorgemerkt: '+names[k])}
+    refresh();
+  })});
+  function undo(){if(stack.length){var k=stack.pop();toast('Rückgängig: '+names[k]);refresh()}else toast('Nichts zum Rückgängigmachen')}
+  $('#undoLink').addEventListener('click',undo);$('#phoneUndo').addEventListener('click',undo);
+  $('#nextBtn').addEventListener('click',function(){toast('Nächstes Foto der Liste (Beispiel)')});
+  $$('[data-q]').forEach(function(b){b.addEventListener('click',function(){toast('Beispiel: hier würde bestätigt')})});
+  refresh();
+})();
+</script>

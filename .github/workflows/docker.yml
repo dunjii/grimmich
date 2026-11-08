@@ -1,5 +1,7 @@
 # Builds the Docker image and publishes it to the GitHub container registry (ghcr.io/dunjii/grimmich).
 # Runs when a release/tag "v*" is pushed, or by hand (Actions -> Docker image -> Run workflow).
+# Branch "main" and tags give the tags "latest" and the version; any other branch (for example "dev") only gives its own
+# branch tag (ghcr.io/dunjii/grimmich:dev), so a test build never replaces "latest".
 name: Docker image
 
 on:
@@ -28,7 +30,8 @@ jobs:
           images: ghcr.io/dunjii/grimmich
           tags: |
             type=semver,pattern={{version}}
-            type=raw,value=latest
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,enable=${{ github.ref_name != github.event.repository.default_branch }}
       - uses: docker/build-push-action@v7
         with:
           context: .
