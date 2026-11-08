@@ -139,6 +139,13 @@ def apply_suggestions(work):
         for k in s["photos"]:
             from_[k] = s
     known_ = {frozenset(s["photos"]) for s in work["series"]} | {frozenset(v) for v in work["discarded"]}
+    # Two photos that were once declared "do not belong together" (series dissolved with discard, photo removed
+    # from a series) are never suggested together again, even if the suggested group looks a bit different now.
+    apart = set()
+    for g in work["discarded"]:
+        g = sorted(set(g))
+        apart.update((a, b) for i, a in enumerate(g) for b in g[i + 1:])
+    apart_ = lambda a, b: (a, b) in apart or (b, a) in apart
     new_ = 0
     for p in suggestion:
         keys = [x["key"] for x in p["photos"]]
@@ -150,6 +157,11 @@ def apply_suggestions(work):
                 series.append(from_[k])
         free = [k for k in keys if k not in from_]
         if not series:
+            group = []
+            for k in free:   # take photos one by one, leave out any that was rejected next to one already taken
+                if not any(apart_(k, j) for j in group):
+                    group.append(k)
+            free = group
             if len(free) < 2:
                 continue
             work["counters"] += 1
@@ -161,13 +173,16 @@ def apply_suggestions(work):
             new_ += 1
         elif len(series) == 1:
             s = series[0]
-            cand = [k for k in free if k not in s["rejected"] and k not in s["suggested_new"]]
+            cand = [k for k in free if k not in s["rejected"] and k not in s["suggested_new"]
+                    and not any(apart_(k, j) for j in s["photos"])]
             if cand:
                 s["suggested_new"].extend(cand)
                 new_ += len(cand)
         else:
             ids = sorted(s["id"] for s in series)
             if ids in work["merge_rejected"] or any(h["series"] == ids for h in work["merge_hints"]):
+                continue
+            if any(apart_(a, b) for i, x in enumerate(series) for y in series[i + 1:] for a in x["photos"] for b in y["photos"]):
                 continue
             work["merge_hints"].append({"series": ids, "new": free})
             new_ += 1

@@ -84,6 +84,7 @@ export function mergeUnits(seriesItems, keys) {
   return goal;
 }
 export function removeIt(s, key) {
+  s.photos.filter((k) => k !== key).forEach((k) => S.work.discarded.push([key, k].sort()));   // remembered: these two do not belong together
   s.photos = s.photos.filter((k) => k !== key);
   delete S.corr[key];
   if (s.photos.length < 2) S.work.series = S.work.series.filter((x) => x !== s);

@@ -7,6 +7,7 @@ and puts the results back into Immich and Gramps. This log is reconstructed from
 - New **menu bar** under the header: Tasks · People · Albums · Series · Events · Places. The left column lists only what the chosen entry stands for; finished people, albums and series are at the bottom of their list.
 - **Refresh** moved into the header (progress shows on the button, a message appears when done). The big start page is no longer needed; the old Inbox is still under Tasks.
 - The selection bar became the **basket**: it stays across Albums, People, Series and so on, survives a reload, shows what is collected as chips (click × to take one out) and has the buttons “Merge into one series” and “Clear selection”.
+- **Rejected series suggestions stay away**: photos removed from a series, and series dissolved with “discard”, are remembered as pairs that do not belong together. A suggestion that looks a little different next time (one more photo) no longer brings them back. New test `tests/test_series_rejected.py`.
 - New page for **one series** (menu entry Series, also from the search); the menu stays on Series.
 - New view **Places**: places assigned to photos, and the photos of one place.
 - Test builds of this branch get the image tag `ui-menu`, never `latest` (workflow taken over from `dev`). New test `tests/ui_menu_test.py`.
