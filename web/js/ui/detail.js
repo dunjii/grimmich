@@ -62,10 +62,9 @@ function titleButton(e, key) {
 function seenLine(key) {
   const c = S.immichSeen[key]; if (!c || !c.d) return "";
   const d = dateLong(c.d), t = {
-    close: tr("Immich: capture date {d}, scan date {s}, only {n} days apart. A date counts as set by you only if it is more than 2 days away from the scan date.", {d, s: dateLong(c.s), n: c.n || 0}) + (c.raw ? ` (${Object.entries(c.raw).map(([k, v]) => k + " " + (v || "–")).join(", ")})` : ""),
+    close: tr("Immich: capture date {d}, scan from {s}. Both are at most 2 days apart, so the date does not count as set by you.", {d, s: dateLong(c.s)}),
     camera: tr("Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.", {d}),
     grimmich: tr("Immich: capture date {d}, written by Grimmich.", {d}),
-    set: tr("Immich: capture date {d}, counts as set by you.", {d}) + (c.raw ? ` (${Object.entries(c.raw).map(([k, v]) => k + " " + (v || "–")).join(", ")})` : ""),
   }[c.why];
   return t ? `<div class="quiet" style="font-size:12px">${esc(t)}</div>` : "";
 }
@@ -93,7 +92,7 @@ export function detailHtml() {
     ${changed.length ? `<div class="box warn"><b>${tr("Changed in Immich.")}</b> ${esc(S.changed[changed[0]].texts.join(" "))}
       <div><button class="small" data-a="seen" data-key="${esc(changed[0])}">${tr("Seen")}</button></div></div>` : ""}
     ${e.immich ? `<div class="box info"><b>${e.camera ? tr("Digital photo, date from the camera") : tr("Set by you in Immich")}:</b> ${tr("{immichDatum}. This date counts as a fixed anchor and is not touched when writing.{bis}", {immichDatum: esc(dateLong(e.immichDate)), bis: e.estimate ? ` ${tr("For comparison, the AI estimates c. {jahr} ({von}–{bis}).", {jahr: e.estimate.year, von: e.estimate.from, bis: e.estimate.to})}` : ""})}</div>` : ""}
-    ${!e.immichIgnored ? seenLine(key) : ""}
+    ${!e.immich && !e.immichIgnored ? seenLine(key) : ""}
     ${e.immichIgnored ? `<div class="box info">${tr("In Immich you set the date {immichDatum}. Grimmich does not use it as an anchor here and writes nothing over it.", {immichDatum: esc(dateLong(e.immichDate))})} <div><button class="small" data-a="immich-anchor" data-uid="${esc(e.uid)}">${tr("Use as anchor again")}</button></div></div>` : ""}
     ${!e.immich && !e.immichIgnored && e.immichDate && e.confirmedFlag && (e.date ? e.date !== e.immichDate : e.year !== +e.immichDate.slice(0, 4)) ? `<div class="box warn">${tr("In Immich you set {immichDatum}. You changed it here. When writing, it is only replaced after your explicit confirmation in the preview.", {immichDatum: esc(dateLong(e.immichDate))})}</div>` : ""}
     <div><div class="field-name">${e.type === "series" ? tr("Type of this photo") : tr("Type")}</div><div class="kind-chips">${[["", tr("Photo")], ...Object.entries(KINDS)].map(([k, n]) => `<button class="small ${kindOf(key) === k ? "good" : ""}" data-a="kind-set" data-uid="${esc(e.uid)}" data-key="${esc(key)}" data-kind="${k}">${esc(n)}</button>`).join("")}</div>
