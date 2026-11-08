@@ -58,13 +58,11 @@ function titleButton(e, key) {
   if (!kk) return "";
   return kk.f.key === key ? '<div class="quiet" style="margin:6px 0">' + tr("✓ This photo represents the series in timeline and sorting. To change it, click another small picture of the series.") + '</div>' : "";
 }
-// What Immich says about the capture date of this photo, and why it does or does not count as set by you (shown only when it does not count).
+// Only the case that needs your action: camera data in the working album, so the Immich date does not count.
 function seenLine(key) {
   const c = S.immichSeen[key]; if (!c || !c.d) return "";
   const d = dateLong(c.d), t = {
-    close: tr("Immich: capture date {d}, scan from {s}. Both are at most 2 days apart, so the date does not count as set by you.", {d, s: dateLong(c.s)}),
     camera: tr("Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.", {d}),
-    grimmich: tr("Immich: capture date {d}, written by Grimmich.", {d}),
   }[c.why];
   return t ? `<div class="quiet" style="font-size:12px">${esc(t)}</div>` : "";
 }

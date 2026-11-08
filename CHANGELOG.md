@@ -3,10 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
-## 0.10.6 – 2026-11-08 – Dates you set in Immich are recognised again
+## 0.10.7 – 2026-11-08 – Dates you set in Immich are recognised again
 - **Fix**: a capture date you set by hand in Immich was ignored (and could have been overwritten when writing). Reason: Immich moves its `fileCreatedAt` along when you change the date, so Grimmich saw “no difference to the scan date”. The scan date now comes from the file's modification date or the day the photo was added to Immich, which do not change. This applies to reading and writing.
-- The grey line under a photo lists the date fields Immich delivers (file modification date and the day it was added stay put when you change the capture date; `fileCreatedAt` and `localDateTime` move along). A first idea (every capture date before 2005 counts as set by you) was dropped again: it would have misread old scans of other users.
-- For photos whose Immich capture date does **not** count as set by you, the photo panel now says why (“Immich: capture date …, scan date …, only n days apart”, camera data in the working album, or written by Grimmich). Grimmich reads this at every Refresh. New test `tests/test_date_check.py`.
+- Immich moves `fileCreatedAt` and `localDateTime` along when you change the capture date, but not the file modification date and the day the photo was added; Grimmich compares with the latter. Only one grey hint remains under a photo: camera data in the working album (the date does not count there). A first idea (every capture date before 2005 counts as set by you) was dropped again: it would have misread old scans of other users.
 
 ## 0.10.4 – 2026-11-08 – Menu bar, basket for series, own series page
 - New **menu bar** under the header: Tasks · People · Albums · Series · Events · Places. The left column lists only what the chosen entry stands for; finished people, albums and series are at the bottom of their list.
