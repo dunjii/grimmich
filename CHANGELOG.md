@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## Unreleased (branch `dev`) – Check view, step 1 of 0.11
+- New **check view** (button "Check view" in the photo panel): one photo in the middle with face frames, the people with age and AI estimate, Gramps events that fit, series, estimate, game answers, source and contradictions around it, the neighbouring photos of the album page below.
+- Below: "What comes out of this" for year, place and event, each with "That is right" (uses the existing anchor, place and event actions). One Undo takes back the last change made in this view and a line says what it changed ("Year confirmed. 1 warning less.").
+- Nothing is written to Immich or Gramps from this view. New test `tests/ui_check_test.py`.
+- Test builds of branch `dev` only get the image tag `dev`, never `latest`.
+
 ## 0.10.3 – 2026-11-05 – Models fixed to tested versions, manual check for newer ones
 - The three models (MiVOLO v2, YOLO face/person detector, DINOv2 small) are loaded with a fixed version (commit hash). Once downloaded, they load from the data folder without any request to Hugging Face, and estimates cannot change silently when a model is updated there.
 - Settings → "AI models": shows the version in use per model and a button "Check for new versions". It only asks Hugging Face for the newest version and reports; it never changes or downloads anything. The result is remembered (`model_check.json`).

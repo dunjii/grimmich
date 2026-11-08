@@ -15,7 +15,7 @@ function isoFrom(ev) {
   return `${d.from[0]}-${String(d.from[1]).padStart(2, "0")}-${String(d.from[2]).padStart(2, "0")}`;
 }
 // Candidates for a unit: events of the people on the photos whose period fits the photo
-function candidates(e) {
+export function candidates(e) {
   const keys = e.keys, pers = [...new Map(keys.flatMap(peopleOn).map((p) => [p.id, p])).values()];
   const already = new Set((S.ez[keys[0]] || []).map((z) => z.id));
   const b = e.year ? ownRange(e) : null, middle = e.decimal_year || e.year;

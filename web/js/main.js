@@ -24,6 +24,7 @@ import {actions as aGramps} from "./ui/gramps.js";
 import {actions as aSimilar} from "./ui/hints.js";
 import {actions as aEvent, eventHtml} from "./ui/event.js";
 import {actions as aPlaces} from "./ui/places.js";
+import {checkHtml, actions as aCheck} from "./ui/check.js";
 import {gameHtml, actions as aGame, startOnPhone} from "./ui/game.js";
 import {gameEvalHtml, actions as aGameEval} from "./ui/gameeval.js";
 import {checkSignIn} from "./ui/login.js";
@@ -51,7 +52,7 @@ async function calcSeries() {
 }
 function drawAll() {
   mark();
-  const write_it = ui.view === "write" || ui.view === "game", frame = $("frame");
+  const write_it = ui.view === "write" || ui.view === "game" || ui.view === "check", frame = $("frame");
   const scroll = {list: $("list").scrollTop, detail: $("detail").scrollTop};
   document.body.classList.toggle("write", write_it);
   frame.classList.toggle("list-closed", !ui.listOpen);
@@ -62,7 +63,7 @@ function drawAll() {
   $("handle").classList.toggle("closed", !ui.listOpen);
   $("head").innerHTML = headHtml();
   if (searchFocus && $("search-field")) { $("search-field").focus(); $("search-field").setSelectionRange(searchPos, searchPos); }
-  if (write_it) { $("page").innerHTML = ui.view === "game" ? gameHtml() : writeHtml(); $("frame").hidden = true; $("page").hidden = false; }
+  if (write_it) { $("page").innerHTML = ui.view === "game" ? gameHtml() : ui.view === "check" ? checkHtml() : writeHtml(); $("frame").hidden = true; $("page").hidden = false; }
   else {
     $("page").hidden = true; $("frame").hidden = false;
     $("list").innerHTML = listHtml(); $("middle").innerHTML = middleHtml(); $("detail").innerHTML = detailHtml();
@@ -144,7 +145,7 @@ const aNavigation = {
   "gr-marker": (el) => grAnchor(el.dataset.pid, el.dataset.ev, el.dataset.part),
   "vb-leer": () => {},
 };
-const ACTION_TEXT = {...aGame, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
+const ACTION_TEXT = {...aCheck, ...aGame, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
 
 window.__grimmichActions = ACTION_TEXT;   // for the search: jumps through the same actions as the buttons
 document.addEventListener("click", async (ev) => {

@@ -104,6 +104,7 @@ export function detailHtml() {
     ${placeArea(e, key)}
     ${grampsBereich(e, key)}
     <div class="button-column">
+      <button class="primary" data-a="ck-open" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Check view")}</button>
       <button class="${w.length ? "warn" : ""}" data-a="faces" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Check faces")}</button>
       <button data-a="date" data-uid="${esc(e.uid)}">${tr("Enter year")}</button>
       ${e.year && !e.confirmedFlag ? `<button class="primary" data-a="anchor" data-uid="${esc(e.uid)}">${tr("Set as anchor")}</button>` : ""}
