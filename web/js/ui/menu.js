@@ -11,6 +11,7 @@ export function menuOf() {
   if (v === "album") return "albums";
   if (v === "event") return "events";
   if (v === "place") return "places";
+  if (v === "serie") return "series";
   if (v === "task") return ui.task === "series" ? "series" : "tasks";
   return "tasks";
 }
@@ -21,5 +22,11 @@ export function menuHtml() {
   return `<nav class="menu" aria-label="${tr("Menu")}">${items.map(([id, name, tag]) => `<button class="${m === id ? "on" : ""}" data-a="menu" data-m="${id}">${name}${tag}</button>`).join("")}</nav>`;
 }
 export const actions = {
-  "menu": (el) => { ui.menu = el.dataset.m; draw(); },
+  "menu": (el) => {
+    ui.menu = el.dataset.m;
+    if (ui.menu === "series" && ui.view !== "serie" && !(ui.view === "task" && ui.task === "series")) {   // the middle shows the series to review
+      Object.assign(ui, {view: "task", task: "series", menu: null, focusKey: null, photoKey: null}); ui.sel.clear();
+    }
+    draw();
+  },
 };

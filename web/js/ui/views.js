@@ -1,13 +1,20 @@
 // Views without a single person: task lists (warnings, series, no estimate, …), inbox and photo albums.
 import {S, ui, draw, saveInbox, savePages, loadNewInfo} from "../state.js";
 import {esc} from "../util.js";
-import {taskUnits, TASKS, taskCounts, unitFromKey, peopleText} from "../model.js";
+import {taskUnits, TASKS, taskCounts, unitFromKey, peopleText, unitList} from "../model.js";
 import {provenanceOf} from "../provenance.js";
 import {pagesFrom, albumKeys, setAlbumLane} from "../provenance.js";
 import {tileObj, tileGrid} from "./tile.js";
 import {seriesView} from "./series.js";
 import {tr} from "../language.js";
 import {statusHtml} from "../job.js";
+
+// One series on its own page (from the menu entry “Series”)
+export function serieHtml() {
+  const e = unitList().byUid["s:" + ui.seriesId];
+  if (!e) return '<div class="empty">' + tr("This series does not exist any more.") + '</div>';
+  return `<div class="person-head"><div><h1>${tr("Series {id}", {id: esc(e.s.id)})}</h1><div class="quiet">${tr("{n} {n:photo|photos}", {n: e.keys.length})}</div></div></div>` + seriesView([e]);
+}
 
 // ------------------------------------------------------------------ Aufgabenliste
 export function taskHtml() {

@@ -35,7 +35,7 @@ export const S = {
 
 export const ui = {
   view: "start",                // start | person | aufgabe | eingang | album | schreiben | game
-  personId: null, task: "", albumId: null, menu: null, placeId: null,
+  personId: null, task: "", albumId: null, menu: null, placeId: null, seriesId: null,
   mode: "time",                   // time | sort | series (only for a person)
   focusKey: null, photoKey: null,      // chosen unit (uid) and the photo chosen in it
   sel: new Set(),                  // selected units (for merging etc.)

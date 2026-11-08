@@ -12,7 +12,7 @@ import {placeHtml} from "./ui/placeview.js";
 import {listHtml, peopleState} from "./ui/list.js";
 import {personHtml} from "./ui/person.js";
 import {detailHtml} from "./ui/detail.js";
-import {taskHtml, inboxHtml, albumHtml, actions as aViews} from "./ui/views.js";
+import {taskHtml, inboxHtml, albumHtml, serieHtml, actions as aViews} from "./ui/views.js";
 import {writeHtml, actions as aWrite} from "./ui/write.js";
 import {selectionBar} from "./ui/tile.js";
 import {redrawAfterSort, actions as aSort} from "./ui/sorting.js";
@@ -39,7 +39,7 @@ function startHtml() {
   return '<div class="empty large-empty"><h1>' + tr("Choose a person or a task on the left") + '</h1></div>';
 }
 function middleHtml() {
-  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml, place: placeHtml, gameeval: gameEvalHtml}[ui.view]?.() ?? startHtml();
+  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml, place: placeHtml, serie: serieHtml, gameeval: gameEvalHtml}[ui.view]?.() ?? startHtml();
 }
 let calcSig = "", calcNo = 0;
 async function calcSeries() {
@@ -125,6 +125,7 @@ const aNavigation = {
     goTo("album", {albumId: el.dataset.id, ...(e ? {focusKey: e.uid, photoKey: el.dataset.key, scrollZu: e.uid} : {})});
   },
   "go-event": (el) => goTo("event", {eventId: el.dataset.id}),
+  "go-series": (el) => { const e = unitList().byUid["s:" + el.dataset.sid]; goTo("serie", {seriesId: el.dataset.sid, ...(e ? {focusKey: e.uid} : {})}); },
   "go-place": (el) => goTo("place", {placeId: el.dataset.id}),
   "go-write": async () => { goTo("write"); await loadWrite(); draw(); },
   "back": () => { const p = peopleState().find((x) => !x.done); goTo(p ? "person" : "start", p ? {personId: p.p.id} : {}); },
@@ -134,11 +135,7 @@ const aNavigation = {
   "series-show": (el) => {
     const e = unitList().byUid["s:" + el.dataset.sid];
     if (ui.view === "person") { ui.mode = "series"; ui.focusKey = e ? e.uid : null; ui.scrollZu = e ? e.uid : null; draw(); }
-    else {   // from tasks, album or inbox: to the person of the series, otherwise to the series list
-      const p = e ? personForPhotos(e.keys) : null;
-      if (p) goTo("person", {personId: p.id, mode: "series", focusKey: e.uid, scrollZu: e.uid});
-      else goTo("task", {task: "series", ...(e ? {focusKey: e.uid, scrollZu: e.uid} : {})});
-    }
+    else goTo("serie", {seriesId: el.dataset.sid, ...(e ? {focusKey: e.uid} : {})});   // from tasks, album, search or menu: the series on its own page
   },
   "pipeline": () => startJob("pipeline", [ui.thresholdPerson, ui.thresholdAll]),
   "gr-load": (el) => { delete S.grEv[el.dataset.pid]; (ui.grOpen = ui.grOpen || {})[el.dataset.pid] = true; return loadEvents(el.dataset.pid, true); },

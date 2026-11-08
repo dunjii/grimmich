@@ -1205,6 +1205,7 @@
   "Select a place on the left.": "Wähle links einen Ort.",
   "Loads names and changes from Immich, reads the albums and estimates new photos": "Lädt Namen und Änderungen aus Immich, liest die Alben und schätzt neue Fotos",
   "Refreshed. {neu} new series suggestions.": "Aktualisiert. {neu} neue Serienvorschläge.",
-  "All series": "Serien"
+  "All series": "Serien",
+  "This series does not exist any more.": "Diese Serie gibt es nicht mehr."
  }
 }

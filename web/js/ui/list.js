@@ -53,7 +53,7 @@ export function listHtml() {
       <div class="top"><b>${esc(x.a.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.n})}</span></div>${bar(x.pct, "var(--akzent)")}
       <div class="bottom">${x.without ? `${tr("{ohne} without date", {ohne: x.without})}` : tr("all dated")}</div></button>`;
   const albumsOpen = albumsAll.filter((x) => x.without), albumsDone = albumsAll.filter((x) => !x.without);
-  const seriesAll = unitList().list.filter((e) => e.type === "series"), seriesRow = (e) => `<button class="row" data-a="series-show" data-sid="${esc(e.s.id)}">
+  const seriesAll = unitList().list.filter((e) => e.type === "series"), seriesRow = (e) => `<button class="row ${ui.view === "serie" && ui.seriesId === e.s.id ? "active" : ""}" data-a="go-series" data-sid="${esc(e.s.id)}">
       <div class="top"><b>${tr("Series {id}", {id: e.s.id})}</b><span>${tr("{n} {n:photo|photos}", {n: e.keys.length})}</span></div><div class="bottom">${esc(peopleText(e.keys[0]) || "")}</div></button>`;
   const seriesOpen = seriesAll.filter((e) => e.s.status === "open"), seriesDone = seriesAll.filter((e) => e.s.status !== "open");
   const grp = (text, list, row) => (list.length ? `<div class="group">${text}</div>${list.map(row).join("")}` : "");
