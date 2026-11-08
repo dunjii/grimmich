@@ -3,9 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
-## Unreleased (branch `dev`) – Check view, step 1 of 0.11
-- New **check view** (button "Check view" in the photo panel): one photo in the middle with face frames, the people with age and AI estimate, Gramps events that fit, series, estimate, game answers, source and contradictions around it, the neighbouring photos of the album page below.
-- Below: "What comes out of this" for year, place and event, each with "That is right" (uses the existing anchor, place and event actions). One Undo takes back the last change made in this view and a line says what it changed ("Year confirmed. 1 warning less.").
+## Unreleased (branch `dev`) – Check view as a whiteboard, step 1 of 0.11
+- New **check view** (button "Check view" in the photo panel): one photo in the middle with face frames. Lines lead from the people (left) to their faces; hovering lights up card, line and frame. Around it: Gramps events of the strip, series, estimate, game answers, source, and the neighbouring photos of the album page.
+- **Year strip** below the photo: drag the year left or right within 10 years around the estimate. While dragging, ages, fitting events, contradictions (before birth, after death, far from the AI estimate, breaks the album order) change live; nothing is saved until "Take over as draft" or "That is right". The strip shows either the life of the people (their other photos, Gramps events, AI estimate) or the place in the album (allowed range between the nearest dated neighbours).
+- Events in the strip can be assigned directly; place suggestions as before. One Undo takes back the last change made in this view and a line says what it changed ("Year confirmed. 1 warning less.").
 - Nothing is written to Immich or Gramps from this view. New test `tests/ui_check_test.py`.
 - Test builds of branch `dev` only get the image tag `dev`, never `latest`.
 

@@ -457,7 +457,7 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ge-conflict-side { display: flex; gap: 6px; align-items: center; font-size: 12px; }
 
 /* check view (0.11, step 1): one photo with its evidence, and what comes out of it */
-.ck-page { max-width: 1240px; margin: 0 auto; padding: 18px 24px 40px; display: flex; flex-direction: column; gap: 14px; }
+.ck-page { position: relative; max-width: 1240px; margin: 0 auto; padding: 18px 24px 40px; display: flex; flex-direction: column; gap: 14px; }
 .ck-top { display: flex; align-items: center; gap: 14px; }
 .ck-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr) 260px; gap: 16px; align-items: start; }
 .ck-col, .ck-stage { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -469,7 +469,7 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ck-pill { display: inline-block; border-radius: 10px; padding: 0 8px; font-size: 12px; background: #ece6d6; color: var(--leise); margin-left: 4px; }
 .ck-pill.ok { background: var(--ok-h); color: var(--ok); }
 .ck-photo { position: relative; min-width: 160px; min-height: 120px; align-self: center; max-width: 100%; border: 6px solid var(--karte); box-shadow: 0 6px 18px rgba(30, 20, 5, .25); cursor: zoom-in; line-height: 0; background: #ddd; }
-.ck-photo img { display: block; max-width: 100%; max-height: 62vh; }
+.ck-photo img { display: block; max-width: 100%; max-height: 46vh; }
 .ck-photo.warn { border-color: var(--warn-r); }
 .ck-face { position: absolute; border: 2px solid var(--akzent); border-radius: 6px; background: rgba(31, 95, 115, .06); transition: .15s; }
 .ck-face span { position: absolute; left: -2px; top: -22px; font-size: 11.5px; line-height: 1.4; background: var(--akzent); color: #fff; padding: 0 7px; border-radius: 5px; white-space: nowrap; }
@@ -486,3 +486,25 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ck-more summary { cursor: pointer; color: var(--akzent); padding: 4px 0; }
 .ck-undo { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; color: var(--leise); min-height: 34px; }
 @media (max-width: 1000px) { .ck-grid { grid-template-columns: 1fr; } .ck-orow { grid-template-columns: 1fr; } }
+
+.ck-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 2; }
+.ck-svg path { fill: none; stroke: var(--akzent); stroke-width: 1.6; stroke-linecap: round; } .ck-svg path.hot { stroke: var(--warn); stroke-width: 2.4; } .ck-svg circle { fill: var(--akzent); }
+.ck-card.on { border-color: var(--ok); background: var(--ok-h); } .ck-fits { color: var(--ok); font-weight: 600; } .ck-nofit { color: var(--leise); }
+.ck-warnline { min-height: 22px; font-size: 13px; text-align: center; } .ck-warnline.bad { color: #a02020; font-weight: 600; } .ck-warnline.ok { color: var(--ok); }
+.ck-focus { background: var(--karte); border: 1px solid var(--rand); border-radius: 12px; padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 8px; }
+.ck-fhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.ck-seg { display: inline-flex; border: 1px solid var(--rand2); border-radius: 8px; overflow: hidden; } .ck-seg button { border: 0; border-radius: 0; min-height: 32px; font-size: 13px; }
+.ck-seg button[aria-pressed=true] { background: var(--akzent-h); color: var(--akzent-d); font-weight: 600; }
+.ck-scroll { overflow-x: auto; }
+.ck-track { position: relative; margin: 0 26px 0 130px; padding-top: 16px; touch-action: none; cursor: ew-resize; user-select: none; }
+.ck-lane { position: relative; height: 50px; border-bottom: 1px dashed var(--rand); }
+.ck-lbl { position: absolute; left: -130px; top: 8px; width: 122px; font-weight: 600; line-height: 1.2; } .ck-lbl small { display: block; font-weight: 400; color: var(--leise); }
+.ck-bar { position: absolute; top: 24px; left: 0; right: 0; height: 5px; border-radius: 3px; background: var(--akzent-r); }
+.ck-dot { position: absolute; top: 17px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; border: 2px solid var(--akzent); background: var(--karte); }
+.ck-dot.ok { background: var(--ok); border-color: var(--ok); } .ck-dot.nb { border-color: var(--warn); box-shadow: 0 0 0 3px var(--warn-h); }
+.ck-ev { position: absolute; top: 4px; width: 11px; height: 11px; margin-left: -5px; transform: rotate(45deg); background: var(--rand2); border-radius: 2px; } .ck-ev.fit { background: var(--warn); }
+.ck-ki { position: absolute; top: 10px; height: 34px; width: 0; border-left: 2px dotted var(--akzent); } .ck-ki span { position: absolute; top: -1px; left: 3px; font-size: 10.5px; color: var(--akzent-d); }
+.ck-band { position: absolute; top: 2px; bottom: 2px; background: var(--ok-h); border: 1.5px dashed var(--ok); border-radius: 6px; }
+.ck-axis { position: relative; height: 20px; margin: 0 26px 0 130px; border-bottom: 1px solid var(--rand2); } .ck-axis span { position: absolute; top: 0; font-size: 11.5px; color: var(--leise); transform: translateX(-50%); }
+.ck-pick { position: absolute; top: 0; bottom: -4px; width: 0; border-left: 2px solid var(--akzent); z-index: 3; pointer-events: none; }
+.ck-knob { position: absolute; left: -13px; top: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--akzent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }

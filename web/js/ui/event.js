@@ -9,7 +9,7 @@ import {tr} from "../language.js";
 
 export const peopleOn = (key) => (S.pf && S.pf.ok ? S.pf.people.filter((p) => p.photos.some((f) => f.key === key)) : []);
 const ownRange = (e) => ({from: (e.from || e.year) - 0, to: (e.to || e.year) + 1});   // [from, to+1) in years
-function isoFrom(ev) {
+export function isoFrom(ev) {
   const d = ev.date;
   if (!d || d.mode !== "genau" || d.estimated || !d.from[0] || !d.from[1] || !d.from[2]) return "";
   return `${d.from[0]}-${String(d.from[1]).padStart(2, "0")}-${String(d.from[2]).padStart(2, "0")}`;
