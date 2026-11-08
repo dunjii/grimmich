@@ -19,7 +19,7 @@ export const S = {
   newInfo: null,                   // {ok, album, neu}
   albums: [], pages: {}, aRow: {},           // Provenance: albums (id, name, keys) and page breaks per album
   inbox: {seen: []},
-  immichData: {},                 // key -> {date, scan}: capture date you set yourself in Immich
+  immichData: {}, immichSeen: {},                 // key -> {date, scan}: capture date you set yourself in Immich
   seriesYear: {},                   // Serien-Id -> berechnetes Datum (Server)
   version: "",
   ez: {},                          // photo key -> [{id, pid, text, date, iso}]: Gramps events assigned to the photo
@@ -68,6 +68,7 @@ export async function loading() {
   S.albums = (a.provenance_albums || {}).albums || []; S.pages = (a.provenance || {}).pages || {}; S.aRow = (a.provenance || {}).order || {};
   S.inbox = a.inbox || {seen: []};
   S.immichData = (a.immich_data || {}).photos || {};
+  S.immichSeen = (a.immich_data || {}).seen || {};
   S.version = a.version || "";
   S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? {votes: a.game_votes.votes, muted: a.game_votes.muted || []} : {votes: [], muted: []};
   S.player = S.signedIn || recall("player", "");   // from outside the name comes from the sign-in

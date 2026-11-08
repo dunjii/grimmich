@@ -1203,6 +1203,9 @@
   "All series": "Serien",
   "This series does not exist any more.": "Diese Serie gibt es nicht mehr.",
   "Take out of the basket": "Aus dem Korb nehmen",
-  "What do I do in Immich first?": "Was mache ich zuerst in Immich?"
+  "What do I do in Immich first?": "Was mache ich zuerst in Immich?",
+  "Immich: capture date {d}, scan date {s}, only {n} days apart. A date counts as set by you only if it is more than 2 days away from the scan date.": "Immich: Aufnahmedatum {d}, Scandatum {s}, nur {n} Tage Abstand. Ein Datum zählt nur dann als von dir gesetzt, wenn es mehr als 2 Tage vom Scandatum abweicht.",
+  "Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.": "Immich: Aufnahmedatum {d}, aber das Foto hat Kameradaten und liegt im Arbeitsalbum. Es zählt nicht als Datum. Lege es ins Ankeralbum, um es zu nutzen.",
+  "Immich: capture date {d}, written by Grimmich.": "Immich: Aufnahmedatum {d}, von Grimmich geschrieben."
  }
 }

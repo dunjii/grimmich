@@ -51,26 +51,40 @@ def camera_without_anchor(photo, key, written):
                 and not _by_grimmich(photo, key, written))
 
 
+def date_check(photo, key, written):
+    """What does Immich say about the capture date, and does it count as set by you?
+    -> {"d": capture date, "s": scan date, "why": reason, "n": days apart}; why is one of
+    "nodate" (no capture date or scan date), "grimmich" (written by Grimmich), "anchor" (anchor album), "camera"
+    (camera data in the working album), "close" (not more than DEVIATION_DAYS from the scan date), "set" (counts)."""
+    exif = photo.get("exifInfo") or {}
+    date_ = (exif.get("dateTimeOriginal") or "")[:10]
+    scan = (photo.get("fileCreatedAt") or photo.get("localDateTime") or "")[:10]
+    info = {"d": date_, "s": scan, "why": "nodate"}
+    if not date_ or not scan:
+        return info
+    if _by_grimmich(photo, key, written):
+        return {**info, "why": "grimmich"}
+    if photo.get("_anker"):   # anchor album: a real digital photo, the date counts (read only)
+        return {**info, "why": "anchor"}
+    if exif.get("make") or exif.get("model"):   # camera data in the working album do not count until you make it an anchor
+        return {**info, "why": "camera"}
+    try:
+        distance = abs((datetime.fromisoformat(date_) - datetime.fromisoformat(scan)).days)
+    except ValueError:
+        return info
+    return {**info, "why": "set" if distance > DEVIATION_DAYS else "close", "n": distance}
+
+
 def hand_date(photo, key, written):
     """Has someone (you) set the capture date in Immich by hand, or is it a digital photo with a camera date?
     -> {"date", "scan", "camera"?} or None.
     Same rule as when writing (immich_write.py): deviation from the scan date, and the photo does not come from Grimmich."""
-    exif = photo.get("exifInfo") or {}
-    date_ = (exif.get("dateTimeOriginal") or "")[:10]
-    scan = (photo.get("fileCreatedAt") or photo.get("localDateTime") or "")[:10]
-    if not date_ or not scan:
-        return None
-    if _by_grimmich(photo, key, written):
-        return None
-    if photo.get("_anker"):   # anchor album: a real digital photo, the date counts (read only)
-        return {"date": date_, "scan": scan, "camera": True, "anchor": True}
-    if exif.get("make") or exif.get("model"):   # camera data in the working album do not count until you make it an anchor
-        return None
-    try:
-        distance = abs((datetime.fromisoformat(date_) - datetime.fromisoformat(scan)).days)
-    except ValueError:
-        return None
-    return {"date": date_, "scan": scan} if distance > DEVIATION_DAYS else None
+    c = date_check(photo, key, written)
+    if c["why"] == "anchor":
+        return {"date": c["d"], "scan": c["s"], "camera": True, "anchor": True}
+    if c["why"] == "set":
+        return {"date": c["d"], "scan": c["s"]}
+    return None
 
 
 DIAG = {"reloaded": 0, "with_date": 0, "with_camera": 0}
@@ -82,6 +96,7 @@ def snapshot():
     print(tx("{n} photos in the album. Reading faces ...", n=len(photos)))
     per_photo = {}
     hand_ = {}
+    seen_ = DIAG["seen"] = {}
     DIAG["camera_without_anchor"] = []
     written = read_(WRITTEN, {})
     for i, photo in enumerate(photos, 1):
@@ -102,6 +117,7 @@ def snapshot():
         ex = photo["exifInfo"]
         DIAG["with_date"] += bool(ex.get("dateTimeOriginal"))
         DIAG["with_camera"] += bool(ex.get("make") or ex.get("model"))
+        seen_[key] = date_check(photo, key, written)
         h = hand_date(photo, key, written)
         if h:
             hand_[key] = h
@@ -162,7 +178,7 @@ def main():
     print(tx("Connecting to {url} ...", url=S.URL))
     new_, hand_ = snapshot()
     write_doc(HAND_DATA, {"state": datetime.now().strftime("%Y-%m-%d %H:%M"), "photos": hand_,
-                         "camera_without_anchor": DIAG.get("camera_without_anchor", [])})
+                         "camera_without_anchor": DIAG.get("camera_without_anchor", []), "seen": DIAG.get("seen", {})})
     print(tx("Exif data: {dated} photos with a capture date, {camera} with camera data ({reloaded} loaded individually).", dated=DIAG['with_date'], camera=DIAG['with_camera'], reloaded=DIAG['reloaded']))
     if DIAG.get("camera_without_anchor"):
         print(tx("{n} digital photos are in the working album, not in the anchor album. Their camera date does not count.", n=len(DIAG['camera_without_anchor'])))

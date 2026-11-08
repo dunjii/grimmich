@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.5 – 2026-11-08 – Why does a date from Immich not count?
+- For photos whose Immich capture date does **not** count as set by you, the photo panel now says why (“Immich: capture date …, scan date …, only n days apart”, camera data in the working album, or written by Grimmich). Grimmich reads this at every Refresh. New test `tests/test_date_check.py`.
+
 ## 0.10.4 – 2026-11-08 – Menu bar, basket for series, own series page
 - New **menu bar** under the header: Tasks · People · Albums · Series · Events · Places. The left column lists only what the chosen entry stands for; finished people, albums and series are at the bottom of their list.
 - **Refresh** moved into the header (progress shows on the button, a message appears when done). The Inbox page is slimmer (counts, unprocessed photos by album); the Immich hint moved to the Help page (“What do I do in Immich first?”). A click on the logo still opens the Inbox.
