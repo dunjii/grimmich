@@ -26,7 +26,7 @@ KEY_CONST = "anonymize_key.json"
 # files Claude needs for tests. More with:  anonymize.py file1.json file2.json
 DEFAULT = [
     "immich_state.json", "age_per_photo.json", "photos.json", "corrections.json", "series_work.json", "series.json",
-    "kinds.json", "place_assignment.json", "order.json", "provenance_albums.json", "provenance.json", "immich_data.json",
+    "kinds.json", "notes.json", "place_assignment.json", "order.json", "provenance_albums.json", "provenance.json", "immich_data.json",
     "people.json", "assignment.json", "event_assignment.json", "inbox.json", "changes.json", "adoption.json",
     "write_preview.json", "write_result.json", "dating_written.json", "dating_backup.json",
 ]

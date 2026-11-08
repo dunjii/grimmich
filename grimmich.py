@@ -74,6 +74,7 @@ READ_ACCESS = {
     "/api/gramps_preview": ("gramps_preview.json", None),
     "/api/event_assignment": ("event_assignment.json", {}),
     "/api/kinds": ("kinds.json", {}),
+    "/api/notes": ("notes.json", {}),
     "/api/places": ("place_assignment.json", {}),
 }
 WRITING = {
@@ -83,6 +84,7 @@ WRITING = {
     "/api/assignment": ("assignment.json", None),
     "/api/event_assignment": ("event_assignment.json", None),
     "/api/kinds": ("kinds.json", None),
+    "/api/notes": ("notes.json", None),
     "/api/places": ("place_assignment.json", None),
     "/api/adoption": ("adoption.json", "rows"),
     "/api/changes": ("changes.json", "photos"),
@@ -274,7 +276,7 @@ def everything():
         "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": {**read_json("game_votes.json", {"votes": []}), "muted": muted_names()},
         "immich_data": read_json("immich_data.json", {"photos": {}}),
         "gramps_preview": read_json("gramps_preview.json", None), "gramps_written": read_json("gramps_written.json", {}),
-        "gramps_status": grampsstatus(), "event_assignment": read_json("event_assignment.json", {}), "kinds": read_json("kinds.json", {}), "places": read_json("place_assignment.json", {}), "version": version(),
+        "gramps_status": grampsstatus(), "event_assignment": read_json("event_assignment.json", {}), "kinds": read_json("kinds.json", {}), "notes": read_json("notes.json", {}), "places": read_json("place_assignment.json", {}), "version": version(),
     }
 
 

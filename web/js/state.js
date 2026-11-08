@@ -24,6 +24,7 @@ export const S = {
   version: "",
   ez: {},                          // photo key -> [{id, pid, text, date, iso}]: Gramps events assigned to the photo
   gv: null, gw: {}, gs: {key_set: false, result: null},   // Nach Gramps: Vorschau, Geschriebenes (key -> Eintrag), Status
+  notes: {},                       // photo key -> {text}: your own thoughts on a photo (stay in Grimmich)
   kinds: {},                       // key -> postcard | greeting_card | document | other (missing = normal photo)
   places: {},                        // key -> {h, id, name, lat, lon, source, force?}: place of the photo (from Gramps)
   grPlaces: null,                    // {liste, nachH, ohne}: alle Orte aus Gramps
@@ -73,6 +74,7 @@ export async function loading() {
   S.player = S.signedIn || recall("player", "");   // from outside the name comes from the sign-in
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
+  S.notes = a.notes && typeof a.notes === "object" ? a.notes : {};
   S.ez = a.event_assignment && typeof a.event_assignment === "object" ? a.event_assignment : {};
   S.gv = a.gramps_preview || null; S.gw = a.gramps_written || {}; S.gs = a.gramps_status || {key_set: false, result: null};
   mark();
@@ -86,6 +88,7 @@ export function saveWork() { clearTimeout(workTimer); workTimer = setTimeout(() 
 export const saveCorr = () => send("/api/corrections", S.corr).catch(problem);
 export const saveOrd = () => send("/api/order", S.ord).catch(problem);
 export const saveKinds = () => send("/api/kinds", S.kinds).catch(problem);
+export const saveNotes = () => send("/api/notes", S.notes).catch(problem);
 export const savePlaces = () => send("/api/places", S.places).catch(problem);
 export const saveEz = () => send("/api/event_assignment", S.ez).catch(problem);
 export const saveAssign = () => send("/api/assignment", S.assignMap).catch(problem);

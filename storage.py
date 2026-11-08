@@ -25,7 +25,7 @@ OLD_FOLDER = "json_old"
 NAMES = (
     "adoption.json", "age_per_photo.json", "assignment.json", "changes.json", "corrections.json",
     "dating_backup.json", "dating_written.json", "event_assignment.json", "gramps_input.json", "gramps_preview.json",
-    "game_votes.json", "gramps_result.json", "gramps_written.json", "immich_data.json", "immich_state.json", "inbox.json", "kinds.json", "model_check.json",
+    "game_votes.json", "gramps_result.json", "gramps_written.json", "immich_data.json", "immich_state.json", "inbox.json", "kinds.json", "model_check.json", "notes.json",
     "order.json", "people.json", "photos.json", "players.json", "place_assignment.json", "provenance.json", "provenance_albums.json",
     "reload.json", "run_marker.json", "series.json", "series_work.json", "write_preview.json", "write_result.json",
 )

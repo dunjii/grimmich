@@ -107,7 +107,7 @@ class TestData(unittest.TestCase):
         for ok in ("/", "/style.css", "/js/main.js", "/js/ui/game.js", "/api/all", "/api/languages", "/api/language/de", "/photos/F1_abc123.jpg", "/crops/F1_1_1_1_1_1_1.jpg", "/api/me", "/robots.txt"):
             self.assertTrue(play.ALLOWED_GET.match(ok), ok)
         for no in ("/api/connection", "/api/work", "/api/job", "/api/corrections", "/api/order", "/api/gramps_events", "/api/write_preview", "/grimmich.py",
-                   "/js/../index.html", "/js/%2e%2e/x.js", "/js/main.py", "/api/people", "/photos/../x.jpg", "/play/api/all", "/api/players", "/api/players.json"):
+                   "/js/../index.html", "/js/%2e%2e/x.js", "/js/main.py", "/api/people", "/api/notes", "/photos/../x.jpg", "/play/api/all", "/api/players", "/api/players.json"):
             self.assertFalse(play.ALLOWED_GET.match(no), no)
 
 

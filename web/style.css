@@ -505,3 +505,17 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ck-axis { position: relative; height: 20px; margin: 0 26px 0 130px; border-bottom: 1px solid var(--rand2); } .ck-axis span { position: absolute; top: 0; font-size: 11.5px; color: var(--leise); transform: translateX(-50%); }
 .ck-pick { position: absolute; top: 0; bottom: -4px; width: 0; border-left: 2px solid var(--akzent); z-index: 3; pointer-events: none; }
 .ck-knob { position: absolute; left: -13px; top: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--akzent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+
+/* In life (0.11, step 1): focus person, photos of the person, what speaks for which year, your thoughts */
+.ck-who { cursor: pointer; } .ck-who.sel { border-color: var(--akzent); background: var(--akzent-h, #dcebef); box-shadow: 0 0 0 2px var(--akzent-r); } .ck-who.dim { opacity: .75; }
+.ck-face.sel { border-color: var(--akzent); background: rgba(31, 95, 115, .12); box-shadow: 0 0 0 4px rgba(31, 95, 115, .2); } .ck-face.dim { opacity: .55; }
+.ck-lane.sel { background: var(--akzent-h, #dcebef); } .ck-lane.sel .ck-bar { background: var(--akzent); }
+.ck-shead { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.ck-thumb.ok { border-color: var(--ok-r); } .ck-thumb.cur { border-color: var(--akzent); box-shadow: 0 0 0 3px var(--akzent-r); }
+.ck-evw { display: flex; gap: 6px; align-items: stretch; }
+.ck-evb { flex: 1; min-width: 0; display: flex; gap: 8px; justify-content: space-between; align-items: center; text-align: left; min-height: 0; padding: 7px 10px; font-weight: 400; border-radius: 8px; }
+.ck-evb small { display: block; color: var(--leise); } .ck-evb .go { white-space: nowrap; color: var(--akzent-d); font-weight: 600; font-size: 12.5px; }
+.ck-evb.on { border-color: var(--ok); background: var(--ok-h); }
+.ck-as { flex: 0 0 auto; padding: 0 8px; } .ck-as.on { background: var(--ok-h); border-color: var(--ok); color: var(--ok); }
+.ck-memo textarea { width: 100%; min-height: 74px; resize: vertical; font: inherit; color: inherit; background: var(--seite2); border: 1px solid var(--rand2); border-radius: 8px; padding: 7px 9px; margin-top: 6px; box-sizing: border-box; }
+#ck-strip .ck-thumb { flex: 0 0 88px; height: 66px; } #ck-strip .ck-thumb span { white-space: nowrap; }

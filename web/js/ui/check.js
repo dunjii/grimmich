@@ -1,8 +1,10 @@
-// Check view (0.11): a whiteboard around one photo. People point at their faces with lines, the year can be dragged along a
-// 10-year strip (life of the people or place in the album) and everything on the page reacts while dragging.
+// “In life” (0.11): a whiteboard around one photo, with the people as its centre. People point at their faces with lines, a click
+// on a person makes her or him the focus (the strip below shows her or his photos with the age), the year can be dragged along a
+// 10-year strip of the lives and everything on the page reacts while dragging. Right: what speaks for which year (a click moves
+// the year there). The one place for your own thoughts on the photo; they stay in Grimmich.
 // It uses the actions that exist elsewhere (draft, anchor, place, event). Nothing is written to Immich or Gramps from here;
 // the one Undo at the bottom takes back the last change made in this view.
-import {S, ui, draw, mark, saveCorr, saveEz, savePlaces} from "../state.js";
+import {S, ui, draw, mark, saveCorr, saveEz, savePlaces, saveNotes} from "../state.js";
 import {esc, image, dateLong} from "../util.js";
 import {unitOf, unitFromKey, unitList, ageList, warnings, statusLabel, shortName, placeFrom, taskCounts, hintText, lifeDates} from "../model.js";
 import {provenanceOf, provenanceText, albumKeys} from "../provenance.js";
@@ -73,10 +75,25 @@ function buildData(e, key, nb) {
       .map((u) => ({y: u.date ? +String(u.date).slice(0, 4) : u.year, ok: !!u.confirmedFlag, near: nbUnits.has(u.uid)})).filter((f) => f.y >= lo && f.y <= hi);
     if (S.assignMap[p.id] && !S.grEv[p.id]) setTimeout(() => loadEvents(p.id), 0);
     const st = S.grEv[p.id], evs = st && st.list ? st.list.filter((ev) => (ev.own || grNear(ev)) && ev.date && ev.date.from && ev.date.from[0]).map((ev) => ({id: ev.id, pid: p.id, y: Math.floor(grYearDec(ev.date.from)), text: grShort(ev, true), date: grDateText(ev.date), iso: isoFrom(ev)})) : [];
-    return {id: p.id, name: p.name, born: l.born ? l.born.decimal_year : null, death: l.death ? l.death.j : null, ki: a ? a.ki : null, others, evs: evs.filter((x) => x.y >= lo && x.y <= hi)};
+    // all other photos of the person (any year), for the strip under the photo
+    const photos = [...new Map(p.photos.map((f) => [unitFromKey(f.key), f.key]).filter(([u]) => u && u.uid !== e.uid && u.year)).keys()]
+      .map((u) => ({uid: u.uid, key: u.keys[0], y: u.date ? +String(u.date).slice(0, 4) : u.year, ok: !!u.confirmedFlag, draft: !!u.draftFlag})).sort((a, b) => a.y - b.y);
+    return {id: p.id, name: p.name, born: l.born ? l.born.decimal_year : null, death: l.death ? l.death.j : null, ki: a ? a.ki : null, others, photos, evs: evs.filter((x) => x.y >= lo && x.y <= hi)};
   });
   const events = [...new Map(persons.flatMap((p) => p.evs).map((x) => [x.id, x])).values()].sort((a, b) => a.y - b.y).slice(0, 10);
-  return {lo, hi, sug: startYear, year: ui.ckYear ?? startYear, persons, events};
+  // focus person: the one chosen by a click, otherwise the youngest (she or he fixes the year most)
+  const young = persons.filter((p) => p.born !== null).sort((a, b) => b.born - a.born)[0] || persons[0] || null;
+  const sel = (persons.find((p) => p.id === ui.ckSel) || young || {}).id || null;
+  return {lo, hi, sug: startYear, year: ui.ckYear ?? startYear, persons, events, sel};
+}
+
+// What speaks for which year: the AI estimate of each person, the estimate of Grimmich, Gramps events. A click moves the year.
+function evidence(e) {
+  const out = [];
+  D.persons.forEach((p) => { if (p.born !== null && p.ki !== null) out.push({t: tr("AI estimate {name}", {name: first(p.name)}), s: tr("looks like {ki} years old", {ki: p.ki}), y: Math.round(p.born + p.ki)}); });
+  if (e.estimate) out.push({t: tr("Estimate"), s: tr("Range {von} to {bis}", {von: e.estimate.from, bis: e.estimate.to}) + (e.refined ? " · " + tr("refined by game answers") : ""), y: Math.round(e.estimate.year)});
+  D.events.forEach((x, i) => out.push({t: x.text, s: x.date, y: x.y, ev: i, id: x.id}));
+  return out;
 }
 const pct = (y) => (100 * (y - D.lo) / (D.hi - D.lo)).toFixed(2);
 
@@ -96,29 +113,30 @@ export function checkHtml() {
   if (!e) return `<div class="ck-page"><div class="empty">${tr("No photo chosen.")} <button data-a="ck-back">${tr("Back")}</button></div></div>`;
   const key = keyOf(e), nb = neighbours(e), w = warnings(e), prov = provenanceOf(key), boxes = faceBoxes(key);
   D = buildData(e, key, nb);
-  const zu = S.ez[e.keys[0]] || [], nowPlace = placeFrom(key), sug = suggestions(e, key).filter((x) => !nowPlace || x.o.h !== nowPlace.h);
+  const nowPlace = placeFrom(key), sug = suggestions(e, key).filter((x) => !nowPlace || x.o.h !== nowPlace.h);
   ui.placeSuggestions = sug;
   const yearText = e.year ? (e.date ? dateLong(e.date) : (e.confirmedFlag || e.draftFlag || e.from === e.to ? String(e.year) : tr("c. {jahr}", {jahr: e.year}))) : tr("still open");
   const last = (ui.ckUndo || [])[(ui.ckUndo || []).length - 1];
-  const stripKeys = nb.list.slice(Math.max(0, nb.i - 3), nb.i + 4);
   const changed = D.year !== D.sug || ui.ckYear != null;
 
   const left = `<div class="ck-col"><div class="ck-eyebrow">${tr("Who")}</div>
-    ${D.persons.length ? D.persons.map((p) => `<div class="ck-card" id="ck-pc-${esc(p.id)}" data-hl="${esc(p.id)}"><b>${esc(shortName(p.name))}</b><div class="ck-sub" data-age="${esc(p.id)}"></div></div>`).join("") : `<div class="quiet">${tr("no named person recognized")}</div>`}
-    <div class="ck-eyebrow" style="margin-top:8px">${tr("Events in the strip")}</div><div class="ck-col" id="ck-evlist"></div>
-    ${zu.length ? `<div class="ck-eyebrow" style="margin-top:8px">${tr("Assigned")}</div>${zu.map((z, i) => `<div class="ck-card ok"><b>${esc(z.text)}</b> ${pill("✓", "ok")}<div class="ck-sub">${esc(z.date)}</div><button class="small" data-a="ev-remove" data-i="${i}" data-uid="${esc(e.uid)}" title="${tr("Remove assignment")}">✕</button></div>`).join("")}` : ""}</div>`;
+    ${D.persons.length ? D.persons.map((p) => `<div class="ck-card ck-who" id="ck-pc-${esc(p.id)}" data-hl="${esc(p.id)}" data-a="ck-who" data-pid="${esc(p.id)}" role="button" tabindex="0"><b>${esc(shortName(p.name))}</b><div class="ck-sub" data-age="${esc(p.id)}"></div></div>`).join("") : `<div class="quiet">${tr("no named person recognized")}</div>`}</div>`;
 
   const middle = `<div class="ck-stage"><div class="ck-photo ${w.length ? "warn" : ""}" data-a="enlarge" data-keys="${esc(e.keys.join("|"))}" data-key="${esc(key)}" data-uid="${esc(e.uid)}"><img src="${image(key)}" alt="">
       ${boxes.map((b) => `<div class="ck-face" id="ck-pf-${esc(b.pid)}" data-hl="${esc(b.pid)}" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"><span>${esc(first(b.name))}</span></div>`).join("")}</div>
     <div class="ck-line"><span class="ck-year" id="ck-bigyear"></span><span class="quiet" id="ck-bigstate"></span></div>
     <div class="ck-warnline" id="ck-warn"></div>
     ${w.length ? `<div class="box warn">${w.map((x) => esc(x.text)).join(" ")}</div>` : ""}
-    <div class="ck-eyebrow">${nb.page ? tr("Page {nr} in the album", {nr: nb.page}) : tr("Neighbors")}</div>
-    <div class="ck-strip" aria-label="${tr("Neighbors")}">${stripKeys.map((u) => `<button class="ck-thumb ${u.uid === e.uid ? "cur" : ""}" data-a="ck-go" data-uid="${esc(u.uid)}" title="${esc(u.year ? String(u.year) : tr("open"))}"><img src="${image(u.keys[0])}" alt=""><span>${esc(u.year ? (u.confirmedFlag ? "✓ " : "") + u.year : "?")}</span></button>`).join("")}</div></div>`;
+    <div class="ck-card"><div class="ck-shead"><b id="ck-sh"></b><span class="quiet" id="ck-between"></span></div><div class="ck-strip" id="ck-strip" aria-label="${tr("Photos of the person")}"></div></div></div>`;
 
-  const right = `<div class="ck-col"><div class="ck-eyebrow">${tr("Around it")}</div>
+  const noteKey = key, noteText = (S.notes[noteKey] && S.notes[noteKey].text) || "";
+  const right = `<div class="ck-col"><div class="ck-eyebrow">${tr("What speaks for which year?")}</div>
+    <div class="ck-col" id="ck-evid"></div>
     ${e.type === "series" ? `<div class="ck-card"><b>${tr("Series {id}", {id: esc(e.s.id)})}</b> ${pill(tr("{n} {n:photo|photos}", {n: e.keys.length}))}<div class="ck-sub">${e.s.status === "ok" ? tr("confirmed") : tr("still to check")}</div></div>` : ""}
-    <div class="ck-card"><b>${tr("Estimate")}</b> ${e.estimate ? pill(tr("c. {jahr}", {jahr: e.estimate.year})) : ""}<div class="ck-sub">${e.estimate ? tr("Range {von} to {bis}", {von: e.estimate.from, bis: e.estimate.to}) : tr("no AI estimate")}${e.refined ? " · " + tr("refined by game answers") : ""}${e.rowOnly ? " · " + tr("from the row only") : ""}</div></div>
+    ${e.estimate ? "" : `<div class="ck-card"><div class="ck-sub">${tr("no AI estimate")}${e.rowOnly ? " · " + tr("from the row only") : ""}</div></div>`}
+    <div class="ck-card ck-memo"><b>${tr("Thoughts on the photo")}</b>
+      <textarea id="ck-note" data-note="${esc(noteKey)}" placeholder="${tr("e.g. Who sits on the left? The table is in the garden in …")}">${esc(noteText)}</textarea>
+      <div class="ck-sub" id="ck-notest">${noteText.trim() ? tr("Saved in Grimmich.") : tr("Nothing written yet.")} ${tr("Writing to Immich or Gramps comes with the new write page.")}</div></div>
     <div class="ck-card"><b>${tr("Game")}</b> ${pill(String(voteCount(e.keys)), voteCount(e.keys) ? "ok" : "")}<div class="ck-sub">${tr("answers that involve this photo")}</div></div>
     <div class="ck-card"><b>${tr("Source")}</b><div class="ck-sub">${prov.length ? prov.map((h) => esc(provenanceText(h))).join("<br>") : tr("Not assigned to a photo album yet. The photo is only in the working album.")}</div></div>
     ${e.hint && !w.length ? `<div class="ck-card"><div class="ck-sub">${esc(hintText(e.hint))}</div></div>` : ""}
@@ -126,7 +144,7 @@ export function checkHtml() {
 
   // the strip: lanes of the people (life) or one lane of the album page
   const years = Array.from({length: D.hi - D.lo + 1}, (_, i) => D.lo + i);
-  const lanes = D.persons.map((p) => `<div class="ck-lane"><div class="ck-lbl">${esc(first(p.name))}<small>${p.born !== null ? "*" + Math.floor(p.born) : ""}${p.death !== null ? " †" + p.death : ""}</small></div><div class="ck-bar"></div>
+  const lanes = D.persons.map((p) => `<div class="ck-lane" data-pid="${esc(p.id)}"><div class="ck-lbl">${esc(first(p.name))}<small>${p.born !== null ? "*" + Math.floor(p.born) : ""}${p.death !== null ? " †" + p.death : ""}</small></div><div class="ck-bar"></div>
       ${p.evs.map((x) => `<div class="ck-ev" data-y="${x.y}" title="${esc(x.text)} ${x.y}" style="left:${pct(x.y)}%"></div>`).join("")}
       ${p.born !== null && p.ki !== null && p.born + p.ki >= D.lo && p.born + p.ki <= D.hi ? `<div class="ck-ki" style="left:${pct(p.born + p.ki)}%"><span>${tr("AI")}</span></div>` : ""}
       ${p.others.map((f) => `<div class="ck-dot ${f.ok ? "ok" : ""}" title="${tr("other photo")} ${f.y}" style="left:${pct(f.y)}%"></div>`).join("")}</div>`).join("") || `<div class="quiet" style="padding:10px 0">${tr("no named person recognized")}</div>`;
@@ -154,7 +172,7 @@ export function checkHtml() {
       <button class="small primary" data-a="ck-go" data-uid="${esc(nb.next ? nb.next.uid : e.uid)}" ${nb.next ? "" : "disabled"}>${tr("Next photo →")}</button></div></div>`;
 
   return `<div class="ck-page" id="ck-board"><svg class="ck-svg" id="ck-svg" aria-hidden="true"></svg>
-    <div class="ck-top"><button data-a="ck-back">${tr("← Back")}</button><h2>${tr("Check")}</h2><span class="quiet">${esc(key)}</span></div>
+    <div class="ck-top"><button data-a="ck-back">${tr("← Back")}</button><h2>${tr("In life")}</h2><span class="quiet">${esc(key)}</span></div>
     <div class="ck-grid">${left}${middle}${right}</div>${focus}${out}</div>`;
 }
 
@@ -177,14 +195,37 @@ function live(year) {
   document.getElementById("ck-bigstate").textContent = year === D.sug ? tr("suggested") : tr("moved, not saved");
   const reset = document.querySelector('[data-a="ck-reset"]'); if (reset) reset.disabled = year === D.sug;
   document.querySelectorAll(".ck-ev").forEach((x) => x.classList.toggle("fit", Math.abs(+x.dataset.y - year) <= 1));
-  const assigned = new Set([].concat(...Object.values(S.ez).map((l) => (l || []).map((z) => z.id))).filter(Boolean));
-  const mine = new Set((S.ez[unitOf(ui.focusKey).keys[0]] || []).map((z) => z.id));
-  document.getElementById("ck-evlist").innerHTML = D.events.length ? D.events.map((x, i) => {
-    const f = Math.abs(x.y - year) <= 1;
-    return `<div class="ck-card ${f ? "on" : ""}"><b>${esc(x.text)}</b><div class="ck-sub">${esc(x.date)} · <span class="${f ? "ck-fits" : "ck-nofit"}">${f ? tr("in range") : (x.y < year ? tr("before") : tr("after"))}</span></div>
-      ${mine.has(x.id) ? pill("✓", "ok") : `<button class="small" data-a="ck-event" data-i="${i}" data-uid="${esc(ui.focusKey)}">${tr("Assign")}</button>`}</div>`;
-  }).join("") : `<div class="quiet">${tr("No events in this strip.")}</div>`;
-  void assigned;
+  // focus person: card, face frame and lane
+  document.querySelectorAll("#page .ck-who, #page .ck-face, #page .ck-lane").forEach((x) => {
+    const id = x.dataset.hl || x.dataset.pid;
+    x.classList.toggle("sel", id === D.sel);
+    x.classList.toggle("dim", !!D.sel && id !== D.sel);
+  });
+  // the photos of the focus person with the age; this photo sits at the dragged year
+  const fp = D.persons.find((p) => p.id === D.sel), sh = document.getElementById("ck-sh"), stripEl = document.getElementById("ck-strip");
+  const sig = year + "|" + D.sel;
+  if (fp && sh && stripEl.dataset.sig !== sig) {
+    stripEl.dataset.sig = sig;
+    const e = unitOf(ui.focusKey), items = fp.photos.map((f) => ({...f})).concat([{cur: true, y: year, uid: e.uid, key: keyOf(e)}]);
+    items.sort((a, b) => a.y - b.y || (a.cur ? 1 : -1));
+    const i = items.findIndex((x) => x.cur), before = items[i - 1], after = items[i + 1];
+    const age = (y) => (fp.born !== null ? ` (${Math.round(y - fp.born)})` : "");
+    sh.textContent = tr("Photos of {name}", {name: first(fp.name)});
+    document.getElementById("ck-between").textContent = before && after ? tr("lies between {a}{x} and {b}{y}", {a: before.y, x: age(before.y), b: after.y, y: age(after.y)})
+      : (before ? tr("after the last known photo ({jahr})", {jahr: before.y}) : (after ? tr("before the first known photo ({jahr})", {jahr: after.y}) : tr("no other photo of this person with a year")));
+    const win = items.slice(Math.max(0, i - 5), i + 6);
+    document.getElementById("ck-strip").innerHTML = win.map((x) => `<button class="ck-thumb ${x.cur ? "cur" : ""} ${x.ok ? "ok" : ""}" ${x.cur ? "" : `data-a="ck-go" data-uid="${esc(x.uid)}"`} title="${x.cur ? tr("this photo") : esc(String(x.y))}"><img src="${image(x.key)}" alt=""><span>${x.cur ? tr("this photo") : esc((x.ok ? "✓ " : (x.draft ? "" : tr("c.") + " ")) + x.y + (fp.born !== null ? " · " + Math.round(x.y - fp.born) + " " + tr("y.") : ""))}</span></button>`).join("");
+    const cur = document.querySelector("#ck-strip .cur"); if (cur && cur.scrollIntoView) cur.scrollIntoView({block: "nearest", inline: "center"});
+  } else if (sh && !fp) { sh.textContent = tr("Photos of the person"); document.getElementById("ck-between").textContent = ""; document.getElementById("ck-strip").innerHTML = `<div class="quiet">${tr("no named person recognized")}</div>`; }
+  // what speaks for which year
+  const e2 = unitOf(ui.focusKey), mine = new Map((S.ez[e2.keys[0]] || []).map((z, i) => [z.id, i])), evEl = document.getElementById("ck-evid");
+  const sig2 = year + "|" + [...mine.keys()].join(",");
+  if (evEl.dataset.sig !== sig2) { evEl.dataset.sig = sig2; evEl.innerHTML = evidence(e2).map((x) => {
+    const f = x.y === year, as = x.ev !== undefined;
+    return `<div class="ck-evw"><button class="ck-evb ${f ? "on" : ""}" data-a="ck-evyear" data-y="${x.y}"><span><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span><span class="go">${x.y}</span></button>` +
+      (as ? (mine.has(x.id) ? `<button class="small ck-as on" data-a="ev-remove" data-i="${mine.get(x.id)}" data-uid="${esc(ui.focusKey)}" title="${tr("Remove assignment")}">✓ ${tr("assigned")}</button>`
+        : `<button class="small ck-as" data-a="ck-event" data-i="${x.ev}" data-uid="${esc(ui.focusKey)}" title="${tr("The photo belongs to this event in Gramps")}">${tr("Assign")}</button>`) : "") + "</div>";
+  }).join("") || `<div class="quiet">${tr("Nothing known yet.")}</div>`; }
   lines();
 }
 export function checkAfter() {
@@ -225,6 +266,23 @@ document.addEventListener("pointerdown", (ev) => {
 document.addEventListener("pointermove", (ev) => { if (dragging && D) { ui.ckYear = yearAt(ev); live(ui.ckYear); } });
 document.addEventListener("pointerup", () => { dragging = false; });
 
+// Your thoughts on the photo are saved into Grimmich while you type (nothing goes to Immich or Gramps).
+let noteTimer = null;
+document.addEventListener("input", (ev) => {
+  const t = ev.target;
+  if (!t || t.id !== "ck-note") return;
+  const key = t.dataset.note, text = t.value;
+  if (text.trim()) S.notes[key] = {text, changed: new Date().toISOString().slice(0, 10)}; else delete S.notes[key];
+  const st = document.getElementById("ck-notest");
+  if (st) st.textContent = tr("Saving …");
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(async () => {
+    await saveNotes();
+    const s2 = document.getElementById("ck-notest");
+    if (s2) s2.textContent = (text.trim() ? tr("Saved in Grimmich.") : tr("Nothing written yet.")) + " " + tr("Writing to Immich or Gramps comes with the new write page.");
+  }, 500);
+});
+
 // Hovering a person card or a face frame lights up the other one and the line.
 const lit = (ev, on) => {
   const el = ev.target.closest && ev.target.closest("[data-hl]");
@@ -243,7 +301,7 @@ export const actions = {
     const e = unitOf(el.dataset.uid);
     if (!e) return;
     ui.checkBack = {view: ui.view, personId: ui.personId, task: ui.task, albumId: ui.albumId, eventId: ui.eventId, mode: ui.mode};
-    ui.ckUndo = []; ui.ckMsg = ""; ui.ckYear = null;
+    ui.ckUndo = []; ui.ckMsg = ""; ui.ckYear = null; ui.ckSel = null;
     ui.focusKey = e.uid; ui.photoKey = el.dataset.key || keyOf(e); ui.view = "check";
     toTop(); draw();
   },
@@ -255,8 +313,11 @@ export const actions = {
   "ck-go": (el) => {
     const e = unitOf(el.dataset.uid);
     if (!e) return;
-    ui.focusKey = e.uid; ui.photoKey = e.keys[0]; ui.ckYear = null; toTop(); draw();
+    const keepSel = ui.ckSel;   // going on to another photo of the same person keeps her or him as the focus
+    ui.focusKey = e.uid; ui.photoKey = e.keys[0]; ui.ckYear = null; ui.ckSel = keepSel; toTop(); draw();
   },
+  "ck-who": (el) => { ui.ckSel = el.dataset.pid; if (D) { D.sel = ui.ckSel; live(D.year); } },
+  "ck-evyear": (el) => { ui.ckYear = +el.dataset.y; if (D) live(ui.ckYear); },
   "ck-detail": () => { Object.assign(ui, ui.checkBack || {view: "start"}); if (ui.view === "check") ui.view = "start"; draw(); },
   "ck-reset": () => { ui.ckYear = null; draw(); },
   "ck-draft": (el) => {
