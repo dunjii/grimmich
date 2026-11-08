@@ -1195,6 +1195,16 @@
   "check failed": "Prüfung fehlgeschlagen",
   "newer version:": "neuere Version:",
   "up to date": "aktuell",
-  "Last check: {t}": "Letzte Prüfung: {t}"
+  "Last check: {t}": "Letzte Prüfung: {t}",
+  "People": "Personen",
+  "Albums": "Alben",
+  "Places": "Orte",
+  "Events": "Ereignisse",
+  "Menu": "Menü",
+  "No places assigned yet.": "Noch keine Orte zugeordnet.",
+  "Select a place on the left.": "Wähle links einen Ort.",
+  "Loads names and changes from Immich, reads the albums and estimates new photos": "Lädt Namen und Änderungen aus Immich, liest die Alben und schätzt neue Fotos",
+  "Refreshed. {neu} new series suggestions.": "Aktualisiert. {neu} neue Serienvorschläge.",
+  "All series": "Serien"
  }
 }

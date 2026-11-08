@@ -23,6 +23,7 @@ async function afterJob() {
   const j = S.job;
   if (j.rc === 0) { await loading(); S.job = j; }
   afterJobHooks.forEach((h) => h(j));
+  if (j.name === "pipeline") toast(j.rc === 0 ? tr("Refreshed. {neu} new series suggestions.", {neu: j.new || 0}) : tr("The run ended with an error. You can find the log under the gear icon. Please send the last lines."));
   if (j.rc !== 0) return;
   if (j.name === "write" && j.args && j.args[0] !== "preview") { await saveAdoption(); await startJob("write", ["preview"]); return; }
   await loadNewInfo();
@@ -37,6 +38,7 @@ export function updateDisplay() {   // only progress texts, so that input in the
   const j = S.job, st = $("jobstatus"), log = $("joblog");
   const last = (j.rows || []).filter((l) => l && !l.startsWith("  ") && !/^\[ ?(WARN|INFO|ERROR)/.test(l)).slice(-1)[0] || "";
   if (st) st.innerHTML = j.running ? statusHtml(j, last) : "";
+  const hb = $("head-refresh"); if (hb && j.running) hb.textContent = "↻ " + tr("Step {no} of {total}:", {no: j.step_no || 0, total: j.step_total || 0}).replace(/:$/, "");
   if (log) { const below = log.scrollHeight - log.scrollTop - log.clientHeight < 40; log.textContent = (j.rows || []).join("\n"); if (below) log.scrollTop = log.scrollHeight; }
 }
 export const jobSchritt = STEP_LABELS;

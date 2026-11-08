@@ -2,7 +2,9 @@
 import {S, ui} from "../state.js";
 import {esc} from "../util.js";
 import {eventList} from "./event.js";
-import {unitList, warnings, taskCounts, personOf, shortName} from "../model.js";
+import {unitList, warnings, taskCounts, personOf, shortName, peopleText} from "../model.js";
+import {menuOf} from "./menu.js";
+import {placeList} from "./placeview.js";
 import {tr} from "../language.js";
 
 export function peopleState() {
@@ -33,8 +35,7 @@ export function listHtml() {
   const inboxVal = z.inAlbum || z.new ? task(z.inAlbum || z.new, tr("Inbox"), z.inAlbum ? tr("new scans in the album, not processed yet") : tr("Photos without series and without confirmed year"), {action: "go-inbox", view: "inbox"}) : "";
   const tasks = inboxVal
     + (f !== "open" ? task(z.warn, tr("Warnings"), tr("Dating does not match birth or death"), {action: "go-task", task: "warnings", view: "task"}, '<span class="tag warn">!</span> ') : "")
-    + (f !== "warnings" ? task(z.series, tr("Series to review"), tr("Do the photos belong together?"), {action: "go-task", task: "series", view: "task"})
-      + task(z.without, tr("No estimate"), tr("not datable yet or not calculated"), {action: "go-task", task: "without", view: "task"})
+    + (f !== "warnings" ? task(z.without, tr("No estimate"), tr("not datable yet or not calculated"), {action: "go-task", task: "without", view: "task"})
       + task(z.cards, tr("Cards and documents"), z.cardsOpen ? tr("{n} without date", {n: z.cardsOpen}) : tr("all dated"), {action: "go-task", task: "cards", view: "task"})
       + task(z.changedFlag, tr("Changed in Immich"), tr("Names, assignment or image changed"), {action: "go-task", task: "changed", view: "task"}) : "")
     + (f === "all" ? task(S.game.votes.length, tr("Game evaluation"), tr("Who answered how much, what the answers changed"), {action: "go-gameeval", view: "gameeval"}) : "");
@@ -47,12 +48,25 @@ export function listHtml() {
   const albumList = albumsState().map((x) => `<button class="row ${ui.view === "album" && ui.albumId === x.a.id ? "active" : ""}" data-a="go-album" data-id="${esc(x.a.id)}">
       <div class="top"><b>${esc(x.a.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.n})}</span></div>${bar(x.pct, "var(--akzent)")}
       <div class="bottom">${x.without ? `${tr("{ohne} without date", {ohne: x.without})}` : tr("all dated")}</div></button>`).join("");
-  return `<div class="list-head"><h2>${tr("Work list")}</h2></div>
-    <div class="chips">${[["all", tr("All")], ["warnings", tr("Warnings {n}", {n: z.warn})], ["open", tr("Open {n}", {n: z.open})]].map(([id, t]) => `<button class="chip ${f === id ? "on" : ""}" data-a="list-filter" data-f="${id}">${t}</button>`).join("")}</div>
-    ${tasks ? `<div class="group">${tr("Tasks")}</div>${tasks}` : ""}
-    <div class="group">${tr("People ({n} open)", {n: openOnes.length})}</div>${openOnes.map(line).join("") || '<div class="quiet" style="padding:6px 10px">' + tr("Nothing to do.") + '</div>'}
-    ${albumList ? `<div class="group">${tr("Photo albums")}</div>${albumList}` : ""}
-    ${eventList()}
-    ${finished.length ? `<div class="group">${tr("Done ({n})", {n: finished.length})}</div>${finished.map(line).join("")}` : ""}
-    <div class="foot quiet">${tr("A photo only gets a source if it is in a photo album, not just in the working album.")}</div>`;
+  const m = menuOf(), none = `<div class="quiet" style="padding:6px 10px">${tr("Nothing to do.")}</div>`;
+  const albumsAll = albumsState(), albumRow = (x) => `<button class="row ${ui.view === "album" && ui.albumId === x.a.id ? "active" : ""}" data-a="go-album" data-id="${esc(x.a.id)}">
+      <div class="top"><b>${esc(x.a.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.n})}</span></div>${bar(x.pct, "var(--akzent)")}
+      <div class="bottom">${x.without ? `${tr("{ohne} without date", {ohne: x.without})}` : tr("all dated")}</div></button>`;
+  const albumsOpen = albumsAll.filter((x) => x.without), albumsDone = albumsAll.filter((x) => !x.without);
+  const seriesAll = unitList().list.filter((e) => e.type === "series"), seriesRow = (e) => `<button class="row" data-a="series-show" data-sid="${esc(e.s.id)}">
+      <div class="top"><b>${tr("Series {id}", {id: e.s.id})}</b><span>${tr("{n} {n:photo|photos}", {n: e.keys.length})}</span></div><div class="bottom">${esc(peopleText(e.keys[0]) || "")}</div></button>`;
+  const seriesOpen = seriesAll.filter((e) => e.s.status === "open"), seriesDone = seriesAll.filter((e) => e.s.status !== "open");
+  const grp = (text, list, row) => (list.length ? `<div class="group">${text}</div>${list.map(row).join("")}` : "");
+  const chips = m === "tasks" || m === "people" ? `<div class="chips">${[["all", tr("All")], ["warnings", tr("Warnings {n}", {n: z.warn})], ["open", tr("Open {n}", {n: z.open})]].map(([id, t]) => `<button class="chip ${f === id ? "on" : ""}" data-a="list-filter" data-f="${id}">${t}</button>`).join("")}</div>` : "";
+  const body = {
+    tasks: tasks || none,
+    people: grp(tr("People ({n} open)", {n: openOnes.length}), openOnes, line) + (openOnes.length ? "" : none) + grp(tr("Done ({n})", {n: finished.length}), finished, line),
+    albums: (albumsAll.length ? "" : none) + grp(tr("Photo albums"), albumsOpen, albumRow) + grp(tr("Done ({n})", {n: albumsDone.length}), albumsDone, albumRow),
+    series: (z.series ? task(z.series, tr("Series to review"), tr("Do the photos belong together?"), {action: "go-task", task: "series", view: "task"}) : "") + (seriesAll.length ? "" : none)
+      + grp(tr("Series"), seriesOpen, seriesRow) + grp(tr("Done ({n})", {n: seriesDone.length}), seriesDone, seriesRow),
+    events: eventList() || none,
+    places: placeList(),
+  }[m];
+  return `<div class="list-head"><h2>${{tasks: tr("Tasks"), people: tr("People"), albums: tr("Albums"), series: tr("All series"), events: tr("Events"), places: tr("Places")}[m]}</h2></div>${chips}${body}
+    ${m === "albums" ? `<div class="foot quiet">${tr("A photo only gets a source if it is in a photo album, not just in the working album.")}</div>` : ""}`;
 }

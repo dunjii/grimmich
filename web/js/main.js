@@ -7,6 +7,8 @@ import {loadGrampsPeople, loadEvents} from "./gramps.js";
 import {loadWrite} from "./review.js";
 import {checkJob, startJob} from "./job.js";
 import {headHtml} from "./ui/header.js";
+import {actions as aMenu} from "./ui/menu.js";
+import {placeHtml} from "./ui/placeview.js";
 import {listHtml, peopleState} from "./ui/list.js";
 import {personHtml} from "./ui/person.js";
 import {detailHtml} from "./ui/detail.js";
@@ -37,7 +39,7 @@ function startHtml() {
   return '<div class="empty large-empty"><h1>' + tr("Choose a person or a task on the left") + '</h1></div>';
 }
 function middleHtml() {
-  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml, gameeval: gameEvalHtml}[ui.view]?.() ?? startHtml();
+  return {person: personHtml, task: taskHtml, inbox: inboxHtml, album: albumHtml, event: eventHtml, place: placeHtml, gameeval: gameEvalHtml}[ui.view]?.() ?? startHtml();
 }
 let calcSig = "", calcNo = 0;
 async function calcSeries() {
@@ -104,7 +106,7 @@ window.addEventListener("popstate", async (ev) => {
 // ------------------------------------------------------------------ Navigation
 const toTop = () => window.scrollTo(0, 0);
 function goTo(view, data = {}) {
-  Object.assign(ui, {view, focusKey: null, photoKey: null, more: 0}, data);
+  Object.assign(ui, {view, menu: null, focusKey: null, photoKey: null, more: 0}, data);
   ui.sel.clear(); closeIt(); toTop(); draw();
 }
 const aNavigation = {
@@ -123,6 +125,7 @@ const aNavigation = {
     goTo("album", {albumId: el.dataset.id, ...(e ? {focusKey: e.uid, photoKey: el.dataset.key, scrollZu: e.uid} : {})});
   },
   "go-event": (el) => goTo("event", {eventId: el.dataset.id}),
+  "go-place": (el) => goTo("place", {placeId: el.dataset.id}),
   "go-write": async () => { goTo("write"); await loadWrite(); draw(); },
   "back": () => { const p = peopleState().find((x) => !x.done); goTo(p ? "person" : "start", p ? {personId: p.p.id} : {}); },
   "list-open": () => { ui.listOpen = true; remember("listeOffen", true); draw(); },
@@ -144,7 +147,7 @@ const aNavigation = {
   "gr-marker": (el) => grAnchor(el.dataset.pid, el.dataset.ev, el.dataset.part),
   "vb-leer": () => {},
 };
-const ACTION_TEXT = {...aGame, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
+const ACTION_TEXT = {...aGame, ...aMenu, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
 
 window.__grimmichActions = ACTION_TEXT;   // for the search: jumps through the same actions as the buttons
 document.addEventListener("click", async (ev) => {
