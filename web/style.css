@@ -493,8 +493,6 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ck-warnline { min-height: 22px; font-size: 13px; text-align: center; } .ck-warnline.bad { color: #a02020; font-weight: 600; } .ck-warnline.ok { color: var(--ok); }
 .ck-focus { background: var(--karte); border: 1px solid var(--rand); border-radius: 12px; padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 8px; }
 .ck-fhead { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
-.ck-seg { display: inline-flex; border: 1px solid var(--rand2); border-radius: 8px; overflow: hidden; } .ck-seg button { border: 0; border-radius: 0; min-height: 32px; font-size: 13px; }
-.ck-seg button[aria-pressed=true] { background: var(--akzent-h); color: var(--akzent-d); font-weight: 600; }
 .ck-scroll { overflow-x: auto; }
 .ck-track { position: relative; margin: 0 26px 0 130px; padding-top: 16px; touch-action: none; cursor: ew-resize; user-select: none; }
 .ck-lane { position: relative; height: 50px; border-bottom: 1px dashed var(--rand); }
@@ -504,7 +502,6 @@ a.gr-link { text-decoration: none; white-space: nowrap; } a.gr-link:hover { text
 .ck-dot.ok { background: var(--ok); border-color: var(--ok); } .ck-dot.nb { border-color: var(--warn); box-shadow: 0 0 0 3px var(--warn-h); }
 .ck-ev { position: absolute; top: 4px; width: 11px; height: 11px; margin-left: -5px; transform: rotate(45deg); background: var(--rand2); border-radius: 2px; } .ck-ev.fit { background: var(--warn); }
 .ck-ki { position: absolute; top: 10px; height: 34px; width: 0; border-left: 2px dotted var(--akzent); } .ck-ki span { position: absolute; top: -1px; left: 3px; font-size: 10.5px; color: var(--akzent-d); }
-.ck-band { position: absolute; top: 2px; bottom: 2px; background: var(--ok-h); border: 1.5px dashed var(--ok); border-radius: 6px; }
 .ck-axis { position: relative; height: 20px; margin: 0 26px 0 130px; border-bottom: 1px solid var(--rand2); } .ck-axis span { position: absolute; top: 0; font-size: 11.5px; color: var(--leise); transform: translateX(-50%); }
 .ck-pick { position: absolute; top: 0; bottom: -4px; width: 0; border-left: 2px solid var(--akzent); z-index: 3; pointer-events: none; }
 .ck-knob { position: absolute; left: -13px; top: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--akzent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }

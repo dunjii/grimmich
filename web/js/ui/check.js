@@ -76,16 +76,7 @@ function buildData(e, key, nb) {
     return {id: p.id, name: p.name, born: l.born ? l.born.decimal_year : null, death: l.death ? l.death.j : null, ki: a ? a.ki : null, others, evs: evs.filter((x) => x.y >= lo && x.y <= hi)};
   });
   const events = [...new Map(persons.flatMap((p) => p.evs).map((x) => [x.id, x])).values()].sort((a, b) => a.y - b.y).slice(0, 10);
-  // place in the album: neighbours with a year, band between the nearest dated ones before and after
-  const dated = (u) => (u.year ? (u.date ? +String(u.date).slice(0, 4) : u.year) : null);
-  let band = null;
-  if (nb.i >= 0) {
-    const before = nb.list.slice(0, nb.i).reverse().map(dated).find((y) => y !== null), after = nb.list.slice(nb.i + 1).map(dated).find((y) => y !== null);
-    band = {lo: before ?? null, hi: after ?? null};
-  }
-  const albumDots = nb.i < 0 ? [] : nb.list.slice(Math.max(0, nb.i - 4), nb.i + 5).filter((u) => u.uid !== e.uid && dated(u) !== null && dated(u) >= lo && dated(u) <= hi)
-    .map((u) => ({y: dated(u), ok: !!u.confirmedFlag, pos: nb.list.indexOf(u) - nb.i}));
-  return {lo, hi, sug: startYear, year: ui.ckYear ?? startYear, persons, events, band, albumDots, page: nb.page};
+  return {lo, hi, sug: startYear, year: ui.ckYear ?? startYear, persons, events};
 }
 const pct = (y) => (100 * (y - D.lo) / (D.hi - D.lo)).toFixed(2);
 
@@ -95,7 +86,6 @@ function problems(year) {
     if (p.born !== null && year < Math.floor(p.born)) out.push(tr("{name} would not be born yet", {name: first(p.name)}));
     if (p.death !== null && year > p.death) out.push(tr("{name} would be dead", {name: first(p.name)}));
   });
-  if (ui.ckMode === "album" && D.band && ((D.band.lo !== null && year < D.band.lo) || (D.band.hi !== null && year > D.band.hi))) out.push(tr("breaks the order of the album page"));
   if (!out.length && D.persons.some((p) => p.born !== null && p.ki !== null && Math.abs((year - p.born) - p.ki) > 4)) out.push(tr("far from the AI estimate (more than 4 years)"));
   return out;
 }
@@ -106,7 +96,6 @@ export function checkHtml() {
   if (!e) return `<div class="ck-page"><div class="empty">${tr("No photo chosen.")} <button data-a="ck-back">${tr("Back")}</button></div></div>`;
   const key = keyOf(e), nb = neighbours(e), w = warnings(e), prov = provenanceOf(key), boxes = faceBoxes(key);
   D = buildData(e, key, nb);
-  const mode = ui.ckMode === "album" ? "album" : "life";
   const zu = S.ez[e.keys[0]] || [], nowPlace = placeFrom(key), sug = suggestions(e, key).filter((x) => !nowPlace || x.o.h !== nowPlace.h);
   ui.placeSuggestions = sug;
   const yearText = e.year ? (e.date ? dateLong(e.date) : (e.confirmedFlag || e.draftFlag || e.from === e.to ? String(e.year) : tr("c. {jahr}", {jahr: e.year}))) : tr("still open");
@@ -137,21 +126,12 @@ export function checkHtml() {
 
   // the strip: lanes of the people (life) or one lane of the album page
   const years = Array.from({length: D.hi - D.lo + 1}, (_, i) => D.lo + i);
-  let lanes = "";
-  if (mode === "life") {
-    lanes = D.persons.map((p) => `<div class="ck-lane"><div class="ck-lbl">${esc(first(p.name))}<small>${p.born !== null ? "*" + Math.floor(p.born) : ""}${p.death !== null ? " †" + p.death : ""}</small></div><div class="ck-bar"></div>
+  const lanes = D.persons.map((p) => `<div class="ck-lane"><div class="ck-lbl">${esc(first(p.name))}<small>${p.born !== null ? "*" + Math.floor(p.born) : ""}${p.death !== null ? " †" + p.death : ""}</small></div><div class="ck-bar"></div>
       ${p.evs.map((x) => `<div class="ck-ev" data-y="${x.y}" title="${esc(x.text)} ${x.y}" style="left:${pct(x.y)}%"></div>`).join("")}
       ${p.born !== null && p.ki !== null && p.born + p.ki >= D.lo && p.born + p.ki <= D.hi ? `<div class="ck-ki" style="left:${pct(p.born + p.ki)}%"><span>${tr("AI")}</span></div>` : ""}
-      ${p.others.map((f) => `<div class="ck-dot ${f.ok ? "ok" : ""} ${f.near ? "nb" : ""}" title="${tr("other photo")} ${f.y}" style="left:${pct(f.y)}%"></div>`).join("")}</div>`).join("") || `<div class="quiet" style="padding:10px 0">${tr("no named person recognized")}</div>`;
-  } else {
-    const b = D.band, bl = b && b.lo !== null ? b.lo : D.lo, bh = b && b.hi !== null ? b.hi : D.hi;
-    lanes = `<div class="ck-lane"><div class="ck-lbl">${nb.page ? tr("Page {nr}", {nr: nb.page}) : tr("Album")}<small>${tr("order in the album")}</small></div><div class="ck-bar"></div>
-      <div class="ck-band" style="left:${pct(Math.max(D.lo, bl))}%;width:${(pct(Math.min(D.hi, bh)) - pct(Math.max(D.lo, bl))).toFixed(2)}%"></div>
-      ${D.albumDots.map((f) => `<div class="ck-dot ${f.ok ? "ok" : ""}" title="${f.pos < 0 ? tr("before this photo") : tr("after this photo")}: ${f.y}" style="left:${pct(f.y)}%"></div>`).join("")}</div>
-      <div class="ck-sub" style="padding:4px 0 0">${tr("Green dashed: the range between the nearest dated neighbors on the page.")}</div>`;
-  }
+      ${p.others.map((f) => `<div class="ck-dot ${f.ok ? "ok" : ""}" title="${tr("other photo")} ${f.y}" style="left:${pct(f.y)}%"></div>`).join("")}</div>`).join("") || `<div class="quiet" style="padding:10px 0">${tr("no named person recognized")}</div>`;
   const focus = `<div class="ck-focus"><div class="ck-fhead"><b>${tr("When?")}</b>
-      <span class="ck-seg" role="group"><button data-a="ck-mode" data-m="life" aria-pressed="${mode === "life"}">${tr("In the life of the people")}</button><button data-a="ck-mode" data-m="album" aria-pressed="${mode === "album"}">${tr("In the album")}</button></span><span class="space"></span>
+      <span class="space"></span>
       <button class="small" data-a="ck-reset" ${changed ? "" : "disabled"}>${tr("Back to suggestion")}</button>
       <button class="small primary" data-a="ck-draft" data-uid="${esc(e.uid)}">${tr("Take over as draft")}</button>
       <button class="small good" data-a="ck-year" data-uid="${esc(e.uid)}">${tr("That is right")}</button>
@@ -278,7 +258,6 @@ export const actions = {
     ui.focusKey = e.uid; ui.photoKey = e.keys[0]; ui.ckYear = null; toTop(); draw();
   },
   "ck-detail": () => { Object.assign(ui, ui.checkBack || {view: "start"}); if (ui.view === "check") ui.view = "start"; draw(); },
-  "ck-mode": (el) => { ui.ckMode = el.dataset.m; draw(); },
   "ck-reset": () => { ui.ckYear = null; draw(); },
   "ck-draft": (el) => {
     const e = unitOf(el.dataset.uid), y = ui.ckYear ?? (D && D.year);
