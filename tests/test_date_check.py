@@ -30,6 +30,10 @@ class DateCheckTest(unittest.TestCase):
         p = photo("1927-07-01", "2026-11-02"); p["fileCreatedAt"] = "1927-07-01T00:00:00Z"
         self.assertEqual(self.why(p), "set")
 
+    def test_date_before_any_scanner_counts_even_if_scan_fields_follow(self):
+        p = photo("1927-07-01", "1927-07-01")   # all date fields moved to the new date
+        self.assertEqual(self.why(p), "set")
+
     def test_camera_data_does_not_count(self):
         self.assertEqual(self.why(photo("1951-06-01", "2026-11-02", make="EPSON")), "camera")
 

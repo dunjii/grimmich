@@ -62,7 +62,7 @@ function titleButton(e, key) {
 function seenLine(key) {
   const c = S.immichSeen[key]; if (!c || !c.d) return "";
   const d = dateLong(c.d), t = {
-    close: tr("Immich: capture date {d}, scan date {s}, only {n} days apart. A date counts as set by you only if it is more than 2 days away from the scan date.", {d, s: dateLong(c.s), n: c.n || 0}),
+    close: tr("Immich: capture date {d}, scan date {s}, only {n} days apart. A date counts as set by you only if it is more than 2 days away from the scan date.", {d, s: dateLong(c.s), n: c.n || 0}) + (c.raw ? ` (${Object.entries(c.raw).map(([k, v]) => k + " " + (v || "–")).join(", ")})` : ""),
     camera: tr("Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.", {d}),
     grimmich: tr("Immich: capture date {d}, written by Grimmich.", {d}),
   }[c.why];

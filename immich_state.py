@@ -16,7 +16,7 @@ from datetime import datetime
 
 import estimate as S
 import storage
-from immich_write import DEVIATION_DAYS, scan_date, ESTIMATED_ALL, OPEN_ALL, any_of, has_block, WRITTEN
+from immich_write import DEVIATION_DAYS, far_from_scan, scan_date, ESTIMATED_ALL, OPEN_ALL, any_of, has_block, WRITTEN
 
 STATE = "immich_state.json"
 CHANGES = "changes.json"
@@ -59,7 +59,7 @@ def date_check(photo, key, written):
     exif = photo.get("exifInfo") or {}
     date_ = (exif.get("dateTimeOriginal") or "")[:10]
     scan = scan_date(photo)
-    info = {"d": date_, "s": scan, "why": "nodate"}
+    info = {"d": date_, "s": scan, "why": "nodate", "raw": {k: (photo.get(k) or "")[:10] for k in ("fileModifiedAt", "createdAt", "fileCreatedAt", "localDateTime")}}
     if not date_ or not scan:
         return info
     if _by_grimmich(photo, key, written):
@@ -68,11 +68,9 @@ def date_check(photo, key, written):
         return {**info, "why": "anchor"}
     if exif.get("make") or exif.get("model"):   # camera data in the working album do not count until you make it an anchor
         return {**info, "why": "camera"}
-    try:
-        distance = abs((datetime.fromisoformat(date_) - datetime.fromisoformat(scan)).days)
-    except ValueError:
-        return info
-    return {**info, "why": "set" if distance > DEVIATION_DAYS else "close", "n": distance}
+    far, scan, n = far_from_scan(photo, date_)
+    info["s"] = scan
+    return {**info, "why": "set" if far else "close", "n": n}
 
 
 def hand_date(photo, key, written):

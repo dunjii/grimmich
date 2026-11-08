@@ -58,6 +58,23 @@ def scan_date(asset):
     return ""
 
 
+EARLIEST_SCAN_YEAR = 2005   # no scanner dates a file earlier: a capture date before this was entered by someone (the scanner, not the photo, sets the date otherwise)
+
+
+def far_from_scan(asset, date_):
+    """Is the capture date (YYYY-MM-DD) so far from the scan date that someone must have set it? -> (bool, scan date, days apart or None)"""
+    scan = scan_date(asset)
+    try:
+        if int(date_[:4]) < EARLIEST_SCAN_YEAR:
+            return True, scan, None
+        if scan:
+            n = abs((datetime.fromisoformat(date_[:10]) - datetime.fromisoformat(scan)).days)
+            return n > DEVIATION_DAYS, scan, n
+    except ValueError:
+        pass
+    return False, scan, None
+
+
 DEVIATION_DAYS = 2   # how far the capture date may deviate from the scan date before we assume 'set by yourself'
 
 
@@ -277,13 +294,9 @@ def plan(entry_row, asset, written):
     # Grimmich writes nothing there). The original is saved before every write.
     camera = bool(exif.get("make") or exif.get("model"))
     if not by_us and not camera:
-        scan = scan_date(asset)
-        if old_date_value and scan:
-            try:
-                distance = abs((datetime.fromisoformat(old_date_value[:10]) - datetime.fromisoformat(scan)).days)
-            except ValueError:
-                distance = 0
-            if distance > DEVIATION_DAYS and not force_:
+        hand_, scan, distance = far_from_scan(asset, old_date_value) if old_date_value else (False, "", None)
+        if old_date_value:
+            if hand_ and not force_:
                 reason_ = tx('Capture date {alt} differs from the scan date {scan} (probably set by you)', alt=old_date_value[:10], scan=scan)
                 if hand_date:
                     reason_ = tx('You changed the date you set ({alt}) in Grimmich. It is only overwritten if you confirm it here.', alt=old_date_value[:10])
