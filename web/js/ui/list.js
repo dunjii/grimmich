@@ -2,7 +2,7 @@
 import {S, ui} from "../state.js";
 import {esc} from "../util.js";
 import {eventList} from "./event.js";
-import {unitList, warnings, taskCounts, personOf, shortName, peopleText} from "../model.js";
+import {unitList, warnings, taskCounts, personOf, shortName, peopleTextUnit, yearShort} from "../model.js";
 import {menuOf} from "./menu.js";
 import {placeList} from "./placeview.js";
 import {tr} from "../language.js";
@@ -54,7 +54,7 @@ export function listHtml() {
       <div class="bottom">${x.without ? `${tr("{ohne} without date", {ohne: x.without})}` : tr("all dated")}</div></button>`;
   const albumsOpen = albumsAll.filter((x) => x.without), albumsDone = albumsAll.filter((x) => !x.without);
   const seriesAll = unitList().list.filter((e) => e.type === "series"), seriesRow = (e) => `<button class="row ${ui.view === "serie" && ui.seriesId === e.s.id ? "active" : ""}" data-a="go-series" data-sid="${esc(e.s.id)}">
-      <div class="top"><b>${tr("Series {id}", {id: e.s.id})}</b><span>${tr("{n} {n:photo|photos}", {n: e.keys.length})}</span></div><div class="bottom">${esc(peopleText(e.keys[0]) || "")}</div></button>`;
+      <div class="top"><b>${tr("Series {id}", {id: e.s.id})}${e.year ? ` (${esc(yearShort(e))})` : ""}</b><span>${tr("{n} {n:photo|photos}", {n: e.keys.length})}</span></div><div class="bottom">${esc(peopleTextUnit(e) || "")}</div></button>`;
   const seriesOpen = seriesAll.filter((e) => e.s.status === "open"), seriesDone = seriesAll.filter((e) => e.s.status !== "open");
   const grp = (text, list, row) => (list.length ? `<div class="group">${text}</div>${list.map(row).join("")}` : "");
   const chips = m === "tasks" || m === "people" ? `<div class="chips">${[["all", tr("All")], ["warnings", tr("Warnings {n}", {n: z.warn})], ["open", tr("Open {n}", {n: z.open})]].map(([id, t]) => `<button class="chip ${f === id ? "on" : ""}" data-a="list-filter" data-f="${id}">${t}</button>`).join("")}</div>` : "";
