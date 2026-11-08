@@ -58,15 +58,10 @@ def scan_date(asset):
     return ""
 
 
-EARLIEST_SCAN_YEAR = 2005   # no scanner dates a file earlier: a capture date before this was entered by someone (the scanner, not the photo, sets the date otherwise)
-
-
 def far_from_scan(asset, date_):
     """Is the capture date (YYYY-MM-DD) so far from the scan date that someone must have set it? -> (bool, scan date, days apart or None)"""
     scan = scan_date(asset)
     try:
-        if int(date_[:4]) < EARLIEST_SCAN_YEAR:
-            return True, scan, None
         if scan:
             n = abs((datetime.fromisoformat(date_[:10]) - datetime.fromisoformat(scan)).days)
             return n > DEVIATION_DAYS, scan, n
