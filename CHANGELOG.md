@@ -7,7 +7,7 @@ and puts the results back into Immich and Gramps. This log is reconstructed from
 - New **menu bar** under the header: Tasks · People · Albums · Series · Events · Places. The left column lists only what the chosen entry stands for; finished people, albums and series are at the bottom of their list.
 - **Refresh** moved into the header (progress shows on the button, a message appears when done). The big start page is no longer needed; the old Inbox is still under Tasks.
 - New view **Places**: places assigned to photos, and the photos of one place.
-- Test builds of this branch also get the image tag `dev`. New test `tests/ui_menu_test.py`.
+- Test builds of this branch get the image tag `ui-menu`, never `latest` (workflow taken over from `dev`). New test `tests/ui_menu_test.py`.
 
 ## 0.10.3 – 2026-11-05 – Models fixed to tested versions, manual check for newer ones
 - The three models (MiVOLO v2, YOLO face/person detector, DINOv2 small) are loaded with a fixed version (commit hash). Once downloaded, they load from the data folder without any request to Hugging Face, and estimates cannot change silently when a model is updated there.
