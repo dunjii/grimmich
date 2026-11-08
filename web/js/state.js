@@ -38,7 +38,7 @@ export const ui = {
   personId: null, task: "", albumId: null, menu: null, placeId: null, seriesId: null,
   mode: "time",                   // time | sort | series (only for a person)
   focusKey: null, photoKey: null,      // chosen unit (uid) and the photo chosen in it
-  sel: new Set(),                  // selected units (for merging etc.)
+  sel: new Set(recall("korb", [])),                  // selected units (for merging etc.)
   p2: null, grAll: false, grUsed: false, listFilter: "all", listOpen: recall("listeOffen", true),
   settings: false, searchOpen: false, writeFilter: "skip", more: 0, search: "",
   thresholdPerson: 0.72, thresholdAll: 0.80,

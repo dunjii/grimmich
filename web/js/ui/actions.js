@@ -149,5 +149,5 @@ export const actions = {
   "faces": (el) => facesDialog(el.dataset.uid, el.dataset.key),
   "seen": async (el) => { delete S.changed[el.dataset.key]; await saveChanges(); draw(); },
   "all-seen": async () => { S.changed = {}; await saveChanges(); draw(); },
-  "mode": (el) => { ui.mode = el.dataset.m; ui.sel.clear(); draw(); },
+  "mode": (el) => { ui.mode = el.dataset.m; draw(); },
 };

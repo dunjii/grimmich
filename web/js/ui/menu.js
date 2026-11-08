@@ -25,7 +25,7 @@ export const actions = {
   "menu": (el) => {
     ui.menu = el.dataset.m;
     if (ui.menu === "series" && ui.view !== "serie" && !(ui.view === "task" && ui.task === "series")) {   // the middle shows the series to review
-      Object.assign(ui, {view: "task", task: "series", menu: null, focusKey: null, photoKey: null}); ui.sel.clear();
+      Object.assign(ui, {view: "task", task: "series", menu: null, focusKey: null, photoKey: null});
     }
     draw();
   },

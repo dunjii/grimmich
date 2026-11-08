@@ -1,7 +1,7 @@
 // Photo tile: image, year, people, status. Used in timeline, task lists, inbox and albums.
 import {S, ui} from "../state.js";
 import {esc, image, dateShort} from "../util.js";
-import {warnings, statusLabel, statusClass, peopleTextUnit, KINDS} from "../model.js";
+import {warnings, statusLabel, statusClass, peopleTextUnit, yearShort, unitOf, KINDS} from "../model.js";
 import {tr} from "../language.js";
 
 export function yearMark(e) {
@@ -33,7 +33,8 @@ export function tileGrid(unitsList, opt = {}) {
 export function selectionBar() {
   const n = ui.sel.size;
   if (!n) return "";
-  return `<div class="selection-bar"><b>${tr("{n} {n:unit|units} selected", {n})}</b>
+  const chips = [...ui.sel].map(unitOf).filter(Boolean).map((e) => `<span class="basket-chip" title="${tr("Take out of the basket")}">${esc((e.type === "series" ? tr("Series {id}", {id: e.s.id}) : peopleTextUnit(e) || tr("unnamed")) + (e.year ? " " + yearShort(e) : ""))}<button data-a="select" data-uid="${esc(e.uid)}" aria-label="${tr("Take out of the basket")}">×</button></span>`).join("");
+  return `<div class="selection-bar"><b>${tr("{n} {n:unit|units} selected", {n})}</b><span class="basket-chips">${chips}</span>
     <button class="primary" data-a="merge" ${n >= 2 ? "" : "disabled"}>${tr("Merge into one series")}</button>
     <button data-a="date-select">${tr("Set date …")}</button><button data-a="kind-select">${tr("Type: card, document …")}</button><button class="good" data-a="confirmed-select">${tr("✓ Set as anchor")}</button>
     <span class="space"></span><button class="small" data-a="deselect">${tr("Clear selection")}</button></div>`;

@@ -70,6 +70,8 @@ function drawAll() {
     $("list").innerHTML = listHtml(); $("middle").innerHTML = middleHtml(); $("detail").innerHTML = detailHtml();
     $("list").scrollTop = scroll.list; $("detail").scrollTop = scroll.detail;
   }
+  if (Object.keys(S.photos).length) [...ui.sel].forEach((u) => { if (!unitOf(u)) ui.sel.delete(u); });   // gone (merged, dissolved): out of the basket
+  remember("korb", [...ui.sel]);
   $("selection").innerHTML = write_it ? "" : selectionBar();
   document.body.classList.toggle("with-bar", ui.sel.size > 0 && !write_it);
   setVisible([...document.querySelectorAll("#middle .tile[data-key], #middle .pface[data-key]")].map((t) => t.dataset.key).filter((k, i, a) => a.indexOf(k) === i));
@@ -97,7 +99,7 @@ function historyKeep() {
 }
 window.addEventListener("popstate", async (ev) => {
   if (!ev.state) return;
-  Object.assign(ui, ev.state); ui.sel.clear(); ui.more = 0; ui.scrollZu = ui.focusKey; closeIt(); ui.settings = false;
+  Object.assign(ui, ev.state); ui.more = 0; ui.scrollZu = ui.focusKey; closeIt(); ui.settings = false;
   draw();
   if (ui.view === "write") { await loadWrite(); draw(); }
   else if (ui.view === "inbox") loadNewInfo().then(draw);
@@ -107,7 +109,7 @@ window.addEventListener("popstate", async (ev) => {
 const toTop = () => window.scrollTo(0, 0);
 function goTo(view, data = {}) {
   Object.assign(ui, {view, menu: null, focusKey: null, photoKey: null, more: 0}, data);
-  ui.sel.clear(); closeIt(); toTop(); draw();
+  closeIt(); toTop(); draw();
 }
 const aNavigation = {
   "go-person": (el) => {
