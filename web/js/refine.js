@@ -2,11 +2,31 @@
 //  - bounds: “before / after the photo from 1950”, “in the 1940s” narrow the span of a photo
 //  - order: “this one is older”, a sorted row of 3–5 photos say which photo is earlier than which
 import {S} from "./state.js";
+import {tr} from "./language.js";
 
 // The answers that count: the answers of hidden players (S.game.muted, names) are left out everywhere.
 export function activeVotes() {
   const muted = S.game.muted;
   return muted && muted.length ? S.game.votes.filter((v) => !muted.includes(v.player)) : S.game.votes;
+}
+
+// Place answers of the players for a photo: [{h, text, players:[names]}], one group per place; each player counts once (their latest answer).
+export function placeAnswers(key) {
+  const mine = new Map();
+  activeVotes().forEach((v) => { if (v.type === "place" && v.key === key && v.place) mine.set(v.player || "", v); });
+  const groups = new Map();
+  mine.forEach((v, player) => {
+    const id = v.h || "t:" + String(v.place).trim().toLowerCase();
+    const g = groups.get(id) || {h: v.h || null, text: v.place, players: []};
+    g.players.push(player || tr("You")); groups.set(id, g);
+  });
+  return [...groups.values()].sort((a, b) => b.players.length - a.players.length);
+}
+// Photos without a place that have place answers from the game
+export function keysWithPlaceAnswers() {
+  const keys = new Set();
+  activeVotes().forEach((v) => { if (v.type === "place" && v.place && S.photos[v.key] && !(S.places && S.places[v.key])) keys.add(v.key); });
+  return [...keys];
 }
 
 // Latest answer per question wins (the same question can be answered again later).

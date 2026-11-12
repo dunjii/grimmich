@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.10 – 2026-11-12 – Clearer sort tiles, automatic sort-in, place answers from the game
+- **Sort by appearance**: each tile shows one year, the colour tells the state: anchor (green, ✓), draft (yellow), uncertain (grey, "c."). ⚠ appears when the row's calculation is far from an anchor. AI age and limits moved into the tooltip.
+- **"Sort in automatically"** replaces "Pre-sort all by AI age": photos already in the row stay where they are (your positions win); the others are put in by year (anchors, drafts, markers) or by AI age (uncertain photos), always between the anchors that bound them.
+- **Place answers from the game** now reach Grimmich: at the photo (with the players' names, "Take over" for known Gramps places) and in the Places list under "Place suggestions from the game". Nothing is set without your click.
+- **Game evaluation**: photos can be clicked and open in the side panel.
+
 ## 0.10.9 – 2026-11-12 – Set a place for the whole basket
 - The selection bar (basket) has a new button **Set place …**: one place from Gramps for all ticked photos, across albums and pages. The place is set directly, like a hand-chosen place at a single photo.
 

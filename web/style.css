@@ -162,7 +162,7 @@ body.with-bar #middle { padding-bottom: 110px; }
 .sort-lane { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; padding: 10px; min-height: 150px; background: var(--karte); border: 1px dashed var(--rand2); border-radius: 10px; }
 .ptile { width: 118px; user-select: none; position: relative; }
 .pface { position: relative; width: 112px; height: 112px; border-radius: 8px; border: 3px solid var(--rand); background-color: #cdbfa6; cursor: grab; touch-action: none; overflow: hidden; }
-.ptile.confirmed .pface { border-color: var(--ok); } .ptile.draft .pface { border-color: #9a8fd0; }
+.ptile.confirmed .pface { border-color: var(--ok); } .ptile.draft .pface { border-color: #d4a017; }
 .ptile.hl .pface { outline: 3px solid #e2a100; } .ptile.blink .pface { animation: blink 1.2s 3; }
 @keyframes blink { 50% { outline: 4px solid #e2a100; } }
 .ptile.before { box-shadow: -6px 0 0 var(--akzent); } .ptile.after { box-shadow: 6px 0 0 var(--akzent); }
@@ -170,6 +170,10 @@ body.with-bar #middle { padding-bottom: 110px; }
 .pnr, .p-series, .p-year { position: absolute; font-size: 11px; background: rgba(255,253,248,.92); border-radius: 4px; padding: 0 5px; }
 .pnr { left: 4px; top: 4px; font-weight: 600; } .p-series { right: 4px; top: 4px; }
 .p-year.new { left: 4px; bottom: 4px; background: var(--akzent); color: #fff; cursor: pointer; font-weight: 600; } .p-year.klein2 { left: 4px; bottom: 26px; color: var(--leise); } .p-year.confirmed { color: var(--ok); }
+.p-year.y-anchor, .p-year.y-draft, .p-year.y-guess { left: 4px; bottom: 4px; font-size: 13px; font-weight: 700; padding: 1px 7px; color: #fff; border-radius: 6px; }
+.p-year.y-anchor { background: var(--ok); } .p-year.y-draft { background: #b8860b; } .p-year.y-guess { background: #6b7782; cursor: pointer; }
+.p-warn { position: absolute; right: 4px; bottom: 4px; background: #fff; border-radius: 50%; width: 22px; height: 22px; line-height: 22px; text-align: center; font-size: 14px; }
+.p-shared { position: absolute; right: 4px; top: 26px; font-size: 11px; background: rgba(255,253,248,.92); border-radius: 4px; padding: 0 5px; }
 .p-label { font-size: 12px; text-align: center; margin-top: 3px; } .p-buttons { display: flex; gap: 4px; justify-content: center; margin-top: 3px; }
 .shared { color: #b07d00; font-weight: 700; }
 .plus-gap { width: 18px; align-self: stretch; min-height: 112px; display: flex; align-items: center; justify-content: center; color: var(--akzent); cursor: pointer; opacity: .25; font-weight: 700; font-size: 18px; border-radius: 6px; }

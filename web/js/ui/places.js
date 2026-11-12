@@ -7,6 +7,7 @@ import {unitOf, setPlace, placeFrom} from "../model.js";
 import {loadGrampsPlaces, grYearDec, grPeriod} from "../gramps.js";
 import {albumNeighbors} from "../provenance.js";
 import {peopleOn} from "./event.js";
+import {placeAnswers} from "../refine.js";
 import {tr} from "../language.js";
 
 export const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
@@ -40,10 +41,15 @@ export function suggestions(e, key) {
   return off;
 }
 
+// Answers of the game for this photo (read-only when the places from Gramps are not available)
+function gameAnswersReadOnly(key) {
+  const ans = placeAnswers(key);
+  return ans.length ? '<div class="quiet" style="margin-top:6px">' + tr("Answers from the game:") + '</div>' + ans.map((g) => `<div class="ez-row"><span><b>${esc(g.text)}</b> <span class="quiet">${esc(g.players.join(", "))}</span></span></div>`).join("") : "";
+}
 export function placeArea(e, key) {
   const head = '<div class="field-name">' + tr("Place") + '</div>';
-  if (!S.grPlaces) { setTimeout(() => loadGrampsPlaces(false), 0); return `<div>${head}<div class="quiet">${tr("Loading places from Gramps …")}</div></div>`; }
-  if (S.grPlaces.errors) return `<div>${head}<div class="quiet">${tr("Places from Gramps not available: {fehler}", {fehler: esc(S.grPlaces.errors)})} <a href="#" class="link" data-a="place-new">${tr("Try again")}</a></div></div>`;
+  if (!S.grPlaces) { setTimeout(() => loadGrampsPlaces(false), 0); return `<div>${head}<div class="quiet">${tr("Loading places from Gramps …")}</div>${placeFrom(key) ? "" : gameAnswersReadOnly(key)}</div>`; }
+  if (S.grPlaces.errors) return `<div>${head}<div class="quiet">${tr("Places from Gramps not available: {fehler}", {fehler: esc(S.grPlaces.errors)})} <a href="#" class="link" data-a="place-new">${tr("Try again")}</a></div>${placeFrom(key) ? "" : gameAnswersReadOnly(key)}</div>`;
   const nowVal = placeFrom(key), seriesVal = e.keys.length > 1;
   const deviating = e.keys.filter((k) => !same(placeFrom(k), nowVal)).length;
   let content = "";
@@ -53,6 +59,11 @@ export function placeArea(e, key) {
     if (nowVal.lat == null) content += '<div class="box warn" style="margin-top:6px">' + tr("In Gramps this place has no coordinates. It is therefore not written to Immich. Add them in Gramps and reload the place list.") + '</div>';
   } else content += '<div class="quiet">' + tr("No place yet.") + '</div>';
   if (seriesVal && deviating) content += `<div class="quiet" style="font-size:12px;margin-top:4px">${tr("{abweichend} of {n} {n:photo|photos} in the series have a different place or none. {button}", {abweichend: deviating, n: e.keys.length, button: nowVal ? `<button class="small" data-a="place-all" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Apply to all photos in the series")}</button>` : ""})}</div>`;
+  const ans = nowVal ? [] : placeAnswers(key);
+  ui.gamePlaces = ans;
+  if (ans.length) content += '<div class="quiet" style="margin-top:6px">' + tr("Answers from the game:") + '</div>' + ans.map((g, i) => `<div class="ez-row">
+    ${g.h && S.grPlaces.byHandle[g.h] ? `<button class="small good" data-a="place-game" data-i="${i}" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Take over")}</button>` : `<button class="small" data-a="place-search-for" data-i="${i}">${tr("Search")}</button>`}
+    <span><b>${esc(g.h && S.grPlaces.byHandle[g.h] ? S.grPlaces.byHandle[g.h].t : tr("new place: {name}", {name: g.text}))}</b> <span class="quiet">${esc(g.players.join(", "))}</span></span></div>`).join("");
   const v = suggestions(e, key).filter((x) => !nowVal || x.o.h !== nowVal.h);
   ui.placeSuggestions = v;
   if (v.length) content += '<div class="quiet" style="margin-top:6px">' + tr("Suggestions:") + '</div>' + v.map((x, i) => `<div class="ez-row"><button class="small" data-a="place-prefill" data-i="${i}" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Take over")}</button>
@@ -118,6 +129,8 @@ export const actions = {
   "place-select": () => placeSelection(),
   "place-pick": (el) => assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[el.dataset.h], tr("chosen by hand")),
   "place-prefill": (el) => { const x = (ui.placeSuggestions || [])[+el.dataset.i]; if (x) return assignTo(el.dataset.uid, el.dataset.key, x.o, x.reason); },
+  "place-game": (el) => { const g = (ui.gamePlaces || [])[+el.dataset.i]; if (g && S.grPlaces.byHandle[g.h]) return assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[g.h], tr("answer from the game: {names}", {names: g.players.join(", ")})); },
+  "place-search-for": (el) => { const g = (ui.gamePlaces || [])[+el.dataset.i], f = document.getElementById("place-search"); if (g && f) { f.value = g.text; f.dispatchEvent(new Event("input", {bubbles: true})); f.focus(); } },
   "place-remove": (el) => assignTo(el.dataset.uid, el.dataset.key, null),
   "place-all": (el) => { const o = placeFrom(el.dataset.key); if (o) return assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[o.h] || {h: o.h, id: o.id, t: o.name, lat: o.lat, lon: o.lon}, o.source, true); },
   "place-only": (el) => { ui.placeOnly = el.checked; draw(); },

@@ -3,6 +3,7 @@ import {S, ui} from "../state.js";
 import {esc} from "../util.js";
 import {unitFromKey} from "../model.js";
 import {tileGrid} from "./tile.js";
+import {keysWithPlaceAnswers} from "../refine.js";
 import {tr} from "../language.js";
 
 export function placeState() {
@@ -17,12 +18,17 @@ export function placeState() {
     .sort((a, b) => a.name.localeCompare(b.name, "de"));
 }
 export function placeList() {
-  const l = placeState();
-  if (!l.length) return `<div class="quiet" style="padding:6px 10px">${tr("No places assigned yet.")}</div>`;
-  return l.map((x) => `<button class="row ${ui.view === "place" && ui.placeId === x.id ? "active" : ""}" data-a="go-place" data-id="${esc(x.id)}">
+  const l = placeState(), sug = keysWithPlaceAnswers().length;
+  const game = sug ? `<button class="row ${ui.view === "place" && ui.placeId === "__game" ? "active" : ""}" data-a="go-place" data-id="__game"><div class="top"><b>🎮 ${tr("Place suggestions from the game")}</b><span>${tr("{n} {n:photo|photos}", {n: sug})}</span></div></button>` : "";
+  if (!l.length) return game || `<div class="quiet" style="padding:6px 10px">${tr("No places assigned yet.")}</div>`;
+  return game + l.map((x) => `<button class="row ${ui.view === "place" && ui.placeId === x.id ? "active" : ""}" data-a="go-place" data-id="${esc(x.id)}">
     <div class="top"><b>${esc(x.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.keys.length})}</span></div></button>`).join("");
 }
 export function placeHtml() {
+  if (ui.placeId === "__game") {
+    const units = [...new Set(keysWithPlaceAnswers().map((k) => unitFromKey(k)).filter(Boolean))];
+    return `<div class="person-head"><div><h1>${tr("Place suggestions from the game")}</h1><div class="quiet">${tr("Photos without a place that players have given a place for. Open a photo to take over a suggestion.")}</div></div></div>${tileGrid(units)}`;
+  }
   const x = placeState().find((y) => y.id === ui.placeId);
   if (!x) return '<div class="empty">' + tr("Select a place on the left.") + '</div>';
   return `<div class="person-head"><div><h1>${esc(x.name)}</h1><div class="quiet">${tr("{n} {n:photo|photos}", {n: x.keys.length})}</div></div></div>

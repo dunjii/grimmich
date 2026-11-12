@@ -2,13 +2,15 @@
 // what the answers changed in the estimates, where answers contradict each other. Players can be hidden: their answers then count nowhere.
 import {S, ui, draw, mark} from "../state.js";
 import {esc, image, send, toast} from "../util.js";
-import {unitOf, yearText} from "../model.js";
+import {unitOf, unitFromKey, yearText} from "../model.js";
 import {tr} from "../language.js";
 import {statsOf} from "./game.js";
 import {noteWho} from "./detail.js";
 import {improvedBy, allChanges, conflicts} from "../impact.js";
 
 const range = (s) => (!s.year ? tr("no estimate") : s.from === s.to ? `${s.year}` : `${s.from}–${s.to}`);
+// A photo in the evaluation: a click opens it in the side panel (where you can edit it)
+const pic = (key) => { const e = unitFromKey(key); return `<img src="${image(key)}" alt="" loading="lazy" ${e ? `data-a="choose" data-uid="${esc(e.uid)}" data-key="${esc(key)}" style="cursor:pointer"` : ""}>`; };
 const when = (t) => (t ? t.replace("T", " ").slice(0, 16) : "–");
 let result = null, shown = 20;   // {at, per: {player: n}, changes}, how many changes are listed
 
@@ -19,19 +21,19 @@ function playerRows() {
   return [...by.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name, "de"));
 }
 function changeRow(c) {
-  return `<div class="ge-change"><img src="${image(c.key)}" alt="" loading="lazy"><div><b>${esc(range(c.after))}</b> <span class="quiet">${tr("before")}: ${esc(range(c.before))}</span></div></div>`;
+  return `<div class="ge-change">${pic(c.key)}<div><b>${esc(range(c.after))}</b> <span class="quiet">${tr("before")}: ${esc(range(c.before))}</span></div></div>`;
 }
 function conflictRow(c) {
   const y = unitOf(c.young), o = unitOf(c.old);
   if (!y || !o) return "";
-  const one = (u, label) => `<div class="ge-conflict-side"><img src="${image(u.keys[0])}" alt="" loading="lazy"><span class="quiet">${label}<br>${esc(yearText(u))}</span></div>`;
+  const one = (u, label) => `<div class="ge-conflict-side">${pic(u.keys[0])}<span class="quiet">${label}<br>${esc(yearText(u))}</span></div>`;
   return `<div class="ge-conflict">${one(y, tr("answers say: younger"))}<span class="quiet">↔</span>${one(o, tr("answers say: older"))}</div>`;
 }
 function notesHtml() {
   const by = new Map();
   S.notes.forEach((n) => { (by.get(n.key) || by.set(n.key, []).get(n.key)).push(n); });
   if (!by.size) return `<div class="quiet">${tr("No notes yet.")}</div>`;
-  return `<div class="ge-notes">${[...by.entries()].map(([key, list]) => `<div class="ge-note"><img src="${image(key)}" alt="" loading="lazy"><div>${list.map((n) => `<div><b>${esc(noteWho(n))}</b> <span class="quiet">${esc(when(n.t))}</span><br>${esc(n.text)}</div>`).join("")}</div></div>`).join("")}</div>`;
+  return `<div class="ge-notes">${[...by.entries()].map(([key, list]) => `<div class="ge-note">${pic(key)}<div>${list.map((n) => `<div><b>${esc(noteWho(n))}</b> <span class="quiet">${esc(when(n.t))}</span><br>${esc(n.text)}</div>`).join("")}</div></div>`).join("")}</div>`;
 }
 export function gameEvalHtml() {
   const rows = playerRows(), muted = S.game.muted || [];

@@ -14,14 +14,18 @@ const lbMap = {};
 export const sortKeys = (pid) => lbMap[pid] || [];   // Order of the tiles when sorting (for the large view)
 
 function sortTile(k, nr, fit, geburt, pid, shared, limit) {
-  const improved = fit !== undefined && fit !== null && k.ki !== null, e = k.e;
-  const stat = e.confirmedFlag ? "confirmed" : e.draftFlag ? "draft" : "";
-  return `<div class="ptile ${stat} ${ui.focusKey === k.uid ? "focus" : ""}" data-tile="${esc(k.uid)}" data-pid="${esc(pid)}" title="${esc(k.f.key)}${shared ? tr(" · also in the other person") : ""}">
+  const e = k.e, stat = e.confirmedFlag ? "confirmed" : e.draftFlag ? "draft" : "";
+  const proposal = fit !== undefined && fit !== null && geburt != null ? Math.round(geburt + fit) : null;
+  // One year per photo; the colour tells the state: anchor (green), draft (yellow), uncertain (grey "c.")
+  const differs = proposal !== null && e.year && Math.abs(proposal - e.year) >= (e.confirmedFlag ? 5 : 2);
+  let badge = "";
+  if (e.confirmedFlag) badge = `<span class="p-year y-anchor">✓ ${e.year}</span>${differs ? `<span class="p-warn" title="${esc(tr("The row suggests c. {jahr}, far from the anchor.", {jahr: proposal}))}">⚠</span>` : ""}`;
+  else if (e.draftFlag) badge = `<span class="p-year y-draft">${e.year}${differs ? " → " + proposal : ""}</span>`;
+  else if (proposal !== null) badge = `<span class="p-year y-guess" data-a="s-anchor" data-pid="${esc(pid)}" data-uid="${esc(k.uid)}" data-j="${proposal}" title="${tr("Click to enter a fixed year")}">${tr("c. {jahr}", {jahr: proposal})}</span>`;
+  const hint = [k.ki !== null ? tr("AI age {ki}", {ki: Math.round(k.ki)}) + (fit !== undefined && fit !== null ? " → " + Math.round(fit) : "") : tr("AI age –"), limit || "", k.f.key, shared ? tr("also in the other person") : ""].filter(Boolean).join(" · ");
+  return `<div class="ptile ${stat} ${ui.focusKey === k.uid ? "focus" : ""}" data-tile="${esc(k.uid)}" data-pid="${esc(pid)}" title="${esc(hint)}">
     <div class="pface" data-pa="sortdrag" data-pid="${esc(pid)}" data-uid="${esc(k.uid)}" data-key="${esc(k.f.key)}" style="${k.f.box ? cropStyle(k.f.key, k.f.box, FACE) : `background-image:url(${image(k.f.key)});background-size:cover;background-position:center;`}">
-      ${nr ? `<span class="pnr">${nr}</span>` : ""}${k.n > 1 ? `<span class="p-series">${esc(k.series_id)} · ${k.n}</span>` : ""}
-      ${e.year ? `<span class="p-year klein2 ${stat}" title="${tr("Saved year")}">${tr("set {bestaetigt}{jahr}", {bestaetigt: e.confirmedFlag ? "✓ " : "", jahr: e.year})}</span>` : ""}
-      ${fit !== undefined && fit !== null && geburt != null ? `<span class="p-year new" data-a="s-anchor" data-pid="${esc(pid)}" data-uid="${esc(k.uid)}" data-j="${Math.round(geburt + fit)}" title="${tr("Click to enter a fixed year")}">${tr("c. {jahr}", {jahr: Math.round(geburt + fit)})}</span>` : ""}</div>
-    <div class="p-label">${k.ki !== null ? tr("AI {ki}", {ki: Math.round(k.ki)}) : tr("AI –")}${improved ? ` → <b>${Math.round(fit)}</b>` : ""}${shared ? ' <span class="shared" title="' + tr("This photo is also in the other person") + '">⇄</span>' : ""}${limit ? `<div class="limit" title="${tr("Limit from the fixed years in the row")}">${esc(limit)}</div>` : ""}</div></div>`;
+      ${nr ? `<span class="pnr">${nr}</span>` : ""}${k.n > 1 ? `<span class="p-series">${esc(k.series_id)} · ${k.n}</span>` : ""}${shared ? '<span class="p-shared" title="' + tr("This photo is also in the other person") + '">⇄</span>' : ""}${badge}</div></div>`;
 }
 function lanesHtml(p, parts, res2, tileObj, pid) {
   if (!parts.length) return '<span class="quiet" style="padding:10px">' + tr("Still empty. Drag faces here.") + '</span>';
@@ -84,7 +88,7 @@ function block(p, tileList, shared, second) {
   const tileObj = (k, i, f) => sortTile(k, i, f, p.birth, p.id, shared.has(k.uid), i ? limitText(gr[i - 1]) : "");
   return `
     <div class="bar-strip ${second ? "second" : ""}">${second ? "<b>" + tr("Second person:") + "</b>" : ""}<b>${esc(p.name)}</b> <span class="quiet">${tr("{reihe_n} of {kacheln_n} {kacheln_n:unit|units} sorted in", {reihe_n: laneVal.length, kacheln_n: tileList.length})}</span><span class="space"></span>
-      <button class="small" data-a="s-presort" data-pid="${pid}">${tr("Pre-sort all by AI age")}</button>
+      <button class="small" data-a="s-presort" data-pid="${pid}">${tr("Sort in automatically")}</button>
       <button class="small" data-a="s-clear" data-pid="${pid}" ${laneVal.length ? "" : "disabled"}>${tr("Clear row")}</button>
       <button class="small good" data-a="s-confirm-all" data-pid="${pid}" ${nDraft ? "" : "disabled"} title="${tr("Confirm all drafts of this person as anchors")}">${tr("✓ Confirm all drafts ({nEntw})", {nEntw: nDraft})}</button></div>
     ${p.birth === null ? "" : grPanel(p)}
@@ -125,16 +129,32 @@ async function sortAction(a, pid) {
   const tileList = personTiles(p);
   if (a === "s-clear") S.ord[p.id] = tokens(p, tileList).filter((t) => t.startsWith("@m:"));
   if (a === "s-presort") {
-    const alt = sortLane(p, tileList).anchorItem.slice().sort((x, y) => x.year - y.year), list = [];
-    let mi = 0;
-    // Photos with a fixed year (anchors, also digital photos) count with their real age, all others with the AI age
-    const ageValue = (k) => (k.e.confirmedFlag && k.e.decimal_year && p.birth !== null ? k.e.decimal_year - p.birth : k.ki);
-    tileList.slice().sort((x, y) => (ageValue(x) ?? 999) - (ageValue(y) ?? 999)).forEach((k) => {   // Place markers between the photos according to their age
-      while (mi < alt.length && ageValue(k) !== null && alt[mi].year - p.birth <= ageValue(k)) list.push(alt[mi++].token);
-      list.push(k.f.key);
+    // Sort in the photos that are not in the row yet. What is already in the row stays where it is (your hand positions win).
+    // Anchors, drafts and markers go by their year, uncertain photos by AI age, always between the anchors/drafts that bound them.
+    const lane = tokens(p, tileList).slice(), byKey = new Map(tileList.map((k) => [k.f.key, k]));
+    const markerYear = new Map(sortLane(p, tileList).anchorItem.map((m) => [m.token, m.year]));
+    const info = (t) => {
+      if (markerYear.has(t)) return {fixed: true, v: p.birth !== null ? markerYear.get(t) - p.birth : null};
+      const k = byKey.get(t);
+      if (!k) return {fixed: false, v: null};
+      if (k.e.confirmedFlag || k.e.draftFlag) { const y = k.e.decimal_year || k.e.year; return {fixed: true, v: p.birth !== null && y ? y - p.birth : null}; }
+      return {fixed: false, v: k.ki};
+    };
+    const inRow = new Set(lane);
+    const todo = [...markerYear.keys(), ...tileList.map((k) => k.f.key)].filter((t) => !inRow.has(t)).map((t) => ({t, ...info(t)})).filter((x) => x.v !== null && x.v !== undefined)
+      .sort((x, y) => (x.fixed === y.fixed ? x.v - y.v : x.fixed ? -1 : 1));
+    todo.forEach((me) => {
+      const inf = lane.map(info);
+      let hi = inf.findIndex((x) => x.fixed && x.v !== null && x.v > me.v);
+      if (hi < 0) hi = lane.length;
+      let lo = -1;
+      inf.forEach((x, i) => { if (i < hi && x.fixed && x.v !== null && x.v <= me.v) lo = i; });
+      let at = hi;
+      for (let i = lo + 1; i < hi; i++) if (inf[i].v !== null && inf[i].v !== undefined && inf[i].v > me.v) { at = i; break; }
+      lane.splice(at, 0, me.t);
     });
-    while (mi < alt.length) list.push(alt[mi++].token);
-    S.ord[p.id] = list;
+    S.ord[p.id] = lane;
+    toast(tr("{n} {n:photo|photos} sorted in.", {n: todo.filter((x) => !markerYear.has(x.t)).length}));
   }
   if (a === "s-apply" && p.birth !== null) {
     const {laneVal, anchorItem} = sortLane(p, tileList);
