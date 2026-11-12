@@ -1,7 +1,8 @@
 // Places: each photo gets a place from Gramps (coordinates go to Immich later). For series the place applies to all photos by default.
 // Suggestions: place of an assigned event, residence of a person on the photo at the matching time, place of the neighbouring photo in the album. Plus a search with a suggestion list.
 import {S, ui, draw, mark, savePlaces} from "../state.js";
-import {esc} from "../util.js";
+import {esc, toast} from "../util.js";
+import {modal, closeIt} from "./dialog.js";
 import {unitOf, setPlace, placeFrom} from "../model.js";
 import {loadGrampsPlaces, grYearDec, grPeriod} from "../gramps.js";
 import {albumNeighbors} from "../provenance.js";
@@ -87,7 +88,34 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && ev.target && ev.target.id === "place-search") { const z = document.querySelector("#place-hits .place-pick"); if (z) z.click(); }
 });
 
+// Basket: one place for all photos in the basket
+async function placeSelection() {
+  const keys = [...ui.sel].map(unitOf).filter(Boolean).flatMap((e) => e.keys);
+  if (!keys.length) return;
+  if (!S.grPlaces) await loadGrampsPlaces(false);
+  if (!S.grPlaces || !S.grPlaces.list) return toast(tr("Places from Gramps not available: {fehler}", {fehler: (S.grPlaces && S.grPlaces.errors) || ""}));
+  modal(`<h3>${tr("Set a place for {n} {n:photo|photos}", {n: keys.length})}</h3>
+    <input type="text" id="basket-place" placeholder="${tr("Search place: type name or Gramps number")}" autocomplete="off" style="width:100%;box-sizing:border-box">
+    <div id="basket-hits" class="place-list"></div>
+    <div class="actions" style="margin-top:14px"><button id="basket-place-no">${tr("Cancel")}</button></div>`);
+  document.getElementById("basket-place-no").onclick = closeIt;
+  const input = document.getElementById("basket-place"), box = document.getElementById("basket-hits");
+  const choose = async (o) => { closeIt(); setPlace(keys, {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon, source: tr("chosen by hand")}); ui.sel.clear(); await savePlaces(); draw(); };
+  const fill = () => {
+    const q = norm(input.value).split(/\s+/).filter(Boolean);
+    const hits = q.length ? S.grPlaces.list.filter((o) => { const x = norm(o.t + " " + o.id); return q.every((w) => x.includes(w)); })
+      .sort((a, b) => (norm(a.n).startsWith(q[0]) ? 0 : 1) - (norm(b.n).startsWith(q[0]) ? 0 : 1) || a.t.length - b.t.length).slice(0, 8) : [];
+    box.innerHTML = q.length && !hits.length ? '<div class="quiet" style="padding:4px 8px">' + tr("No place found.") + '</div>'
+      : hits.map((o, i) => `<div class="place-pick" data-i="${i}"><b>${esc(o.n)}</b> <span class="quiet">${esc(o.t.slice(o.n.length))}</span></div>`).join("");
+    box.querySelectorAll(".place-pick").forEach((b) => { b.onclick = () => choose(hits[+b.dataset.i]); });
+  };
+  input.addEventListener("input", fill);
+  input.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { const z = box.querySelector(".place-pick"); if (z) z.click(); } });
+  input.focus();
+}
+
 export const actions = {
+  "place-select": () => placeSelection(),
   "place-pick": (el) => assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[el.dataset.h], tr("chosen by hand")),
   "place-prefill": (el) => { const x = (ui.placeSuggestions || [])[+el.dataset.i]; if (x) return assignTo(el.dataset.uid, el.dataset.key, x.o, x.reason); },
   "place-remove": (el) => assignTo(el.dataset.uid, el.dataset.key, null),

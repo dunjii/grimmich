@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.9 – 2026-11-12 – Set a place for the whole basket
+- The selection bar (basket) has a new button **Set place …**: one place from Gramps for all ticked photos, across albums and pages. The place is set directly, like a hand-chosen place at a single photo.
+
 ## 0.10.8 – 2026-11-12 – Notes on photos, fixed button bar in the game
 - **Notes**: in the game a new "Notes" button opens a centred window (same as the other input fields, so the keyboard does not cover it). Several notes per photo, each with the player's name and date; with several photos in the question you pick the photo by its thumbnail. Players from outside can add notes and see or delete only their own.
 - Notes show at the photo in Grimmich (list with names, you can add and delete), in the game evaluation (per photo with player names) and as a small symbol on the tile.

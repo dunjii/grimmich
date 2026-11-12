@@ -1216,6 +1216,8 @@
   "Note saved.": "Notiz gespeichert.",
   "No notes yet.": "Noch keine Notizen.",
   "Notes from the game": "Notizen aus dem Spiel",
-  "Has notes": "Hat Notizen"
+  "Has notes": "Hat Notizen",
+  "Set place …": "Ort setzen …",
+  "Set a place for {n} {n:photo|photos}": "Ort für {n} {n:Foto|Fotos} setzen"
  }
 }
