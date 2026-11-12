@@ -29,6 +29,7 @@ export const S = {
   grPlaces: null,                    // {liste, nachH, ohne}: alle Orte aus Gramps
   similar: {},                        // similar photos per photo (response of the server)
   grP: null, grEv: {},             // Gramps: Personenliste, Ereignisse je Immich-Person
+  notes: [],                       // notes on photos: {id, key, text, player, t} (from outside only the player's own)
   game: {votes: [], muted: []},                 // answers of the game: {type?, ...}; older: {a, b, pid, older: a|b|same|unknown|different}, who, year, place
   ver: 0,                          // counts changes so that derived data is recomputed
 };
@@ -55,6 +56,8 @@ export async function loading() {
   S.photos = indexIt(a.photos);
   S.work = a.work;
   S.work.merge_hints = S.work.merge_hints || []; S.work.merge_rejected = S.work.merge_rejected || [];
+  const live = new Set(S.work.series.map((s) => s.id));   // merge hints about series that no longer exist are dropped
+  S.work.merge_hints = S.work.merge_hints.filter((h) => Array.isArray(h.series) && h.series.length > 1 && h.series.every((id) => live.has(id)));
   S.work.series.forEach((s) => { s.suggested_new = s.suggested_new || []; s.rejected = s.rejected || []; });
   S.res = a.results; S.corr = a.results.corrections || {};
   S.people = a.people.people || {}; S.allNames = a.people.all || [];
@@ -71,6 +74,7 @@ export async function loading() {
   S.immichSeen = (a.immich_data || {}).seen || {};
   S.version = a.version || "";
   S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? {votes: a.game_votes.votes, muted: a.game_votes.muted || []} : {votes: [], muted: []};
+  S.notes = a.notes && Array.isArray(a.notes.notes) ? a.notes.notes : [];
   S.player = S.signedIn || recall("player", "");   // from outside the name comes from the sign-in
   S.kinds = a.kinds && typeof a.kinds === "object" ? a.kinds : {};
   S.places = a.places && typeof a.places === "object" ? a.places : {};
@@ -99,6 +103,15 @@ export async function sendVote(op, vote) {
     const r = await send("/api/vote", {op, vote, player: S.player});
     if (r && r.ok) { S.game = {votes: r.votes, muted: r.muted || []}; mark(); } else problem();
   } catch (e) { problem(); }
+}
+// Notes on photos: op "add" ({key, text}) or "delete" ({id}); the game sends the player's name, Grimmich itself none (= the owner).
+export async function sendNote(op, note, player = S.player) {
+  try {
+    const r = await send("/api/note", {op, ...note, player});
+    if (r && r.ok) { S.notes = r.notes || []; mark(); return true; }
+    problem();
+  } catch (e) { problem(); }
+  return false;
 }
 export const saveInbox = () => send("/api/inbox", S.inbox).catch(problem);
 

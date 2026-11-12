@@ -11,7 +11,7 @@ import {actions as aMenu} from "./ui/menu.js";
 import {placeHtml} from "./ui/placeview.js";
 import {listHtml, peopleState} from "./ui/list.js";
 import {personHtml} from "./ui/person.js";
-import {detailHtml} from "./ui/detail.js";
+import {detailHtml, actions as aDetail} from "./ui/detail.js";
 import {taskHtml, inboxHtml, albumHtml, serieHtml, actions as aViews} from "./ui/views.js";
 import {writeHtml, actions as aWrite} from "./ui/write.js";
 import {selectionBar} from "./ui/tile.js";
@@ -146,7 +146,7 @@ const aNavigation = {
   "gr-marker": (el) => grAnchor(el.dataset.pid, el.dataset.ev, el.dataset.part),
   "vb-leer": () => {},
 };
-const ACTION_TEXT = {...aGame, ...aMenu, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
+const ACTION_TEXT = {...aGame, ...aDetail, ...aMenu, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
 
 window.__grimmichActions = ACTION_TEXT;   // for the search: jumps through the same actions as the buttons
 document.addEventListener("click", async (ev) => {

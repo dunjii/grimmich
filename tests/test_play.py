@@ -224,6 +224,27 @@ class TestServer(unittest.TestCase):
         self.assertEqual(self.call("POST", "/api/players", {"op": "add", "name": "Eve"}, headers=funnel)[0], 404)
         self.assertEqual(self.call("GET", "/play/", headers=funnel)[0], 200)
 
+    def test_notes_players_add_and_see_only_their_own(self):
+        anna, ben = self.login("Anna"), self.login("Ben")
+        s, d = self.call("POST", "/play/api/note", {"op": "add", "key": "F1_abc123", "text": "Tante Lotte?", "player": "Mallory"}, cookie=anna)
+        self.assertEqual(s, 200)
+        self.assertEqual([n["player"] for n in json.loads(d)["notes"]], ["Anna"])   # the name comes from the sign-in
+        self.call("POST", "/play/api/note", {"op": "add", "key": "F1_abc123", "text": "Garten in Bürgel"}, cookie=ben)
+        notes = json.loads(self.call("GET", "/play/api/all", cookie=anna)[1])["notes"]["notes"]
+        self.assertEqual([(n["player"], n["text"]) for n in notes], [("Anna", "Tante Lotte?")])   # not the notes of others
+        note_id = notes[0]["id"]
+        s, d = self.call("POST", "/play/api/note", {"op": "delete", "id": note_id}, cookie=ben)   # Ben cannot remove Anna's note
+        self.assertEqual(len(json.loads(self.call("GET", "/play/api/all", cookie=anna)[1])["notes"]["notes"]), 1)
+        self.call("POST", "/play/api/note", {"op": "delete", "id": note_id}, cookie=anna)
+        self.assertEqual(json.loads(self.call("GET", "/play/api/all", cookie=anna)[1])["notes"]["notes"], [])
+
+    def test_notes_are_checked(self):
+        cookie = self.login("Anna")
+        for bad in ({"op": "add", "key": "../../x", "text": "a"}, {"op": "add", "key": "F1_abc123", "text": "   "}, {"op": "add", "key": "F1_abc123", "text": "x" * 2000},
+                    {"op": "add", "key": "F1_abc123"}, {"op": "remove"}):
+            self.assertEqual(self.call("POST", "/play/api/note", bad, cookie=cookie)[0], 400)
+        self.assertEqual(self.call("POST", "/play/api/note", {"op": "add", "key": "F1_abc123", "text": "x"})[0], 401)   # not signed in
+
     def test_the_settings_page_never_gets_hashes(self):
         status, data = self.call("GET", "/api/players")
         self.assertEqual(status, 200)

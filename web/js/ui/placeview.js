@@ -20,11 +20,11 @@ export function placeList() {
   const l = placeState();
   if (!l.length) return `<div class="quiet" style="padding:6px 10px">${tr("No places assigned yet.")}</div>`;
   return l.map((x) => `<button class="row ${ui.view === "place" && ui.placeId === x.id ? "active" : ""}" data-a="go-place" data-id="${esc(x.id)}">
-    <div class="top"><b>${esc(x.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.unitList.length})}</span></div></button>`).join("");
+    <div class="top"><b>${esc(x.name)}</b><span>${tr("{n} {n:photo|photos}", {n: x.keys.length})}</span></div></button>`).join("");
 }
 export function placeHtml() {
   const x = placeState().find((y) => y.id === ui.placeId);
   if (!x) return '<div class="empty">' + tr("Select a place on the left.") + '</div>';
-  return `<div class="person-head"><div><h1>${esc(x.name)}</h1><div class="quiet">${tr("{n} {n:photo|photos}", {n: x.unitList.length})}</div></div></div>
+  return `<div class="person-head"><div><h1>${esc(x.name)}</h1><div class="quiet">${tr("{n} {n:photo|photos}", {n: x.keys.length})}</div></div></div>
     ${tileGrid(x.unitList.slice().sort((a, b) => (a.decimal_year || a.year || 0) - (b.decimal_year || b.year || 0)))}`;
 }

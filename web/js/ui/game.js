@@ -3,7 +3,7 @@
 //   anchor (before or after a photo with a known year), sort (3–5 photos of one person from young to old), decade.
 //   Old “year” answers are still kept and shown, the question itself is no longer asked.
 // The answers stay in Grimmich (game_votes); nothing is written to Immich or Gramps.
-import {S, ui, draw, sendVote, mark} from "../state.js";
+import {S, ui, draw, sendVote, sendNote, mark} from "../state.js";
 import {esc, image, recall, remember, BASE, PLAY} from "../util.js";
 import {loadGrampsPlaces, loadEvents} from "../gramps.js";
 import {unitFromKey, placeFrom, immichDate} from "../model.js";
@@ -158,6 +158,8 @@ const ICON = {
   before: '<path d="M15 5l-7 7 7 7"/>',
   after: '<path d="M9 5l7 7-7 7"/>',
   undo: '<path d="M9 7H4v5M4 7c4-4 12-3 15 3 1 3 0 6-2 8"/>',
+  note: '<path d="M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h5"/>',
+  next: '<path d="M9 5l7 7-7 7"/>',
   person: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
   photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M21 16l-5-4-9 7"/>',
 };
@@ -196,13 +198,15 @@ function placeChips(q) {
 
 // A search window in the middle of the screen (instead of a second page): photo, field, list, "Cancel".
 // With the keyboard open the window follows the visible part of the screen.
-function openSheet(title, key, box, placeholder) {
+function openSheet(title, key, box, placeholder, opts = {}) {
   const el = document.createElement("div"); el.className = "game-sheet";
   el.innerHTML = `<div class="game-sheet-card" role="dialog" aria-label="${esc(title)}">
     <div class="game-sheet-head"><button class="game-sheet-thumb" data-a="game-view" data-key="${esc(key)}" ${box ? `data-box="${box.join(",")}"` : ""}><img src="${image(key)}" alt=""></button><b>${esc(title)}</b></div>
-    <input class="game-input" id="game-sheet-input" placeholder="${esc(placeholder)}" autocomplete="off">
+    ${opts.above || ""}
+    ${opts.area ? `<textarea class="game-input" id="game-sheet-input" rows="4" maxlength="1500" placeholder="${esc(placeholder)}"></textarea>`
+      : `<input class="game-input" id="game-sheet-input" placeholder="${esc(placeholder)}" autocomplete="off">`}
     <div class="game-sheet-list" id="game-sheet-list"></div>
-    <div class="game-sheet-foot"><button class="game-btn game-sheet-close">${tr("Cancel")}</button></div></div>`;
+    <div class="game-sheet-foot"><button class="game-btn game-sheet-close">${tr("Cancel")}</button>${opts.save ? `<button class="game-btn primary game-sheet-save">${esc(opts.save)}</button>` : ""}</div></div>`;
   const vv = window.visualViewport;
   const fit = () => { if (vv) { el.style.top = vv.offsetTop + "px"; el.style.height = vv.height + "px"; } };
   const close = () => { if (vv) { vv.removeEventListener("resize", fit); vv.removeEventListener("scroll", fit); } el.remove(); };
@@ -211,7 +215,7 @@ function openSheet(title, key, box, placeholder) {
   el.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
   el.querySelector(".game-sheet-close").addEventListener("click", close);
   document.body.appendChild(el);
-  return {input: el.querySelector("input"), list: el.querySelector("#game-sheet-list"), close};
+  return {el, input: el.querySelector("#game-sheet-input"), save: el.querySelector(".game-sheet-save"), list: el.querySelector("#game-sheet-list"), close};
 }
 
 function placeSheet(q) {
@@ -262,28 +266,63 @@ function nameSheet(q) {
   if (!touch()) input.focus();
 }
 
-function questionHtml(q) {
+// The photos a question is about (a note can be written for any of them)
+const noteKeys = (q) => (q.type === "who" ? [q.f.key] : q.type === "anchor" ? [q.key, q.anchor] : q.type === "sort" ? q.items.map((f) => f.key)
+  : q.type === "year" || q.type === "place" || q.type === "decade" ? [q.key] : q.a && q.b ? [q.a.key, q.b.key] : []);
+const myNotes = (key) => S.notes.filter((n) => n.key === key);
+// The same three buttons under every question: previous, notes, don't know
+function bottomBar(q) {
   const n = S.game.votes.filter((v) => v.player === S.player).length;
-  const undo = btn("game-undo", "", "undo", tr("Undo last decision"), n ? "" : "disabled");
-  const unknown = btn("game-pick", "unknown", "unknown", tr("Don't know"));
+  return `<div class="game-bottom">${btn("game-undo", "", "undo", tr("Previous"), n ? "" : "disabled")}${btn("game-notes", "", "note", tr("Notes"))}${btn("game-pick", "unknown", "next", tr("Don't know"))}</div>`;
+}
+function noteSheet(q) {
+  const keys = noteKeys(q);
+  if (!keys.length) return;
+  let chosen = keys[0];
+  const thumbs = keys.length > 1 ? `<div class="game-note-thumbs">${keys.map((k, i) => `<button class="game-note-thumb ${i ? "" : "on"}" data-i="${i}" aria-label="${esc(tr("Photo {n}", {n: i + 1}))}"><img src="${image(k)}" alt=""></button>`).join("")}</div>` : "";
+  const {el, input, save, list, close} = openSheet(tr("Note on the photo"), keys[0], null, tr("What do you know about this photo?"), {area: true, above: thumbs, save: tr("Save")});
+  const mine = () => { list.innerHTML = myNotes(chosen).map((n) => `<div class="game-sheet-item"><span>${esc(n.text)}</span> <button class="game-note-del" data-id="${n.id}" aria-label="${esc(tr("Delete note"))}">×</button></div>`).join(""); };
+  mine();
+  el.querySelectorAll(".game-note-thumb").forEach((b) => b.addEventListener("click", () => {
+    chosen = keys[+b.dataset.i];
+    el.querySelectorAll(".game-note-thumb").forEach((x) => x.classList.toggle("on", x === b));
+    const t = el.querySelector(".game-sheet-thumb"); t.dataset.key = chosen; t.querySelector("img").src = image(chosen);
+    mine();
+  }));
+  list.addEventListener("click", async (e) => {
+    const d = e.target.closest(".game-note-del"); if (!d) return;
+    if (await sendNote("delete", {id: +d.dataset.id})) mine();
+  });
+  save.addEventListener("click", async () => {
+    const text = input.value.trim(); if (!text) { input.focus(); return; }
+    save.disabled = true;
+    if (await sendNote("add", {key: chosen, text})) { input.value = ""; mine(); close(); ui.feedback = tr("Note saved."); draw(); } else save.disabled = false;
+  });
+  if (!touch()) input.focus();
+}
+
+function questionHtml(q) {
+  return questionBody(q) + bottomBar(q);
+}
+function questionBody(q) {
   if (q.type === "who") {
     return `<div class="game-q">${tr("Who is this?")}</div>
       <div class="game-pair"><div class="game-cell"><div class="game-box"><span class="game-photo static" style="${faceBg(q.f)}"></span>${q.f.box ? frameInCutout(q.f.box) : ""}${thumb(q.f.key, q.f.box ? `data-box="${q.f.box.join(",")}"` : "")}</div></div></div>
       <div class="game-chips">${nameChips(q).map((x, i) => `<button class="game-chip" data-a="game-name-choose" data-i="${i}"><b>${esc(x.name)}</b><small>${esc(x.reason)}</small></button>`).join("")}
         <button class="game-chip" data-a="game-name-search"><b>${tr("Another name …")}</b></button></div>
-      <div class="game-buttons">${unknown}${undo}</div>`;
+`;
   }
   if (q.type === "anchor") {
     return `<div class="game-q">${tr("Was this photo taken before or after the one from {year}?", {year: q.ay})}</div>
       <div class="game-pair">${wholePhoto(q.key)}${wholePhoto(q.anchor, q.ay)}</div>
-      <div class="game-buttons">${btn("game-pick", "before", "before", tr("Earlier"))}${btn("game-pick", "same", "same", tr("About the same time"))}${btn("game-pick", "after", "after", tr("Later"))}${unknown}${undo}</div>`;
+      <div class="game-buttons">${btn("game-pick", "before", "before", tr("Earlier"))}${btn("game-pick", "same", "same", tr("About the same time"))}${btn("game-pick", "after", "after", tr("Later"))}</div>`;
   }
   if (q.type === "sort") {
     const done = q.order.length === q.items.length, ranks = ranksOf(q);
     return `<div class="game-q">${tr("Put the photos of {name} in order, youngest first.", {name: esc(q.name)})}</div>
       <div class="quiet game-sort-hint">${tr("Tap the photos from youngest to oldest. Tap the last one again if it is as old as the one before; a third tap removes it.")}</div>
       <div class="game-sort">${q.items.map((f, i) => { const at = q.order.indexOf(i); return `<div class="game-box"><button class="game-photo ${at >= 0 ? "chosen" : ""}" data-a="game-sort" data-i="${i}" style="${faceBg(f)}"></button>${at >= 0 ? `<span class="game-badge game-num">${ranks[at]}</span>` : ""}${thumb(f.key, `data-pair="${q.items.map((x) => esc(x.key)).join("|")}" data-i="${i}"`)}</div>`; }).join("")}</div>
-      <div class="game-buttons">${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}${unknown}${undo}</div>
+      <div class="game-buttons">${btn("game-sort-reset", "", "undo", tr("Start again"), q.order.length ? "" : "disabled")}</div>
       <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${done ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }
   if (q.type === "decade") {
@@ -294,13 +333,12 @@ function questionHtml(q) {
     return `<div class="game-q">${tr("In which decade was this photo taken?")}</div>
       <div class="game-pair">${wholePhoto(q.key)}</div>
       <div class="game-chips">${decades.map((d) => `<button class="game-chip" data-a="game-decade" data-d="${d}"><b>${d}s</b></button>`).join("")}</div>
-      <div class="game-buttons">${unknown}${undo}</div>`;
+`;
   }
   if (q.type === "year") {
     return `<div class="game-q">${tr("In which year was this photo taken?")}</div>
       <div class="game-pair">${wholePhoto(q.key)}</div>
-      ${answerBar("year", "game-years", "", tr("Year, e.g. 1952"), 'type="number" inputmode="numeric" min="1800" max="2100"')}
-      <div class="game-buttons">${unknown}${undo}</div>`;
+      ${answerBar("year", "game-years", "", tr("Year, e.g. 1952"), 'type="number" inputmode="numeric" min="1800" max="2100"')}`;
   }
   if (q.type === "place") {
     if (!q.asked) { q.asked = true; peopleOn(q.key).forEach((p) => loadEvents(p.id)); }   // residences of the people on the photo help with suggestions
@@ -311,13 +349,12 @@ function questionHtml(q) {
       <div class="game-pair">${wholePhoto(q.key)}</div>
       <div class="game-chips">${shown.map((x, i) => `<button class="game-chip ${c && (c.h ? c.h === x.o.h : c.t === x.o.t) ? "on" : ""}" data-a="game-place-choose" data-i="${i}"><b>${esc(x.o.n || x.o.t)}</b><small>${esc(x.reason)}</small></button>`).join("")}
         <button class="game-chip" data-a="game-place-search"><b>${tr("Another place …")}</b></button></div>
-      <div class="game-buttons">${unknown}${undo}</div>
       <div class="game-answer"><button class="game-btn primary" data-a="game-save" ${c ? "" : "disabled"}>${tr("Save")}</button></div>`;
   }
   return `<div class="game-q">${tr("Which photo shows {name} older?", {name: esc(q.name)})}</div>
     <div class="game-pair">${face(q, "a")}${face(q, "b")}</div>
-    <div class="game-buttons">${btn("game-pick", "same", "same", tr("Same age"))}${unknown}
-      ${btn("game-pick", "different", "different", tr("Not the same person"))}${undo}</div>`;
+    <div class="game-buttons">${btn("game-pick", "same", "same", tr("Same age"))}
+      ${btn("game-pick", "different", "different", tr("Not the same person"))}</div>`;
 }
 
 // ---- results: what has been answered so far (only looking, nothing is changed)
@@ -673,6 +710,7 @@ export const actions = {
       return answer({type: "year", key: q.key, year: y});
     }
   },
+  "game-notes": () => { if (ui.game) noteSheet(ui.game); },
   "game-undo": async () => {
     let i = S.game.votes.length - 1;
     while (i >= 0 && S.game.votes[i].player !== S.player) i--;

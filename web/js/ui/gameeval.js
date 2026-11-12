@@ -5,6 +5,7 @@ import {esc, image, send, toast} from "../util.js";
 import {unitOf, yearText} from "../model.js";
 import {tr} from "../language.js";
 import {statsOf} from "./game.js";
+import {noteWho} from "./detail.js";
 import {improvedBy, allChanges, conflicts} from "../impact.js";
 
 const range = (s) => (!s.year ? tr("no estimate") : s.from === s.to ? `${s.year}` : `${s.from}–${s.to}`);
@@ -26,6 +27,12 @@ function conflictRow(c) {
   const one = (u, label) => `<div class="ge-conflict-side"><img src="${image(u.keys[0])}" alt="" loading="lazy"><span class="quiet">${label}<br>${esc(yearText(u))}</span></div>`;
   return `<div class="ge-conflict">${one(y, tr("answers say: younger"))}<span class="quiet">↔</span>${one(o, tr("answers say: older"))}</div>`;
 }
+function notesHtml() {
+  const by = new Map();
+  S.notes.forEach((n) => { (by.get(n.key) || by.set(n.key, []).get(n.key)).push(n); });
+  if (!by.size) return `<div class="quiet">${tr("No notes yet.")}</div>`;
+  return `<div class="ge-notes">${[...by.entries()].map(([key, list]) => `<div class="ge-note"><img src="${image(key)}" alt="" loading="lazy"><div>${list.map((n) => `<div><b>${esc(noteWho(n))}</b> <span class="quiet">${esc(when(n.t))}</span><br>${esc(n.text)}</div>`).join("")}</div></div>`).join("")}</div>`;
+}
 export function gameEvalHtml() {
   const rows = playerRows(), muted = S.game.muted || [];
   const table = rows.map((p) => {
@@ -44,6 +51,8 @@ export function gameEvalHtml() {
       <div class="ge-changes">${result.changes.slice(0, shown).map(changeRow).join("")}</div>
       ${result.changes.length > shown ? `<button class="small" data-a="ge-more">${tr("Show more")}</button>` : ""}` : `<div class="quiet">${tr("The answers have not changed any estimate so far.")}</div>`)
       : `<div class="quiet">${tr("Click “Calculate effect” to see it.")}</div>`}
+    <h2>${tr("Notes from the game")}</h2>
+    ${notesHtml()}
     <h2>${tr("Contradictions")}</h2>
     ${conf.length ? `<div class="quiet">${tr("The answers and your rows contradict each other for these photos. Check them in the rows.")}</div><div class="ge-conflicts">${conf.join("")}</div>` : `<div class="quiet">${tr("No contradictions.")}</div>`}`;
 }

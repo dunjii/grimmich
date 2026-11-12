@@ -12,12 +12,14 @@ import time
 # what may be asked for under /play/ (everything else is "not found")
 ALLOWED_GET = re.compile(r"^/$|^/(style\.css|favicon\.svg|favicon\.png|robots\.txt)$|^/js/(?!.*\.\.)[\w./-]+\.js$|^/api/(all|languages|gramps_places|me)$"
                          r"|^/api/language/[\w-]+$|^/photos/[^/]+\.jpg$|^/crops/[^/]+\.jpg$")
-ALLOWED_POST = {"/api/vote", "/api/login", "/api/logout", "/api/password"}   # the game does not need anything else
-LOGIN_NEEDED = re.compile(r"^/api/(all|gramps_places|vote|password)$|^/photos/|^/crops/")   # everything with data or answers
+ALLOWED_POST = {"/api/vote", "/api/note", "/api/login", "/api/logout", "/api/password"}   # the game does not need anything else
+LOGIN_NEEDED = re.compile(r"^/api/(all|gramps_places|vote|note|password)$|^/photos/|^/crops/")   # everything with data or answers
 ROBOTS = b"User-agent: *\nDisallow: /\n"
 
 TYPES = {None, "older", "who", "place", "anchor", "sort", "decade"}
 MAX_VOTES = 200000
+MAX_NOTES = 20000
+MAX_NOTE_LENGTH = 1500
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
 
@@ -96,6 +98,29 @@ def validate_vote(vote, photo_keys):
     return None
 
 
+def validate_note(data, photo_keys):
+    """A note as sent by a player -> {"key", "text"}, or None when something is wrong."""
+    if not isinstance(data, dict):
+        return None
+    key, text = data.get("key"), clean_text(data.get("text"), MAX_NOTE_LENGTH, allow_empty=False)
+    if not (isinstance(key, str) and key in photo_keys and text):
+        return None
+    return {"key": key, "text": text}
+
+
+def add_note(notes, note, player, now):
+    """New list of notes with this one appended (it gets a number, the player and the time); None when the list is full."""
+    if len(notes) >= MAX_NOTES:
+        return None
+    new_id = max([n.get("id", 0) for n in notes if isinstance(n.get("id"), int)] + [0]) + 1
+    return notes + [{"id": new_id, **note, "player": player, "t": now}]
+
+
+def delete_note(notes, note_id, player=None):
+    """New list without this note; with `player` only that player's own note can be removed."""
+    return [n for n in notes if not (n.get("id") == note_id and (player is None or n.get("player") == player))]
+
+
 def add_vote(votes, vote, player, now):
     """New list of answers with this one appended (the clean vote gets the player and the time); None when the list is full."""
     if len(votes) >= MAX_VOTES:
@@ -133,7 +158,7 @@ def vote_keys(vote):
     return {k for k in keys if isinstance(k, str)}
 
 
-def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version, hidden_keys=frozenset(), hidden_people=frozenset(), muted=()):
+def build_data(photos, work, rows, corrections, names, age, people_photos, immich_data, places, kinds, votes, version, hidden_keys=frozenset(), hidden_people=frozenset(), muted=(), notes=(), player=None):
     """What the game gets: the same shape as the full interface expects at start, but only the parts the game needs.
     Not included: connection data and keys, write preview, order, assignments to Gramps, events, birth dates, descriptions."""
     keys = {p["key"] for p in photos.get("photos", []) if isinstance(p, dict) and "key" in p} - set(hidden_keys)   # hidden = photos with people who are not to be shown
@@ -160,6 +185,7 @@ def build_data(photos, work, rows, corrections, names, age, people_photos, immic
         "write_preview": None, "write_status": {}, "job": {"running": False},
         "provenance_albums": {"albums": []}, "provenance": {"pages": {}}, "inbox": {"seen": []},
         "game_votes": {"votes": votes, "muted": list(muted)},
+        "notes": {"notes": [n for n in (notes or []) if isinstance(n, dict) and n.get("key") in keys and n.get("player") == player]},   # a player only gets his own notes
         "immich_data": {"photos": {k: {"date": v.get("date"), "camera": bool(v.get("camera"))} for k, v in (immich_data or {}).items() if k in keys and isinstance(v, dict) and v.get("date")}},
         "gramps_preview": None, "gramps_written": {}, "gramps_status": {"key_set": False, "result": None}, "event_assignment": {},
         "kinds": {k: {"kind": v.get("kind")} for k, v in (kinds or {}).items() if k in keys and isinstance(v, dict) and v.get("kind")},

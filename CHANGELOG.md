@@ -3,6 +3,13 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.8 – 2026-11-12 – Notes on photos, fixed button bar in the game
+- **Notes**: in the game a new "Notes" button opens a centred window (same as the other input fields, so the keyboard does not cover it). Several notes per photo, each with the player's name and date; with several photos in the question you pick the photo by its thumbnail. Players from outside can add notes and see or delete only their own.
+- Notes show at the photo in Grimmich (list with names, you can add and delete), in the game evaluation (per photo with player names) and as a small symbol on the tile.
+- **Game**: the same three buttons sit under every question: Previous (undo last decision), Notes, Don't know. Question-specific buttons stay above.
+- **Places**: the number is now the real number of photos (not of series or single units).
+- **Series**: merge suggestions about series that no longer exist are dropped, so the badge and the list agree.
+
 ## 0.10.7 – 2026-11-08 – Dates you set in Immich are recognised again
 - **Fix**: a capture date you set by hand in Immich was ignored (and could have been overwritten when writing). Reason: Immich moves its `fileCreatedAt` along when you change the date, so Grimmich saw “no difference to the scan date”. The scan date now comes from the file's modification date or the day the photo was added to Immich, which do not change. This applies to reading and writing.
 - Immich moves `fileCreatedAt` and `localDateTime` along when you change the capture date, but not the file modification date and the day the photo was added; Grimmich compares with the latter. Only one grey hint remains under a photo: camera data in the working album (the date does not count there). A first idea (every capture date before 2005 counts as set by you) was dropped again: it would have misread old scans of other users.

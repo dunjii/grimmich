@@ -999,7 +999,6 @@
   "taken from the series (own faces cannot be dated)": "von der Serie übernommen (eigene Gesichter nicht datierbar)",
   "This one is older": "Dieses ist älter",
   "Which photo shows {name} older?": "Auf welchem Foto ist {name} älter?",
-  "Undo last decision": "Letzte Entscheidung zurücknehmen",
   "Back to Grimmich": "Zurück zu Grimmich",
   "Not enough photos of named people yet. Please click “Refresh” first.": "Noch nicht genug Fotos benannter Personen. Bitte zuerst „Aktualisieren“ klicken.",
   "Same age": "Gleich alt",
@@ -1204,6 +1203,19 @@
   "This series does not exist any more.": "Diese Serie gibt es nicht mehr.",
   "Take out of the basket": "Aus dem Korb nehmen",
   "What do I do in Immich first?": "Was mache ich zuerst in Immich?",
-  "Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.": "Immich: Aufnahmedatum {d}, aber das Foto hat Kameradaten und liegt im Arbeitsalbum. Es zählt nicht als Datum. Lege es ins Ankeralbum, um es zu nutzen."
+  "Immich: capture date {d}, but the photo has camera data and is in the working album. It does not count as a date. Put it into the anchor album to use it.": "Immich: Aufnahmedatum {d}, aber das Foto hat Kameradaten und liegt im Arbeitsalbum. Es zählt nicht als Datum. Lege es ins Ankeralbum, um es zu nutzen.",
+  "You": "Du",
+  "Notes": "Notizen",
+  "Delete note": "Notiz löschen",
+  "Add a note …": "Notiz hinzufügen …",
+  "Add note": "Notiz hinzufügen",
+  "Previous": "Vorherige",
+  "Photo {n}": "Foto {n}",
+  "Note on the photo": "Notiz zum Foto",
+  "What do you know about this photo?": "Was weißt du über dieses Foto?",
+  "Note saved.": "Notiz gespeichert.",
+  "No notes yet.": "Noch keine Notizen.",
+  "Notes from the game": "Notizen aus dem Spiel",
+  "Has notes": "Hat Notizen"
  }
 }

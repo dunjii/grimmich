@@ -1,5 +1,5 @@
 // Right column: the chosen photo (or series) with dating, people, source and actions.
-import {S, ui, draw} from "../state.js";
+import {S, ui, draw, sendNote} from "../state.js";
 import {setDraft} from "./actions.js";
 import {esc, image, dateLong} from "../util.js";
 import {unitOf, personTiles, personOf, warnings, statusLabel, statusClass, ageList, shortName, hintKind, hintText, notInAlbum, KINDS, kindOf, roughTime} from "../model.js";
@@ -67,6 +67,26 @@ function seenLine(key) {
   return t ? `<div class="quiet" style="font-size:12px">${esc(t)}</div>` : "";
 }
 
+// Notes on the photo: from the game (with the name of the player) and your own; you can add and delete them
+const noteDate = (t) => (t ? t.slice(0, 10) : "");
+export const notesOf = (keys) => S.notes.filter((n) => keys.includes(n.key));
+export const noteWho = (n) => n.player || tr("You");
+function notesArea(key) {
+  const list = S.notes.filter((n) => n.key === key);
+  return `<div><div class="field-name">${tr("Notes")}</div>
+    ${list.map((n) => `<div class="note-row"><span><b>${esc(noteWho(n))}</b> <span class="quiet">${esc(noteDate(n.t))}</span><br>${esc(n.text)}</span><button class="small" data-a="note-del" data-id="${n.id}" title="${esc(tr("Delete note"))}">×</button></div>`).join("")}
+    <textarea id="note-text" rows="2" maxlength="1500" placeholder="${esc(tr("Add a note …"))}" style="width:100%;box-sizing:border-box"></textarea>
+    <button class="small" data-a="note-add" data-key="${esc(key)}">${tr("Add note")}</button></div>`;
+}
+export const actions = {
+  "note-add": async (el) => {
+    const t = document.getElementById("note-text"), text = t ? t.value.trim() : "";
+    if (!text) return;
+    if (await sendNote("add", {key: el.dataset.key, text}, "")) draw();
+  },
+  "note-del": async (el) => { if (await sendNote("delete", {id: +el.dataset.id}, "")) draw(); },
+};
+
 export function detailHtml() {
   const e = ui.focusKey ? unitOf(ui.focusKey) : null;
   if (!e) return `<div class="detail-head"><h2>${tr("Selected photo")}</h2></div><div class="empty">${tr("Click a tile to see its dating, people and source here.")}</div>`;
@@ -109,6 +129,7 @@ export function detailHtml() {
       ${peopleList.length ? peopleList.map((p) => { const pp = personPage(p.name); return `<div class="row-pair"><span>${pp ? `<a href="#" class="link" data-a="go-person" data-pid="${esc(pp.id)}" data-key="${esc(key)}" title="${tr("Open person page")}">${esc(shortName(p.name))}</a>` : esc(shortName(p.name))}</span><span class="quiet">${p.currentVal !== null ? (p.currentVal < 0 ? tr("before birth") : tr("Age c. {alter} y", {alter: p.currentVal})) : ""}${p.ki !== null ? (p.currentVal !== null ? ` · ${tr("AI {ki}", {ki: p.ki})}` : `${tr("AI age c. {ki} y", {ki: p.ki})}`) : ""}</span></div>`; }).join("") : '<div class="quiet">' + tr("no named person recognized") + '</div>'}</div>
     <div><div class="field-name">${tr("Source")}</div>
       ${prov.length ? prov.map((h) => `<div><a href="#" class="link" data-a="go-album" data-id="${esc(h.albumId)}" data-key="${esc(key)}" title="${tr("Open album and show this photo there")}">${esc(provenanceText(h))}</a></div>`).join("") : '<div class="quiet">' + tr("Not assigned to a photo album yet. The photo is only in the working album.") + '</div>'}</div>
+    ${notesArea(key)}
     ${hintsArea(e, key)}
     ${eventRange(e)}
     ${placeArea(e, key)}

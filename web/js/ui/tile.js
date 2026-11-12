@@ -19,6 +19,7 @@ export function tileObj(e, opt = {}) {
     <div class="image" data-a="choose" data-uid="${esc(e.uid)}" data-key="${esc(key)}">
       <img loading="lazy" src="${image(key)}" alt="" onerror="this.style.display='none'">
       <span class="year ${cssClass}">${esc(yearMark(e))}</span>${fresh}${e.kind ? `<span class="kind-mark">${esc(KINDS[e.kind])}</span>` : ""}
+      ${S.notes.some((n) => e.keys.includes(n.key)) ? `<span class="note-mark" title="${tr("Has notes")}">📝</span>` : ""}
       ${S.gw && S.gw[key] ? `<span class="gr-mark" title="${tr("Already in Gramps: {gid}", {gid: esc(S.gw[key].gid)})}">Gramps</span>` : ""}
       ${e.type === "series" ? `<span class="series-mark" title="${tr("Series {id}", {id: esc(e.s.id)})}">${tr("{n} {n:photo|photos}", {n: e.keys.length})}${e.cardKeys && !e.kind ? tr(", {n} {n:card|cards}", {n: e.cardKeys.length}) : ""}</span>` : ""}
       <span class="tick-box ${marked ? "on" : ""}" data-a="select" data-uid="${esc(e.uid)}" title="${tr("Select for merging")}">${marked ? "✓" : ""}</span></div>

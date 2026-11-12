@@ -286,7 +286,7 @@ def everything():
         "age": read_json("age_per_photo.json", {}), "people_photos": people_photos(), "order": read_json("order.json", {}),
         "assignment": read_json("assignment.json", {}), "connection": connections.status(), "write_preview": read_json("write_preview.json", None),
         "write_status": write_status(), "job": JOB.status(), "provenance_albums": read_json("provenance_albums.json", {"albums": []}),
-        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": {**read_json("game_votes.json", {"votes": []}), "muted": muted_names()},
+        "provenance": read_json("provenance.json", {"pages": {}}), "inbox": inbox, "game_votes": {**read_json("game_votes.json", {"votes": []}), "muted": muted_names()}, "notes": read_json("notes.json", {"notes": []}),
         "immich_data": read_json("immich_data.json", {"photos": {}}),
         "gramps_preview": read_json("gramps_preview.json", None), "gramps_written": read_json("gramps_written.json", {}),
         "gramps_status": grampsstatus(), "event_assignment": read_json("event_assignment.json", {}), "kinds": read_json("kinds.json", {}), "places": read_json("place_assignment.json", {}), "version": version(),
@@ -550,7 +550,8 @@ def play_all(player=None):
     hidden_keys, hidden_people, hidden_names = hidden()
     return play.build_data(photos, work, read_results(), read_json("corrections.json", {}), [n for n in people.get("all", []) if n not in hidden_names], read_json("age_per_photo.json", {}),
                            people_photos(), (read_json("immich_data.json", {"photos": {}}) or {}).get("photos", {}), read_json("place_assignment.json", {}),
-                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version(), hidden_keys, hidden_people, muted_names(player))
+                           read_json("kinds.json", {}), read_json("game_votes.json", {"votes": []}).get("votes", []), version(), hidden_keys, hidden_people, muted_names(player),
+                           read_json("notes.json", {"notes": []}).get("notes", []), player)
 
 
 def handle_vote(data_, signed_in=None):
@@ -578,6 +579,37 @@ def handle_vote(data_, signed_in=None):
                 return {"ok": False}, 507
         write_json("game_votes.json", {"votes": new})
     return {"ok": True, "votes": new, "muted": muted_names(signed_in)}, 200
+
+
+def handle_note(data_, signed_in=None):
+    """A note on a photo: added (op "add") or removed (op "delete"). From outside the name comes from the sign-in and a player can only
+    remove his own notes; locally the name is optional (empty = the owner). -> (answer, code)"""
+    if not isinstance(data_, dict):
+        return {"ok": False}, 400
+    player, op = (signed_in if signed_in else (play.clean_text(data_.get("player"), 60) or "")), data_.get("op")
+    if op not in ("add", "delete"):
+        return {"ok": False}, 400
+    if not RATE.allow():
+        return {"ok": False}, 429
+    with _lock_:
+        notes = read_json("notes.json", {"notes": []}).get("notes", [])
+        if op == "delete":
+            note_id = data_.get("id")
+            if not (isinstance(note_id, int) and not isinstance(note_id, bool)):
+                return {"ok": False}, 400
+            new = play.delete_note(notes, note_id, player if signed_in else None)
+        else:
+            keys = {p["key"] for p in read_json(PHOTOS_FILE, {"photos": []}).get("photos", []) if "key" in p}
+            if signed_in:
+                keys -= hidden()[0]
+            note = play.validate_note(data_, keys)
+            if note is None:
+                return {"ok": False}, 400
+            new = play.add_note(notes, note, player, datetime.datetime.now().isoformat(timespec="seconds"))
+            if new is None:
+                return {"ok": False}, 507
+        write_json("notes.json", {"notes": new})
+    return {"ok": True, "notes": [n for n in new if n.get("player") == player] if signed_in else new}, 200
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -788,6 +820,10 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self._json({"ok": True}, 200, [("Set-Cookie", auth.cookie_header(auth.make_token(players_doc(), key), self._secure()))])
             return
+        if path_ == "/api/note":
+            answer, code = handle_note(data_, signed_in=entry["name"])
+            self._json(answer, code)
+            return
         answer, code = handle_vote(data_, signed_in=entry["name"])   # the name comes from the sign-in, never from the request
         self._json(answer, code)
 
@@ -812,6 +848,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         if path_ == "/api/vote":
             answer, code = handle_vote(data_)
+            self._json(answer, code)
+        elif path_ == "/api/note":
+            answer, code = handle_note(data_)
             self._json(answer, code)
         elif path_ == "/api/models_check":
             result = model_versions.check()
