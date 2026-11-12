@@ -93,7 +93,7 @@ function block(p, tileList, shared, second) {
       <button class="small good" data-a="s-confirm-all" data-pid="${pid}" ${nDraft ? "" : "disabled"} title="${tr("Confirm all drafts of this person as anchors")}">${tr("✓ Confirm all drafts ({nEntw})", {nEntw: nDraft})}</button></div>
     ${p.birth === null ? "" : grPanel(p)}
     <b>${tr("Row (young → old)")}</b>
-    <div class="anchor-legend"><span class="lg lg-fest"></span> ${tr("Anchor with photo (fixed year)")} <span class="lg lg-ohne"></span> ${tr("Anchor without photo")} <span class="shared">G</span> ${tr("from Gramps")}</div>
+    <div class="anchor-legend"><span class="lg lg-fest"></span> ${tr("Anchor: ✓ year (fixed)")} <span class="lg lg-entw"></span> ${tr("Draft: year not confirmed yet")} <span class="lg lg-vorschlag"></span> ${tr("Uncertain: c. year, suggestion from the row (click to fix it)")} <span class="lg-warn">⚠</span> ${tr("far from an anchor")} <span class="lg lg-ohne"></span> ${tr("Anchor without photo")} <span class="shared">G</span> ${tr("from Gramps")}<br><span class="quiet">${tr("Hover over a photo: AI age, limits from the anchors.")}</span></div>
     <div class="sort-lane" id="sreihe_${pid}" data-pid="${pid}">${lanesHtml(p, parts, res2, tileObj, pid)}</div>
     ${res2 ? `<div class="effect"><b>${tr("Effect of the order (AI age, smoothed along the row)")}</b>
         <div>${tr("Comparison with the other people in the same photos ({n} {n:photo|photos}): spread", {n: res2.m1.n})} <b>${tr("{vor} → {nach} years", {vor: res2.m1.given.toFixed(1), nach: res2.m1.surnames.toFixed(1)})}</b> <span class="quiet">${tr("(if it drops, the faces fit better with the others)")}</span></div>

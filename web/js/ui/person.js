@@ -130,6 +130,7 @@ function birthBox(p) {
   return `<div class="box warn">${tr("No date of birth is entered for <b>{name}</b> (neither in Gramps nor in Immich). {als}", {name: esc(p.name), als: v
     ? `${tr("From {n} {n:photo|photos} with a confirmed year, a year of birth of about <b>{jahr}</b> results (±{fehler} years).", {n: v.n, jahr: Math.round(v.year), fehler: v.errors})}
        <div class="actions"><button class="small primary" data-a="born-adopt" data-pid="${esc(p.id)}">${tr("Take over as estimated year of birth")}</button></div>`
+    : estimateBirth.single ? tr("The AI estimates this person at about {alter} years in {jahr}. For a year of birth I need a second photo with a confirmed year from another year, or a known date. Until then you can sort by appearance; there are just no years, only limits like “later than 1960”.", {alter: estimateBirth.single.age, jahr: estimateBirth.single.year})
     : tr("As soon as a photo of this person has a confirmed year, I can estimate the year of birth from it. Until then you can sort by appearance; there are just no years, only limits like “later than 1960”.")})}</div>`;
 }
 

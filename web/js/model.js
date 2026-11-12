@@ -269,13 +269,17 @@ const sigmaAge = (a) => (a < 6 ? 1.2 : a < 12 ? 1.8 : a < 20 ? 2.5 : a < 35 ? 3.
 // Birth year from photos with a confirmed year: year minus AI age, weighted by the accuracy of the age estimate
 export function estimateBirth(p) {
   let sw = 0, sj = 0, n = 0;
+  const years = new Set(), firstAge = {};
   personTiles(p).forEach((k) => {
     if (!k.e.confirmedFlag || !k.e.year || k.ki === null) return;
     const w = 1 / sigmaAge(k.ki) ** 2;
     sw += w; sj += w * ((k.e.decimal_year || k.e.year) - k.ki); n++;
+    years.add(k.e.year); if (!firstAge.year) Object.assign(firstAge, {year: k.e.year, age: Math.round(k.ki)});
   });
-  return n ? {year: Math.round(sj / sw * 10) / 10, n, errors: Math.round(Math.sqrt(1 / sw) * 10) / 10} : null;
+  estimateBirth.single = n && years.size < 2 ? firstAge : null;   // one anchor year only: no birth year, just the hint
+  return n && years.size >= 2 ? {year: Math.round(sj / sw * 10) / 10, n, errors: Math.round(Math.sqrt(1 / sw) * 10) / 10} : null;
 }
+estimateBirth.single = null;
 // Person with the best birth year: Gramps, otherwise Immich, otherwise the estimated one you adopted (birthSource: Gramps | Immich | estimated | null)
 let pvVer = -1, pvMap = {};
 export function personOf(id) {

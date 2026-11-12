@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.12 – 2026-11-12 – Birth year estimate needs two anchor years; legends updated
+- **Estimated birth year** is only suggested when at least two anchors from different years exist. With one anchor year (for example a whole series anchored to 1998) the hint says what the AI estimates ("about 33 years in 1998") and what is missing, and the take-over button is gone.
+- **Legends** (Help and the small one in "Sort by appearance") describe the new tiles: green anchor, yellow draft, grey "c." suggestion, ⚠, tooltip, notes symbol. Drafts are yellow everywhere now (also in the timeline).
+
 ## 0.10.11 – 2026-11-12 – Side panel in the game evaluation
 - **Fix**: a photo clicked in the game evaluation now really opens the side panel (the panel was hidden in that view).
 

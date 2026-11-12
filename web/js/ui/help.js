@@ -5,10 +5,13 @@ import {tr} from "../language.js";
 
 const legendItems = () => [
   ["ok", tr("Anchor (confirmed)"), tr("A year you confirmed, or a date you set in Immich. It is fixed and acts on all other photos through the rows.")],
-  ["draft", tr("Draft (year with ?)"), tr("A year you took over or set but did not confirm yet. It is held and no longer moves, but it does not act as an anchor yet.")],
+  ["draft", tr("Draft (yellow)"), tr("A year you took over or set but did not confirm yet. It is held and no longer moves, but it does not act as an anchor yet.")],
   ["estimate", tr("Estimate (c. 1952)"), tr("The year Grimmich calculates. It is recomputed after every change and has a span, for example c. 1952 (1946–1958).")],
   ["warn", tr("Warning"), tr("Something contradicts the dating, for example a photo from before a person was born.")],
-  ["", tr("AI 34 → 36"), tr("The AI age estimate of the person, and the age after smoothing along your row.")],
+  ["", tr("✓ 1959 (green)"), tr("In “Sort by appearance”: an anchor with a fixed year. Yellow is a draft, grey “c. 1953” a suggestion from the row; a click on it lets you fix the year.")],
+  ["", tr("⚠ on a tile"), tr("The row suggests a year far from the anchor or draft. Check the photo and its place in the row.")],
+  ["", tr("Tooltip on a tile"), tr("Hover over a photo in “Sort by appearance”: the AI age of the person (and after smoothing along the row) and the limits from the anchors.")],
+  ["", tr("📝"), tr("The photo has notes, from you or from players of the game.")],
   ["", tr("⇄"), tr("The photo is also in the row of another person.")],
   ["", tr("S038 · 3"), tr("Number of the series and number of photos in it. A series has one year for all its photos and all rows.")],
   ["", tr("Faded photo"), tr("The photo is no longer in the working or anchor album.")]
