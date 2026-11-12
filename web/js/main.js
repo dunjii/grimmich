@@ -57,7 +57,7 @@ function drawAll() {
   const scroll = {list: $("list").scrollTop, detail: $("detail").scrollTop};
   document.body.classList.toggle("write", write_it);
   frame.classList.toggle("list-closed", !ui.listOpen);
-  frame.classList.toggle("no-detail", ui.view === "start" || ui.view === "write" || ui.view === "gameeval");
+  frame.classList.toggle("no-detail", ui.view === "start" || ui.view === "write" || (ui.view === "gameeval" && !(ui.focusKey && unitOf(ui.focusKey))));
   frame.classList.toggle("detail-empty", !(ui.focusKey && unitOf(ui.focusKey)));   // nothing chosen: narrow column
   const searchFocus = document.activeElement && document.activeElement.id === "search-field", searchPos = searchFocus ? document.activeElement.selectionStart : 0;
   $("handle").innerHTML = write_it ? "" : `<button data-a="${ui.listOpen ? "list-close" : "list-open"}" title="${ui.listOpen ? tr("Collapse work list") : tr("Open work list")}" aria-label="${ui.listOpen ? tr("Collapse work list") : tr("Open work list")}">${ui.listOpen ? "◂" : "▸"}</button>`;

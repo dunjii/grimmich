@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.11 – 2026-11-12 – Side panel in the game evaluation
+- **Fix**: a photo clicked in the game evaluation now really opens the side panel (the panel was hidden in that view).
+
 ## 0.10.10 – 2026-11-12 – Clearer sort tiles, automatic sort-in, place answers from the game
 - **Sort by appearance**: each tile shows one year, the colour tells the state: anchor (green, ✓), draft (yellow), uncertain (grey, "c."). ⚠ appears when the row's calculation is far from an anchor. AI age and limits moved into the tooltip.
 - **"Sort in automatically"** replaces "Pre-sort all by AI age": photos already in the row stay where they are (your positions win); the others are put in by year (anchors, drafts, markers) or by AI age (uncertain photos), always between the anchors that bound them.
