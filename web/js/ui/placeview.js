@@ -55,7 +55,17 @@ document.addEventListener("input", (ev) => {
 let mapView = null, mapObj = null;
 export const placePoints = () => placeState().filter((x) => x.lat != null).map((x) => ({id: x.id, lat: x.lat, lon: x.lon, n: x.keys.length, title: x.name}));
 export const setPlaceView = (lat, lon) => { mapView = {lat, lon, zoom: Math.max(15, mapView ? mapView.zoom : 0)}; };
+// Under the map only two rows of photos; the rest comes with one button
+function limitPhotos() {
+  const g = document.querySelector("#orte-fotos .grid"), more = document.getElementById("orte-mehr");
+  if (!g || !more) return;
+  const tiles = [...g.children], cols = Math.max(1, getComputedStyle(g).gridTemplateColumns.split(" ").length), max = cols * 2;
+  if (ui.placeAll === ui.placeId || tiles.length <= max) { more.hidden = true; return; }
+  tiles.slice(max).forEach((t) => { t.hidden = true; });
+  more.hidden = false; more.innerHTML = `<button class="small" data-a="place-all">${tr("Show all {n} photos", {n: tiles.length})}</button>`;
+}
 export function placeMapInit() {
+  limitPhotos();
   if (mapObj) { try { mapObj.destroy(); } catch (e) { /* alte Karte ist schon weg */ } mapObj = null; }
   const box = document.getElementById("orte-map");
   if (!box) return;
@@ -99,10 +109,11 @@ export function placeHtml() {
         <div>${x.immich ? placeButtons(x) + " " : ""}<button class="small" data-a="place-edit" data-id="${esc(x.id)}">${x.lat == null ? tr("Set on map …") : tr("Edit …")}</button></div></div>`
     : `<div class="person-head"><div><h1>${tr("Places")}</h1><div class="quiet">${pts.length ? tr("{n} {n:photo|photos} at {p} {p:point|points}. Click a point to see its photos.", {n: total, p: pts.length}) : tr("No place with coordinates yet.")}</div></div></div>`;
   const grid = x ? tileGrid(x.unitList.slice().sort((a, b) => (a.decimal_year || a.year || 0) - (b.decimal_year || b.year || 0))) : "";
-  return `${head}<div id="orte-map" class="orte-karte"></div><div style="margin-top:10px">${grid}</div>`;
+  return `${head}<div id="orte-map" class="orte-karte"></div><div style="margin-top:10px" id="orte-fotos">${grid}</div><div id="orte-mehr" style="margin-top:8px" hidden></div>`;
 }
 
 export const actions = {
+  "place-all": () => { ui.placeAll = ui.placeId; draw(); },
   "place-edit": (el) => {
     const x = placeState().find((y) => y.id === el.dataset.id);
     if (x) openPlacePicker({keys: x.keys, title: x.name, text: x.immich ? "" : x.name});

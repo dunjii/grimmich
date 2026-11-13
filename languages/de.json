@@ -1275,6 +1275,7 @@
   "no coordinates": "keine Koordinaten",
   "Edit …": "Bearbeiten …",
   "{n} {n:photo|photos} at {p} {p:point|points}. Click a point to see its photos.": "{n} {n:Foto|Fotos} an {p} {p:Punkt|Punkten}. Klicke einen Punkt an, um seine Fotos zu sehen.",
-  "No place with coordinates yet.": "Noch kein Ort mit Koordinaten."
+  "No place with coordinates yet.": "Noch kein Ort mit Koordinaten.",
+  "Show all {n} photos": "Alle {n} Fotos zeigen"
  }
 }

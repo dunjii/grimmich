@@ -502,3 +502,4 @@ body:not(.write) { --kopf: 108px; }
 .gmap-mk { position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--akzent); color: #fff; font-weight: 700; font-size: 12px; border: 3px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.4); cursor: pointer; pointer-events: auto; }
 .gmap-mk.multi { background: #3d7f93; } .gmap-mk.sel { background: #c0392b; z-index: 2; }
 .orte-karte.gmap { height: min(46vh, 460px); min-height: 260px; margin: 0 14px; }
+.grid > [hidden], #orte-mehr[hidden] { display: none !important; }
