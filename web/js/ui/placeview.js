@@ -64,8 +64,23 @@ function limitPhotos() {
   tiles.slice(max).forEach((t) => { t.hidden = true; });
   more.hidden = false; more.innerHTML = `<button class="small" data-a="place-all">${tr("Show all {n} photos", {n: tiles.length})}</button>`;
 }
+// The map gets the height that is left, so that it and two rows of photos fit on the screen (at least 300 px)
+function sizeMap() {
+  const box = document.getElementById("orte-map");
+  if (!box) return;
+  const g = document.querySelector("#orte-fotos .grid"), more = document.getElementById("orte-mehr");
+  let below = 24;
+  if (g) {
+    const tiles = [...g.children].filter((t) => !t.hidden), cols = Math.max(1, getComputedStyle(g).gridTemplateColumns.split(" ").length);
+    const rows = Math.min(2, Math.ceil(tiles.length / cols)), th = tiles[0] ? tiles[0].getBoundingClientRect().height : 215;
+    below = 10 + rows * (th + 12) + (more && !more.hidden ? 44 : 0) + 12;
+  }
+  const top = box.getBoundingClientRect().top + window.scrollY;
+  box.style.height = Math.max(300, Math.round(window.innerHeight - top - below)) + "px";
+}
+window.addEventListener("resize", () => { if (document.getElementById("orte-map")) { sizeMap(); if (mapObj) mapObj.refresh(); } });
 export function placeMapInit() {
-  limitPhotos();
+  limitPhotos(); sizeMap();
   if (mapObj) { try { mapObj.destroy(); } catch (e) { /* alte Karte ist schon weg */ } mapObj = null; }
   const box = document.getElementById("orte-map");
   if (!box) return;

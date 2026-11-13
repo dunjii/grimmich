@@ -109,6 +109,7 @@ export function createMap(box, opts) {
   box.querySelectorAll(".gmap-zoom button").forEach((b) => b.addEventListener("click", () => zoomTo(z + +b.dataset.z)));
   setTimeout(render, 0);
   return {
+    refresh() { render(); },
     setMarks(list, onClick) { marks = list; markDone = onClick; clusterZ = null; render(); },
     view: () => ({lat: latOf(cy, z), lon: lonOf(cx, z), zoom: z}),
     // show all points: the biggest zoom at which they all fit

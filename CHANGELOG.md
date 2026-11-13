@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.18 – 2026-11-13 – Bigger map
+- The map on the places page uses the height that is left, so that it and two rows of photos fit on the screen (at least 300 px high). It follows the window size.
+
 ## 0.10.17 – 2026-11-13 – Two rows of photos under the map
 - Under the map only two rows of photos are shown; "Show all … photos" shows the rest.
 
