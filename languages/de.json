@@ -1234,6 +1234,27 @@
   "Draft: year not confirmed yet": "Entwurf: Jahr noch nicht bestätigt",
   "The row suggests a year far from the anchor or draft. Check the photo and its place in the row.": "Die Reihe schlägt ein Jahr vor, das weit vom Anker oder Entwurf entfernt liegt. Prüfe das Foto und seinen Platz in der Reihe.",
   "⚠ on a tile": "⚠ auf einer Kachel",
-  "Hover over a photo in “Sort by appearance”: the AI age of the person (and after smoothing along the row) and the limits from the anchors.": "Über ein Foto in „Sortieren nach Aussehen“ fahren: KI-Alter der Person (und nach dem Glätten entlang der Reihe) und die Grenzen aus den Ankern."
+  "Hover over a photo in “Sort by appearance”: the AI age of the person (and after smoothing along the row) and the limits from the anchors.": "Über ein Foto in „Sortieren nach Aussehen“ fahren: KI-Alter der Person (und nach dem Glätten entlang der Reihe) und die Grenzen aus den Ankern.",
+  "Place in Immich": "Ort in Immich",
+  "Equated with the Gramps place {name}.": "Gleichgesetzt mit dem Gramps-Ort {name}.",
+  "place from Immich": "Ort aus Immich",
+  "All places are matched.": "Alle Orte sind abgeglichen.",
+  "The place in Grimmich and the place in Immich are more than 300 m apart. Open a photo and decide which one counts.": "Der Ort in Grimmich und der Ort in Immich liegen mehr als 300 m auseinander. Öffne ein Foto und entscheide, welcher gilt.",
+  "Equate": "Gleichsetzen",
+  "Places that Immich has for your photos and that are not equated with a Gramps place yet. A place you leave alone stays as it is in Immich.": "Orte, die Immich für deine Fotos hat und die noch keinem Gramps-Ort gleichgesetzt sind. Ein Ort, den du nicht anfasst, bleibt in Immich, wie er ist.",
+  "Equate with Gramps place …": "Mit Gramps-Ort gleichsetzen …",
+  "{n} {n:place|places}": "{n} {n:Ort|Orte}",
+  "Places differ": "Orte weichen ab",
+  "Places from Gramps are not loaded yet.": "Die Orte aus Gramps sind noch nicht geladen.",
+  "{m} m": "{m} m",
+  "Next Gramps place:": "Nächster Gramps-Ort:",
+  "Match with Gramps": "Abgleich mit Gramps",
+  "Other place …": "Anderer Ort …",
+  "Keep Grimmich place": "Grimmich-Ort behalten",
+  "Take Immich place": "Immich-Ort nehmen",
+  "No Gramps place with coordinates found.": "Kein Gramps-Ort mit Koordinaten gefunden.",
+  "Load": "Laden",
+  "The place in Grimmich ({a}) differs from the place in Immich ({b}). Which one counts?": "Der Ort in Grimmich ({a}) weicht vom Ort in Immich ({b}) ab. Welcher gilt?",
+  "{km} km": "{km} km"
  }
 }

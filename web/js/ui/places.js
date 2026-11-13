@@ -1,6 +1,6 @@
 // Places: each photo gets a place from Gramps (coordinates go to Immich later). For series the place applies to all photos by default.
 // Suggestions: place of an assigned event, residence of a person on the photo at the matching time, place of the neighbouring photo in the album. Plus a search with a suggestion list.
-import {S, ui, draw, mark, savePlaces} from "../state.js";
+import {S, ui, draw, mark, savePlaces, saveOrd} from "../state.js";
 import {esc, toast} from "../util.js";
 import {modal, closeIt} from "./dialog.js";
 import {unitOf, setPlace, placeFrom} from "../model.js";
@@ -8,6 +8,7 @@ import {loadGrampsPlaces, grYearDec, grPeriod} from "../gramps.js";
 import {albumNeighbors} from "../provenance.js";
 import {peopleOn} from "./event.js";
 import {placeAnswers} from "../refine.js";
+import {geoOf, geoId, geoMapped, geoText, geoGroups, geoConflict, nearestGramps, kmText} from "../geo.js";
 import {tr} from "../language.js";
 
 export const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
@@ -99,33 +100,64 @@ document.addEventListener("keydown", (ev) => {
   if (ev.key === "Enter" && ev.target && ev.target.id === "place-search") { const z = document.querySelector("#place-hits .place-pick"); if (z) z.click(); }
 });
 
-// Basket: one place for all photos in the basket
-async function placeSelection() {
-  const keys = [...ui.sel].map(unitOf).filter(Boolean).flatMap((e) => e.keys);
-  if (!keys.length) return;
+// Search dialog for a Gramps place; onChoose(o) gets the chosen entry {h, id, t, n, lat, lon}
+async function pickPlace(title, onChoose) {
   if (!S.grPlaces) await loadGrampsPlaces(false);
   if (!S.grPlaces || !S.grPlaces.list) return toast(tr("Places from Gramps not available: {fehler}", {fehler: (S.grPlaces && S.grPlaces.errors) || ""}));
-  modal(`<h3>${tr("Set a place for {n} {n:photo|photos}", {n: keys.length})}</h3>
+  modal(`<h3>${esc(title)}</h3>
     <input type="text" id="basket-place" placeholder="${tr("Search place: type name or Gramps number")}" autocomplete="off" style="width:100%;box-sizing:border-box">
     <div id="basket-hits" class="place-list"></div>
     <div class="actions" style="margin-top:14px"><button id="basket-place-no">${tr("Cancel")}</button></div>`);
   document.getElementById("basket-place-no").onclick = closeIt;
   const input = document.getElementById("basket-place"), box = document.getElementById("basket-hits");
-  const choose = async (o) => { closeIt(); setPlace(keys, {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon, source: tr("chosen by hand")}); ui.sel.clear(); await savePlaces(); draw(); };
   const fill = () => {
     const q = norm(input.value).split(/\s+/).filter(Boolean);
     const hits = q.length ? S.grPlaces.list.filter((o) => { const x = norm(o.t + " " + o.id); return q.every((w) => x.includes(w)); })
       .sort((a, b) => (norm(a.n).startsWith(q[0]) ? 0 : 1) - (norm(b.n).startsWith(q[0]) ? 0 : 1) || a.t.length - b.t.length).slice(0, 8) : [];
     box.innerHTML = q.length && !hits.length ? '<div class="quiet" style="padding:4px 8px">' + tr("No place found.") + '</div>'
       : hits.map((o, i) => `<div class="place-pick" data-i="${i}"><b>${esc(o.n)}</b> <span class="quiet">${esc(o.t.slice(o.n.length))}</span></div>`).join("");
-    box.querySelectorAll(".place-pick").forEach((b) => { b.onclick = () => choose(hits[+b.dataset.i]); });
+    box.querySelectorAll(".place-pick").forEach((b) => { b.onclick = () => { closeIt(); onChoose(hits[+b.dataset.i]); }; });
   };
   input.addEventListener("input", fill);
   input.addEventListener("keydown", (ev) => { if (ev.key === "Enter") { const z = box.querySelector(".place-pick"); if (z) z.click(); } });
   input.focus();
 }
+// Basket: one place for all photos in the basket
+async function placeSelection() {
+  const keys = [...ui.sel].map(unitOf).filter(Boolean).flatMap((e) => e.keys);
+  if (!keys.length) return;
+  pickPlace(tr("Set a place for {n} {n:photo|photos}", {n: keys.length}), async (o) => {
+    setPlace(keys, {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon, source: tr("chosen by hand")}); ui.sel.clear(); await savePlaces(); draw();
+  });
+}
+// Equate an Immich place (identical coordinates) with a Gramps place: applies to all photos with these coordinates
+async function equate(id, o) {
+  const x = geoGroups().find((y) => y.id === id);
+  if (!x || !o) return;
+  S.ord._geo = S.ord._geo || {};
+  S.ord._geo[id] = {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon};
+  mark(); await saveOrd(); draw();
+}
+// Immich place of the photo, equation with Gramps, and the decision when Grimmich and Immich differ
+export function geoBlock(key) {
+  const g = geoOf(key);
+  if (!g) return "";
+  const mp = geoMapped(g), gid = geoId(g), p = S.places && S.places[key];
+  let h = `<div><div class="field-name">${tr("Place in Immich")}</div><div><b>${esc(geoText(g))}</b> <span class="quiet">${g.lat.toFixed(4)} / ${g.lon.toFixed(4)}</span>`;
+  if (mp) h += `<div class="quiet">${tr("Equated with the Gramps place {name}.", {name: esc(mp.name)})} <a href="#" class="link" data-a="geo-unmap" data-id="${esc(gid)}">${tr("Undo")}</a></div>`;
+  else h += `<div class="actions"><button class="small" data-a="geo-pick" data-id="${esc(gid)}">${tr("Equate with Gramps place …")}</button></div>`;
+  if (geoConflict(key)) h += `<div class="box warn" style="margin-top:6px">${tr("The place in Grimmich ({a}) differs from the place in Immich ({b}). Which one counts?", {a: esc(p.name || ""), b: esc(geoText(g))})}
+    <div class="actions"><button class="small" data-a="geo-keep" data-key="${esc(key)}">${tr("Keep Grimmich place")}</button><button class="small" data-a="geo-use-immich" data-key="${esc(key)}">${tr("Take Immich place")}</button></div></div>`;
+  return h + "</div></div>";
+}
 
 export const actions = {
+  "geo-equate": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id), n = x && nearestGramps(x.g); if (n) return equate(x.id, n.o); },
+  "geo-pick": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id) || {id: el.dataset.id}; return pickPlace(tr("Equate with Gramps place …"), (o) => equate(x.id, o)); },
+  "geo-load": () => loadGrampsPlaces(false).then(draw),
+  "geo-unmap": async (el) => { if (S.ord._geo) delete S.ord._geo[el.dataset.id]; mark(); await saveOrd(); draw(); },
+  "geo-keep": async (el) => { (S.ord._geoOk = S.ord._geoOk || {})[el.dataset.key] = true; mark(); await saveOrd(); draw(); },
+  "geo-use-immich": async (el) => { setPlace([el.dataset.key], null); mark(); await savePlaces(); draw(); },
   "place-select": () => placeSelection(),
   "place-pick": (el) => assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[el.dataset.h], tr("chosen by hand")),
   "place-prefill": (el) => { const x = (ui.placeSuggestions || [])[+el.dataset.i]; if (x) return assignTo(el.dataset.uid, el.dataset.key, x.o, x.reason); },

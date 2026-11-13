@@ -7,7 +7,7 @@ import {provenanceOf, provenanceText} from "../provenance.js";
 import {grampsBereich} from "./gramps.js";
 import {eventRange} from "./event.js";
 import {hintsArea, cardRange} from "./hints.js";
-import {placeArea} from "./places.js";
+import {placeArea, geoBlock} from "./places.js";
 import {tr} from "../language.js";
 
 // A person page exists for people with photos in the work list, not for “… Unknown”
@@ -133,6 +133,7 @@ export function detailHtml() {
     ${hintsArea(e, key)}
     ${eventRange(e)}
     ${placeArea(e, key)}
+    ${geoBlock(key)}
     ${grampsBereich(e, key)}
     <div class="button-column">
       <button class="${w.length ? "warn" : ""}" data-a="faces" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Check faces")}</button>

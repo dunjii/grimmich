@@ -72,6 +72,7 @@ export async function loading() {
   S.inbox = a.inbox || {seen: []};
   S.immichData = (a.immich_data || {}).photos || {};
   S.immichSeen = (a.immich_data || {}).seen || {};
+  S.geo = (a.immich_data || {}).geo || {};          // places Immich has: {key: {lat, lon, t}}
   S.version = a.version || "";
   S.game = a.game_votes && Array.isArray(a.game_votes.votes) ? {votes: a.game_votes.votes, muted: a.game_votes.muted || []} : {votes: [], muted: []};
   S.notes = a.notes && Array.isArray(a.notes.notes) ? a.notes.notes : [];

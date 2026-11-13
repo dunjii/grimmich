@@ -3,6 +3,14 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.13 – 2026-11-13 – Places from Immich
+- **Reading in**: Grimmich now reads the place Immich has for each photo (coordinates, city/state/country). Click "Refresh" after the update so the places are read.
+- **At the photo**: "Place in Immich" with the coordinates; you can equate it with a Gramps place.
+- **Places list**: Immich places appear as their own entries (📍), grouped by identical coordinates, with the number of photos.
+- **Match with Gramps**: lists the Immich places that are not equated yet, with the nearest Gramps place and the distance. "Equate" (or "Other place …") applies to all photos with these coordinates; "Undo" at the photo reverses it. Places you leave alone stay as they are in Immich.
+- **Places differ**: if the place in Grimmich and the place in Immich are more than 300 m apart, the photo asks which one counts ("Keep Grimmich place" / "Take Immich place"). Nothing is overwritten by itself.
+- Writing to Immich is unchanged.
+
 ## 0.10.12 – 2026-11-12 – Birth year estimate needs two anchor years; legends updated
 - **Estimated birth year** is only suggested when at least two anchors from different years exist. With one anchor year (for example a whole series anchored to 1998) the hint says what the AI estimates ("about 33 years in 1998") and what is missing, and the take-over button is gone.
 - **Legends** (Help and the small one in "Sort by appearance") describe the new tiles: green anchor, yellow draft, grey "c." suggestion, ⚠, tooltip, notes symbol. Drafts are yellow everywhere now (also in the timeline).

@@ -73,6 +73,16 @@ def date_check(photo, key, written):
     return {**info, "why": "set" if far else "close", "n": n}
 
 
+def geo_of(exif):
+    """The place Immich has for a photo: coordinates and the place text (city, state, country), or None."""
+    try:
+        lat, lon = float(exif.get("latitude")), float(exif.get("longitude"))
+    except (TypeError, ValueError):
+        return None
+    text = ", ".join(x for x in (exif.get("city"), exif.get("state"), exif.get("country")) if x)
+    return {"lat": round(lat, 5), "lon": round(lon, 5), "t": text}
+
+
 def hand_date(photo, key, written):
     """Has someone (you) set the capture date in Immich by hand, or is it a digital photo with a camera date?
     -> {"date", "scan", "camera"?} or None.
@@ -96,6 +106,7 @@ def snapshot():
     hand_ = {}
     seen_ = DIAG["seen"] = {}
     DIAG["camera_without_anchor"] = []
+    geo_ = DIAG["geo"] = {}
     written = read_(WRITTEN, {})
     for i, photo in enumerate(photos, 1):
         if i % 100 == 0:
@@ -115,6 +126,9 @@ def snapshot():
         ex = photo["exifInfo"]
         DIAG["with_date"] += bool(ex.get("dateTimeOriginal"))
         DIAG["with_camera"] += bool(ex.get("make") or ex.get("model"))
+        g = geo_of(ex)
+        if g:
+            geo_[key] = g
         seen_[key] = date_check(photo, key, written)
         h = hand_date(photo, key, written)
         if h:
@@ -176,7 +190,7 @@ def main():
     print(tx("Connecting to {url} ...", url=S.URL))
     new_, hand_ = snapshot()
     write_doc(HAND_DATA, {"state": datetime.now().strftime("%Y-%m-%d %H:%M"), "photos": hand_,
-                         "camera_without_anchor": DIAG.get("camera_without_anchor", []), "seen": DIAG.get("seen", {})})
+                         "camera_without_anchor": DIAG.get("camera_without_anchor", []), "seen": DIAG.get("seen", {}), "geo": DIAG.get("geo", {})})
     print(tx("Exif data: {dated} photos with a capture date, {camera} with camera data ({reloaded} loaded individually).", dated=DIAG['with_date'], camera=DIAG['with_camera'], reloaded=DIAG['reloaded']))
     if DIAG.get("camera_without_anchor"):
         print(tx("{n} digital photos are in the working album, not in the anchor album. Their camera date does not count.", n=len(DIAG['camera_without_anchor'])))
