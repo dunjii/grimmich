@@ -28,7 +28,7 @@ export async function openPlacePicker({keys, title, text = "", onDone}) {
     <div id="of-near" class="quiet" style="margin-top:4px"></div>
     <div class="row2"><div><label>${tr("Name")}</label><input type="text" id="of-name" value="${esc(cur ? cur.name : "")}"></div>
       <div><label>${tr("Belongs to")}</label><input type="text" id="of-parent" value="${esc(cur ? "" : city)}" placeholder="${esc(tr("e.g. the town"))}"></div></div>
-    <div class="actions" style="margin-top:14px"><button id="of-no">${tr("Cancel")}</button><button class="primary" id="of-ok">${tr("Apply")}</button></div></div>`, 720);
+    <div class="actions" style="margin-top:14px"><button id="of-no">${tr("Cancel")}</button><button class="primary" id="of-ok">${tr("Apply")}</button></div></div>`, 1100);
   const $ = (id) => document.getElementById(id);
   let chosen = null, net = [];
   const map = createMap($("of-map"), {lat: start ? start.lat : 51.0, lon: start ? start.lon : 10.4, zoom: start ? start.z : 6, pin: start ? {lat: start.lat, lon: start.lon} : null,

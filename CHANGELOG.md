@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.15 – 2026-11-13 – Bigger place window
+- The place window is wider (up to 1100 px) and the map is taller (about half the screen height).
+
 ## 0.10.14 – 2026-11-13 – One window to choose a place, with a map
 - **"Choose place …" / "Change …"** at the photo (and "Set place …" in the basket) open one window: search (places from Gramps, your own places; Enter also searches OpenStreetMap on the internet), a map with a pin (click or drag it, zoom with the wheel), name and "belongs to".
 - A place from Gramps is taken over as it is. Any other place becomes **your own place in Grimmich** (it does not have to exist in Gramps). Its coordinate goes to Immich like before, after your confirmation.
