@@ -8,6 +8,7 @@ import {loadGrampsPlaces, grYearDec, grPeriod} from "../gramps.js";
 import {albumNeighbors} from "../provenance.js";
 import {peopleOn} from "./event.js";
 import {placeAnswers} from "../refine.js";
+import {openPlacePicker} from "./placepicker.js";
 import {geoOf, geoId, geoMapped, geoText, geoGroups, geoConflict, nearestGramps, kmText} from "../geo.js";
 import {tr} from "../language.js";
 
@@ -49,8 +50,8 @@ function gameAnswersReadOnly(key) {
 }
 export function placeArea(e, key) {
   const head = '<div class="field-name">' + tr("Place") + '</div>';
-  if (!S.grPlaces) { setTimeout(() => loadGrampsPlaces(false), 0); return `<div>${head}<div class="quiet">${tr("Loading places from Gramps …")}</div>${placeFrom(key) ? "" : gameAnswersReadOnly(key)}</div>`; }
-  if (S.grPlaces.errors) return `<div>${head}<div class="quiet">${tr("Places from Gramps not available: {fehler}", {fehler: esc(S.grPlaces.errors)})} <a href="#" class="link" data-a="place-new">${tr("Try again")}</a></div>${placeFrom(key) ? "" : gameAnswersReadOnly(key)}</div>`;
+  if (!S.grPlaces) setTimeout(() => loadGrampsPlaces(false), 0);
+  const gp = S.grPlaces && !S.grPlaces.errors ? S.grPlaces : null;
   const nowVal = placeFrom(key), seriesVal = e.keys.length > 1;
   const deviating = e.keys.filter((k) => !same(placeFrom(k), nowVal)).length;
   let content = "";
@@ -63,16 +64,15 @@ export function placeArea(e, key) {
   const ans = nowVal ? [] : placeAnswers(key);
   ui.gamePlaces = ans;
   if (ans.length) content += '<div class="quiet" style="margin-top:6px">' + tr("Answers from the game:") + '</div>' + ans.map((g, i) => `<div class="ez-row">
-    ${g.h && S.grPlaces.byHandle[g.h] ? `<button class="small good" data-a="place-game" data-i="${i}" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Take over")}</button>` : `<button class="small" data-a="place-search-for" data-i="${i}">${tr("Search")}</button>`}
-    <span><b>${esc(g.h && S.grPlaces.byHandle[g.h] ? S.grPlaces.byHandle[g.h].t : tr("new place: {name}", {name: g.text}))}</b> <span class="quiet">${esc(g.players.join(", "))}</span></span></div>`).join("");
-  const v = suggestions(e, key).filter((x) => !nowVal || x.o.h !== nowVal.h);
+    ${g.h && gp && gp.byHandle[g.h] ? `<button class="small good" data-a="place-game" data-i="${i}" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Take over")}</button>` : `<button class="small" data-a="place-search-for" data-i="${i}">${tr("Search")}</button>`}
+    <span><b>${esc(g.h && gp && gp.byHandle[g.h] ? gp.byHandle[g.h].t : tr("new place: {name}", {name: g.text}))}</b> <span class="quiet">${esc(g.players.join(", "))}</span></span></div>`).join("");
+  const v = gp ? suggestions(e, key).filter((x) => !nowVal || x.o.h !== nowVal.h) : [];
   ui.placeSuggestions = v;
   if (v.length) content += '<div class="quiet" style="margin-top:6px">' + tr("Suggestions:") + '</div>' + v.map((x, i) => `<div class="ez-row"><button class="small" data-a="place-prefill" data-i="${i}" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${tr("Take over")}</button>
     <span><b>${esc(x.o.t)}</b> <span class="quiet">${esc(x.reason)}${x.o.lat == null ? tr(" · without coordinates") : ""}</span></span></div>`).join("");
-  content += `<div style="margin-top:8px"><input type="text" id="place-search" data-uid="${esc(e.uid)}" data-key="${esc(key)}" placeholder="${tr("Search place: type name or Gramps number")}" autocomplete="off" style="width:100%;box-sizing:border-box">
-    <div id="place-hits" class="place-list"></div>
+  content += `<div style="margin-top:8px"><button class="small primary" data-a="place-open" data-uid="${esc(e.uid)}" data-key="${esc(key)}">${nowVal ? tr("Change …") : tr("Choose place …")}</button></div>
     ${seriesVal ? `<label class="quiet" style="font-size:12px;display:block;margin-top:4px"><input type="checkbox" data-a="place-only" ${ui.placeOnly ? "checked" : ""}> ${tr("only for this photo (otherwise the place applies to the whole series)")}</label>` : ""}
-    <div class="quiet" style="font-size:12px;margin-top:4px">${tr("{n} {n:place|places} from Gramps{Koordinaten}.", {n: S.grPlaces.list.length, Koordinaten: S.grPlaces.without ? `${tr(", {ohne} of them without coordinates", {ohne: S.grPlaces.without})}` : ""})} <a href="#" class="link" data-a="place-new">${tr("Reload")}</a></div></div>`;
+    ${gp ? "" : `<div class="quiet" style="font-size:12px;margin-top:4px">${tr("Places from Gramps not available: {fehler}", {fehler: esc((S.grPlaces && S.grPlaces.errors) || tr("loading …"))})} <a href="#" class="link" data-a="place-new">${tr("Try again")}</a></div>`}`;
   return `<div>${head}${content}</div>`;
 }
 
@@ -84,21 +84,6 @@ async function assignTo(uid, key, o, reasonText, everyone) {
   setPlace(keys, o ? {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon, source: reasonText} : null);
   await savePlaces(); draw();
 }
-
-// suggestion list while typing (without redrawing the page, so the input field keeps its focus)
-document.addEventListener("input", (ev) => {
-  const t = ev.target;
-  if (!t || t.id !== "place-search") return;
-  const box = document.getElementById("place-hits"), q = norm(t.value).split(/\s+/).filter(Boolean);
-  if (!q.length || !S.grPlaces) { box.innerHTML = ""; return; }
-  const hitList = S.grPlaces.list.filter((o) => { const s = norm(o.t + " " + o.id); return q.every((w) => s.includes(w)); })
-    .sort((a, b) => (norm(a.n).startsWith(q[0]) ? 0 : 1) - (norm(b.n).startsWith(q[0]) ? 0 : 1) || a.t.length - b.t.length).slice(0, 8);
-  box.innerHTML = hitList.length ? hitList.map((o) => `<div class="place-pick" data-a="place-pick" data-h="${esc(o.h)}" data-uid="${esc(t.dataset.uid)}" data-key="${esc(t.dataset.key)}"><b>${esc(o.n)}</b> <span class="quiet">${esc(o.t.slice(o.n.length).replace(/^,\s*/, ""))} · ${esc(o.id)}${o.lat == null ? tr(" · without coordinates") : ""}</span></div>`).join("")
-    : '<div class="quiet" style="padding:4px 8px">' + tr("No place found.") + '</div>';
-});
-document.addEventListener("keydown", (ev) => {
-  if (ev.key === "Enter" && ev.target && ev.target.id === "place-search") { const z = document.querySelector("#place-hits .place-pick"); if (z) z.click(); }
-});
 
 // Search dialog for a Gramps place; onChoose(o) gets the chosen entry {h, id, t, n, lat, lon}
 async function pickPlace(title, onChoose) {
@@ -126,9 +111,7 @@ async function pickPlace(title, onChoose) {
 async function placeSelection() {
   const keys = [...ui.sel].map(unitOf).filter(Boolean).flatMap((e) => e.keys);
   if (!keys.length) return;
-  pickPlace(tr("Set a place for {n} {n:photo|photos}", {n: keys.length}), async (o) => {
-    setPlace(keys, {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon, source: tr("chosen by hand")}); ui.sel.clear(); await savePlaces(); draw();
-  });
+  openPlacePicker({keys, title: tr("Set a place for {n} {n:photo|photos}", {n: keys.length}), onDone: () => ui.sel.clear()});
 }
 // Equate an Immich place (identical coordinates) with a Gramps place: applies to all photos with these coordinates
 async function equate(id, o) {
@@ -151,7 +134,9 @@ export function geoBlock(key) {
   return h + "</div></div>";
 }
 
+const keysFor = (el) => { const e = unitOf(el.dataset.uid); return !e ? [] : !ui.placeOnly || e.keys.length < 2 ? e.keys : [el.dataset.key]; };
 export const actions = {
+  "place-open": (el) => openPlacePicker({keys: keysFor(el)}),
   "geo-equate": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id), n = x && nearestGramps(x.g); if (n) return equate(x.id, n.o); },
   "geo-pick": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id) || {id: el.dataset.id}; return pickPlace(tr("Equate with Gramps place …"), (o) => equate(x.id, o)); },
   "geo-load": () => loadGrampsPlaces(false).then(draw),
@@ -159,10 +144,9 @@ export const actions = {
   "geo-keep": async (el) => { (S.ord._geoOk = S.ord._geoOk || {})[el.dataset.key] = true; mark(); await saveOrd(); draw(); },
   "geo-use-immich": async (el) => { setPlace([el.dataset.key], null); mark(); await savePlaces(); draw(); },
   "place-select": () => placeSelection(),
-  "place-pick": (el) => assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[el.dataset.h], tr("chosen by hand")),
   "place-prefill": (el) => { const x = (ui.placeSuggestions || [])[+el.dataset.i]; if (x) return assignTo(el.dataset.uid, el.dataset.key, x.o, x.reason); },
   "place-game": (el) => { const g = (ui.gamePlaces || [])[+el.dataset.i]; if (g && S.grPlaces.byHandle[g.h]) return assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[g.h], tr("answer from the game: {names}", {names: g.players.join(", ")})); },
-  "place-search-for": (el) => { const g = (ui.gamePlaces || [])[+el.dataset.i], f = document.getElementById("place-search"); if (g && f) { f.value = g.text; f.dispatchEvent(new Event("input", {bubbles: true})); f.focus(); } },
+  "place-search-for": (el) => { const g = (ui.gamePlaces || [])[+el.dataset.i], b = document.querySelector('[data-a="place-open"]'); if (g && b) openPlacePicker({keys: keysFor(b), text: g.text}); },
   "place-remove": (el) => assignTo(el.dataset.uid, el.dataset.key, null),
   "place-all": (el) => { const o = placeFrom(el.dataset.key); if (o) return assignTo(el.dataset.uid, el.dataset.key, S.grPlaces.byHandle[o.h] || {h: o.h, id: o.id, t: o.name, lat: o.lat, lon: o.lon}, o.source, true); },
   "place-only": (el) => { ui.placeOnly = el.checked; draw(); },

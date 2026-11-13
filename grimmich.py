@@ -42,6 +42,7 @@ import model_versions  # noqa: E402
 import play  # noqa: E402
 import credentials  # noqa: E402
 import addresses  # noqa: E402
+import geocode  # noqa: E402
 import messages  # noqa: E402
 from messages import tx  # noqa: E402
 
@@ -737,6 +738,8 @@ class Handler(BaseHTTPRequestHandler):
             self._json(connections.gramps_personen(new_=bool(q.get("new"))))
         elif path_ == "/api/gramps_places":
             self._json(connections.gramps_orte(new_=bool(q.get("new"))))
+        elif path_ == "/api/geocode":   # only for you, not for players from outside
+            self._json(geocode.search((q.get("q") or [""])[0], version=version()))
         elif path_ == "/api/models":
             self._json(model_versions.view(read_json("model_check.json", {})))
         elif path_ == "/api/gramps_events":

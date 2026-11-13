@@ -488,3 +488,10 @@ body:not(.write) { --kopf: 108px; }
 
 .counts-line { display: flex; flex-wrap: wrap; gap: 8px 26px; margin: 12px 0 16px; color: var(--leise, #6b6f6a); }
 .counts-line b { color: var(--text, inherit); font-size: 18px; }
+.gmap { position: relative; overflow: hidden; height: 260px; border: 1px solid var(--rand); border-radius: 8px; background: #e6e9d8; cursor: grab; touch-action: none; user-select: none; }
+.gmap-tiles { position: absolute; inset: 0; } .gmap-tile { position: absolute; left: 0; top: 0; width: 256px; height: 256px; max-width: none; pointer-events: none; }
+.gmap-pin { position: absolute; left: 0; top: 0; width: 0; height: 0; cursor: grab; } .gmap-pin::after { content: ""; position: absolute; left: -11px; top: -30px; width: 22px; height: 22px; background: #c0392b; border: 2px solid #fff; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); box-shadow: 0 1px 4px #0006; }
+.gmap-zoom { position: absolute; left: 8px; top: 8px; display: flex; flex-direction: column; gap: 4px; } .gmap-zoom button { width: 30px; height: 30px; font-size: 18px; line-height: 1; border: 1px solid #999; border-radius: 6px; background: #fff; cursor: pointer; }
+.gmap-credit { position: absolute; right: 6px; bottom: 3px; font-size: 10px; background: rgba(255,255,255,.8); padding: 0 4px; border-radius: 3px; }
+.ort-fenster .row2 { display: flex; gap: 10px; } .ort-fenster .row2 > div { flex: 1; } .ort-fenster label { font-size: 12px; color: var(--leise); display: block; margin-top: 8px; }
+.ort-fenster input[type=text] { width: 100%; box-sizing: border-box; }
