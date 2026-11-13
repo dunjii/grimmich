@@ -3,6 +3,13 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.16 – 2026-11-13 – Places page with a map
+- **Menu "Places" opens a map** in the middle: one point per place with the number of photos, points close together become one circle (click zooms in). The chosen point is red.
+- A click on a point shows its photos below; **"Edit …"** opens the place window. The photo panel stays on the right.
+- Left column: "Map", **"To do"** (match with Gramps, places differ, suggestions from the game, **without coordinates**), a **search** and the list of places. A place from the list moves the map to it.
+- New page "Without coordinates": places without a point, with "Set on map …".
+- Not yet: hierarchy ("Belongs to") in the list and linking own places with Gramps places (next step).
+
 ## 0.10.15 – 2026-11-13 – Bigger place window
 - The place window is wider (up to 1100 px) and the map is taller (about half the screen height).
 

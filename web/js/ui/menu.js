@@ -27,6 +27,7 @@ export const actions = {
     if (ui.menu === "series" && ui.view !== "serie" && !(ui.view === "task" && ui.task === "series")) {   // the middle shows the series to review
       Object.assign(ui, {view: "task", task: "series", menu: null, focusKey: null, photoKey: null});
     }
+    if (ui.menu === "places" && ui.view !== "place") Object.assign(ui, {view: "place", placeId: null, menu: null, focusKey: null, photoKey: null});   // the map
     draw();
   },
 };

@@ -1183,7 +1183,6 @@
   "Events": "Ereignisse",
   "Menu": "Menü",
   "No places assigned yet.": "Noch keine Orte zugeordnet.",
-  "Select a place on the left.": "Wähle links einen Ort.",
   "Loads names and changes from Immich, reads the albums and estimates new photos": "Lädt Namen und Änderungen aus Immich, liest die Alben und schätzt neue Fotos",
   "Refreshed. {neu} new series suggestions.": "Aktualisiert. {neu} neue Serienvorschläge.",
   "All series": "Serien",
@@ -1265,6 +1264,17 @@
   "Nearby:": "In der Nähe:",
   "Belongs to": "Gehört zu",
   "Choose a place": "Ort wählen",
-  "Apply": "Übernehmen"
+  "Apply": "Übernehmen",
+  "To do": "Zu erledigen",
+  "Map": "Karte",
+  "Without coordinates": "Ohne Koordinaten",
+  "Set on map …": "Auf Karte setzen …",
+  "Show photos": "Fotos zeigen",
+  "These places have no point on the map yet. Set them on the map to see them there.": "Diese Orte haben noch keinen Punkt auf der Karte. Setze sie auf der Karte, dann erscheinen sie dort.",
+  "All places have coordinates.": "Alle Orte haben Koordinaten.",
+  "no coordinates": "keine Koordinaten",
+  "Edit …": "Bearbeiten …",
+  "{n} {n:photo|photos} at {p} {p:point|points}. Click a point to see its photos.": "{n} {n:Foto|Fotos} an {p} {p:Punkt|Punkten}. Klicke einen Punkt an, um seine Fotos zu sehen.",
+  "No place with coordinates yet.": "Noch kein Ort mit Koordinaten."
  }
 }

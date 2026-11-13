@@ -26,6 +26,7 @@ import {actions as aGramps} from "./ui/gramps.js";
 import {actions as aSimilar} from "./ui/hints.js";
 import {actions as aEvent, eventHtml} from "./ui/event.js";
 import {actions as aPlaces} from "./ui/places.js";
+import {placeMapInit, placeState, setPlaceView, actions as aPlaceView} from "./ui/placeview.js";
 import {gameHtml, actions as aGame, startOnPhone} from "./ui/game.js";
 import {gameEvalHtml, actions as aGameEval} from "./ui/gameeval.js";
 import {checkSignIn} from "./ui/login.js";
@@ -68,6 +69,7 @@ function drawAll() {
   else {
     $("page").hidden = true; $("frame").hidden = false;
     $("list").innerHTML = listHtml(); $("middle").innerHTML = middleHtml(); $("detail").innerHTML = detailHtml();
+    placeMapInit();
     $("list").scrollTop = scroll.list; $("detail").scrollTop = scroll.detail;
   }
   if (Object.keys(S.photos).length) [...ui.sel].forEach((u) => { if (!unitOf(u)) ui.sel.delete(u); });   // gone (merged, dissolved): out of the basket
@@ -128,7 +130,11 @@ const aNavigation = {
   },
   "go-event": (el) => goTo("event", {eventId: el.dataset.id}),
   "go-series": (el) => { const e = unitList().byUid["s:" + el.dataset.sid]; goTo("serie", {seriesId: el.dataset.sid, ...(e ? {focusKey: e.uid} : {})}); },
-  "go-place": (el) => goTo("place", {placeId: el.dataset.id}),
+  "go-place": (el) => {
+    const id = el.dataset.id || null, x = id && !id.startsWith("__") ? placeState().find((y) => y.id === id) : null;
+    if (x && x.lat != null) setPlaceView(x.lat, x.lon);   // the map moves to the place
+    goTo("place", {placeId: id});
+  },
   "go-write": async () => { goTo("write"); await loadWrite(); draw(); },
   "back": () => { const p = peopleState().find((x) => !x.done); goTo(p ? "person" : "start", p ? {personId: p.p.id} : {}); },
   "list-open": () => { ui.listOpen = true; remember("listeOffen", true); draw(); },
@@ -146,7 +152,7 @@ const aNavigation = {
   "gr-marker": (el) => grAnchor(el.dataset.pid, el.dataset.ev, el.dataset.part),
   "vb-leer": () => {},
 };
-const ACTION_TEXT = {...aGame, ...aDetail, ...aMenu, ...aGameEval, ...aPlaces, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
+const ACTION_TEXT = {...aGame, ...aDetail, ...aMenu, ...aGameEval, ...aPlaces, ...aPlaceView, ...aSimilar, ...aEvent, ...aGramps, ...aSearch, ...aCommon, ...aSeries, ...aSort, ...aViews, ...aWrite, ...aSettings, ...aHelp, ...aNavigation};
 
 window.__grimmichActions = ACTION_TEXT;   // for the search: jumps through the same actions as the buttons
 document.addEventListener("click", async (ev) => {
