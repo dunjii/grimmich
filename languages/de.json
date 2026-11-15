@@ -1279,6 +1279,7 @@
   "Show all {n} photos": "Alle {n} Fotos zeigen",
   "Coordinates": "Koordinaten",
   "Pin:": "Pin:",
-  "set pin here": "Pin hier setzen"
+  "set pin here": "Pin hier setzen",
+  "{n} places on the same spot": "{n} Orte an derselben Stelle"
  }
 }

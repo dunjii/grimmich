@@ -86,8 +86,10 @@ export function placeMapInit() {
   if (!box) return;
   const pts = placePoints(), v = mapView;
   mapObj = createMap(box, {lat: v ? v.lat : 51.0, lon: v ? v.lon : 10.4, zoom: v ? v.zoom : 5, pickable: false, onView: (x) => { mapView = x; }});
-  mapObj.setMarks(pts.map((p) => ({...p, sel: p.id === ui.placeId})), (m) => {
+  mapObj.setMarks(pts.map((p) => ({...p, sel: p.id === ui.placeId || (ui.placeId === "__multi" && (ui.placeIds || []).includes(p.id))})), (m) => {
     Object.assign(ui, {view: "place", menu: null, placeId: m.id, focusKey: null, photoKey: null}); draw();
+  }, (items) => {   // points on the same spot: show all their photos together
+    Object.assign(ui, {view: "place", menu: null, placeId: "__multi", placeIds: items.map((m) => m.id), focusKey: null, photoKey: null}); draw();
   });
   if (!v) mapObj.fit(pts);
 }
@@ -117,11 +119,15 @@ export function placeHtml() {
       <button class="small" data-a="place-edit" data-id="${esc(x.id)}">${tr("Set on map …")}</button> <button class="small" data-a="go-place" data-id="${esc(x.id)}">${tr("Show photos")}</button></div>`).join("");
     return `<div class="person-head"><div><h1>${tr("Without coordinates")}</h1><div class="quiet">${tr("These places have no point on the map yet. Set them on the map to see them there.")}</div></div></div><div style="padding:8px 14px">${rows || `<div class="quiet">${tr("All places have coordinates.")}</div>`}</div>`;
   }
-  const x = ui.placeId ? placeState().find((y) => y.id === ui.placeId) : null;
+  let x = ui.placeId && ui.placeId !== "__multi" ? placeState().find((y) => y.id === ui.placeId) : null;
+  if (ui.placeId === "__multi") {   // several places on the same spot
+    const l = placeState().filter((y) => (ui.placeIds || []).includes(y.id)), keys = l.flatMap((y) => y.keys);
+    x = {id: "__multi", name: tr("{n} places on the same spot", {n: l.length}), keys, unitList: [...new Set(l.flatMap((y) => y.unitList))], lat: l[0] ? l[0].lat : null, lon: l[0] ? l[0].lon : null, multi: l};
+  }
   const total = placeState().reduce((n, y) => n + y.keys.length, 0), pts = placePoints();
   const head = x
     ? `<div class="person-head"><div><h1>${esc(x.name)}</h1><div class="quiet">${tr("{n} {n:photo|photos}", {n: x.keys.length})}${x.immich ? " · " + tr("place from Immich") : ""}${x.lat == null ? " · " + tr("no coordinates") : ""}</div></div>
-        <div>${x.immich ? placeButtons(x) + " " : ""}<button class="small" data-a="place-edit" data-id="${esc(x.id)}">${x.lat == null ? tr("Set on map …") : tr("Edit …")}</button></div></div>`
+        <div>${x.multi ? x.multi.map((y) => `<button class="small" data-a="go-place" data-id="${esc(y.id)}">${esc(y.name)} (${y.keys.length})</button>`).join(" ") : (x.immich ? placeButtons(x) + " " : "") + `<button class="small" data-a="place-edit" data-id="${esc(x.id)}">${x.lat == null ? tr("Set on map …") : tr("Edit …")}</button>`}</div></div>`
     : `<div class="person-head"><div><h1>${tr("Places")}</h1><div class="quiet">${pts.length ? tr("{n} {n:photo|photos} at {p} {p:point|points}. Click a point to see its photos.", {n: total, p: pts.length}) : tr("No place with coordinates yet.")}</div></div></div>`;
   const grid = x ? tileGrid(x.unitList.slice().sort((a, b) => (a.decimal_year || a.year || 0) - (b.decimal_year || b.year || 0))) : "";
   return `${head}<div id="orte-map" class="orte-karte"></div><div style="margin-top:10px" id="orte-fotos">${grid}</div><div id="orte-mehr" style="margin-top:8px" hidden></div>`;

@@ -15,7 +15,7 @@ export function createMap(box, opts) {
   box.classList.add("gmap");
   box.innerHTML = '<div class="gmap-tiles"></div><div class="gmap-marks"></div><div class="gmap-pin" hidden></div><div class="gmap-zoom"><button type="button" data-z="1">+</button><button type="button" data-z="-1">−</button></div><div class="gmap-credit">© OpenStreetMap</div>';
   const tiles = box.querySelector(".gmap-tiles"), pinEl = box.querySelector(".gmap-pin"), marksEl = box.querySelector(".gmap-marks"), have = new Map();
-  let marks = [], clusterZ = null, clusters = [], markDone = null, pickable = opts.pickable !== false;
+  let marks = [], clusterZ = null, clusters = [], markDone = null, clusterDone = null, pickable = opts.pickable !== false;
   const size = () => ({w: box.clientWidth || 600, h: box.clientHeight || 250});
   function render() {
     const {w, h} = size(), x0 = cx - w / 2, y0 = cy - h / 2, n = 2 ** z;
@@ -94,7 +94,8 @@ export function createMap(box, opts) {
       const c = clusters[+d.mk.dataset.i];
       if (!c) return;
       if (c.items.length === 1) { if (markDone) markDone(c.m); }
-      else zoomTo(Math.min(MAXZ, z + 2), c.x - (cx - size().w / 2), c.y - (cy - size().h / 2));
+      else if (apart(c.items)) fitTo(c.items, 18);   // zoom so that the circle falls apart
+      else if (clusterDone) clusterDone(c.items);     // points on the same spot: they stay together, the page shows them all
       return;
     }
     if (!pickable) return;
@@ -108,23 +109,26 @@ export function createMap(box, opts) {
   }, {passive: false});
   box.querySelectorAll(".gmap-zoom button").forEach((b) => b.addEventListener("click", () => zoomTo(z + +b.dataset.z)));
   setTimeout(render, 0);
+  // show all points: the biggest zoom at which they all fit
+  function fitTo(points, maxZoom = 16) {
+    if (!points.length) return;
+    const {w, h} = size();
+    let nz = MAXZ;
+    for (; nz > MINZ; nz--) {
+      const xs = points.map((p) => worldX(p.lon, nz)), ys = points.map((p) => worldY(p.lat, nz));
+      if (Math.max(...xs) - Math.min(...xs) < w - 80 && Math.max(...ys) - Math.min(...ys) < h - 80) break;
+    }
+    nz = Math.min(nz, maxZoom);
+    const xs = points.map((p) => worldX(p.lon, nz)), ys = points.map((p) => worldY(p.lat, nz));
+    z = nz; have.forEach((i) => i.remove()); have.clear(); cx = (Math.max(...xs) + Math.min(...xs)) / 2; cy = (Math.max(...ys) + Math.min(...ys)) / 2; clusterZ = null; render();
+  }
+  // do the points still lie apart when you zoom in as far as it makes sense (zoom 18)?
+  const apart = (items) => { const xs = items.map((m) => worldX(m.lon, 18)), ys = items.map((m) => worldY(m.lat, 18)); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) > 50; };
   return {
     refresh() { render(); },
-    setMarks(list, onClick) { marks = list; markDone = onClick; clusterZ = null; render(); },
+    setMarks(list, onClick, onCluster) { marks = list; markDone = onClick; clusterDone = onCluster; clusterZ = null; render(); },
     view: () => ({lat: latOf(cy, z), lon: lonOf(cx, z), zoom: z}),
-    // show all points: the biggest zoom at which they all fit
-    fit(points) {
-      if (!points.length) return;
-      const {w, h} = size();
-      let nz = MAXZ;
-      for (; nz > MINZ; nz--) {
-        const xs = points.map((p) => worldX(p.lon, nz)), ys = points.map((p) => worldY(p.lat, nz));
-        if (Math.max(...xs) - Math.min(...xs) < w - 80 && Math.max(...ys) - Math.min(...ys) < h - 80) break;
-      }
-      nz = Math.min(nz, 16);
-      const xs = points.map((p) => worldX(p.lon, nz)), ys = points.map((p) => worldY(p.lat, nz));
-      z = nz; have.forEach((i) => i.remove()); have.clear(); cx = (Math.max(...xs) + Math.min(...xs)) / 2; cy = (Math.max(...ys) + Math.min(...ys)) / 2; clusterZ = null; render();
-    },
+    fit: fitTo,
     centerOn(lat, lon, zoom) { if (zoom && zoom !== z) { z = zoom; have.forEach((i) => i.remove()); have.clear(); } cx = worldX(lon, z); cy = worldY(lat, z); clusterZ = null; render(); },
     setPin(lat, lon, zoom) { pin = {lat, lon}; cx = worldX(lon, z); cy = worldY(lat, z); if (zoom && zoom !== z) { z = zoom; have.forEach((i) => i.remove()); have.clear(); cx = worldX(lon, z); cy = worldY(lat, z); } render(); },
     pin: () => pin,
