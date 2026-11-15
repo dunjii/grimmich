@@ -6,7 +6,7 @@ import {modal, closeIt} from "./dialog.js";
 import {setPlace, placeFrom} from "../model.js";
 import {loadGrampsPlaces} from "../gramps.js";
 import {createMap} from "../map.js";
-import {distKm, geoOf} from "../geo.js";
+import {distKm, geoOf, parseCoords} from "../geo.js";
 import {tr} from "../language.js";
 
 const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
@@ -25,6 +25,7 @@ export async function openPlacePicker({keys, title, text = "", onDone}) {
     <input type="text" id="of-q" value="${esc(text)}" placeholder="${esc(tr("Search place (Enter: also on the internet)"))}" autocomplete="off">
     <div id="of-hits" class="place-list"></div>
     <div id="of-map" style="margin-top:8px"></div>
+    <div id="of-coord" class="quiet" style="margin-top:4px"></div>
     <div id="of-near" class="quiet" style="margin-top:4px"></div>
     <div class="row2"><div><label>${tr("Name")}</label><input type="text" id="of-name" value="${esc(cur ? cur.name : "")}"></div>
       <div><label>${tr("Belongs to")}</label><input type="text" id="of-parent" value="${esc(cur ? "" : city)}" placeholder="${esc(tr("e.g. the town"))}"></div></div>
@@ -36,11 +37,13 @@ export async function openPlacePicker({keys, title, text = "", onDone}) {
   const ready = () => { const p = map.pin(); $("of-ok").disabled = !(chosen || (p && $("of-name").value.trim())); };
   function near() {
     const p = map.pin();
+    $("of-coord").innerHTML = p ? `${tr("Pin:")} <code>${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}</code>` : "";
     const list = p ? knownPlaces().map((o) => ({o, km: distKm(p, {lat: +o.lat, lon: +o.lon})})).filter((x) => x.km <= 0.15).sort((a, b) => a.km - b.km).slice(0, 3) : [];
     $("of-near").innerHTML = list.length ? tr("Nearby:") + " " + list.map((x, i) => `<button class="small" data-i="${i}">${esc(x.o.t)} (${Math.round(x.km * 1000)} m)</button>`).join(" ") : "";
     $("of-near").querySelectorAll("button").forEach((b) => { b.onclick = () => pick(list[+b.dataset.i].o); });
   }
   function pick(o) {
+    if (o.coord) { chosen = null; map.setPin(o.lat, o.lon, Math.max(map.zoom(), 17)); near(); ready(); return; }
     chosen = o.gramps || o.own ? o : null;
     $("of-name").value = o.gramps ? o.t : o.n || o.name || "";
     $("of-parent").value = o.gramps ? "" : o.parent || "";
@@ -50,16 +53,21 @@ export async function openPlacePicker({keys, title, text = "", onDone}) {
     const q = norm($("of-q").value).split(/\s+/).filter(Boolean), box = $("of-hits");
     const local = q.length ? knownPlaces().filter((o) => { const x = norm(o.t + " " + o.id); return q.every((w) => x.includes(w)); })
       .sort((a, b) => (norm(a.n).startsWith(q[0]) ? 0 : 1) - (norm(b.n).startsWith(q[0]) ? 0 : 1) || a.t.length - b.t.length).slice(0, 6) : [];
-    const all = [...local, ...net];
-    box.innerHTML = all.map((o, i) => `<div class="place-pick" data-i="${i}"><b>${esc(o.n || o.name)}</b> <span class="quiet">${esc((o.t || o.text || "").slice((o.n || o.name || "").length))} · ${tag(o)}</span></div>`).join("")
+    const c = parseCoords($("of-q").value);
+    const all = [...(c ? [{coord: true, n: tr("Coordinates"), t: tr("Coordinates"), lat: c.lat, lon: c.lon}] : []), ...local, ...net];
+    box.innerHTML = all.map((o, i) => `<div class="place-pick" data-i="${i}"><b>${esc(o.n || o.name)}</b> <span class="quiet">${o.coord ? `${o.lat.toFixed(5)}, ${o.lon.toFixed(5)} · ${tr("set pin here")}` : `${esc((o.t || o.text || "").slice((o.n || o.name || "").length))} · ${tag(o)}`}</span></div>`).join("")
       || (q.length ? `<div class="quiet" style="padding:4px 8px">${tr("No place found.")}</div>` : "");
     box.querySelectorAll(".place-pick").forEach((b) => { b.onclick = () => pick(all[+b.dataset.i]); });
   }
-  $("of-q").addEventListener("input", () => { net = []; fillHits(); });
+  $("of-q").addEventListener("input", () => {
+    net = []; fillHits();
+    const c = parseCoords($("of-q").value);
+    if (c) pick({coord: true, lat: c.lat, lon: c.lon});   // typed coordinates set the pin at once
+  });
   $("of-q").addEventListener("keydown", async (ev) => {
     if (ev.key !== "Enter") return;
     const q = $("of-q").value.trim();
-    if (q.length < 2) return;
+    if (q.length < 2 || parseCoords(q)) return;
     $("of-hits").insertAdjacentHTML("beforeend", `<div class="quiet" style="padding:4px 8px">${tr("Searching on the internet …")}</div>`);
     try {
       const r = await (await fetch("/api/geocode?q=" + encodeURIComponent(q))).json();

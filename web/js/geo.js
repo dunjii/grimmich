@@ -45,3 +45,33 @@ export function geoConflict(key) {
 }
 export const geoConflicts = () => Object.keys(S.geo || {}).filter((k) => S.photos[k] && geoConflict(k));
 export const kmText = (km) => (km < 1 ? tr("{m} m", {m: Math.round(km * 1000)}) : tr("{km} km", {km: km.toFixed(1)}));
+
+// Coordinates typed or pasted by the user: 51°04'30.8"N 11°20'40.4"E, 51°04.513'N 11°20.673'E, 51.0752, 11.3446 (also with a decimal comma). → {lat, lon} or null
+export function parseCoords(text) {
+  let t = String(text || "").trim().replace(/[′’´‘]/g, "'").replace(/[″”“]|''/g, '"').replace(/[º˚]/g, "°");
+  if (!t) return null;
+  if (/^[NSEOWnseow]\s*\d/.test(t)) t = t.replace(/([NSEOWnseow])\s*(\d[^NSEOWnseow]*)/g, (a, h, rest) => rest.trim() + h + " ");   // letter in front: N 51° 4' 30.8" O 11° …
+  const num = "(\\d+(?:[.,]\\d+)?)", f = (x) => parseFloat(String(x).replace(",", "."));
+  const part = new RegExp(`${num}\\s*°\\s*(?:${num}\\s*'\\s*)?(?:${num}\\s*"\\s*)?([NSEOWnseow])?|${num}\\s*°?\\s*([NSEOWnseow])(?![a-zA-Z])`, "g");
+  const found = [...t.matchAll(part)];
+  let two = null;
+  if (found.length === 2 && t.replace(part, "").replace(/[\s,;]/g, "") === "") {
+    two = found.map((m) => {
+      const hasDeg = m[1] !== undefined, deg = hasDeg ? f(m[1]) : f(m[5]), min = hasDeg && m[2] !== undefined ? f(m[2]) : 0, sec = hasDeg && m[3] !== undefined ? f(m[3]) : 0;
+      const h = (hasDeg ? m[4] : m[6]) || "";
+      let v = deg + min / 60 + sec / 3600;
+      if (/[SsWw]/.test(h)) v = -v;
+      return {v, h: h.toUpperCase()};
+    });
+    // order: with letters N/S before E/O/W or the other way round; without letters latitude first
+    const isLon = (x) => /[EOW]/.test(x.h), isLat = (x) => /[NS]/.test(x.h);
+    if (isLon(two[0]) || isLat(two[1])) two.reverse();
+    if (isLat(two[1]) || isLon(two[0])) return null;
+    two = [two[0].v, two[1].v];
+  } else if (!found.length) {
+    let m = t.match(/^(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)$/) || t.match(/^(-?\d+(?:[.,]\d+)?)\s*;\s*(-?\d+(?:[.,]\d+)?)$/) || t.match(/^(-?\d+(?:[.,]\d+)?)\s+(-?\d+(?:[.,]\d+)?)$/);
+    if (m) two = [f(m[1]), f(m[2])];
+  }
+  if (!two || two.some((x) => !isFinite(x)) || Math.abs(two[0]) > 90 || Math.abs(two[1]) > 180) return null;
+  return {lat: two[0], lon: two[1]};
+}

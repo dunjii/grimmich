@@ -3,6 +3,10 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.19 – 2026-11-15 – Coordinates in the place search
+- In the place window you can type or paste **coordinates**: `51°04'30.8"N 11°20'40.4"E`, `51°04.513'N 11°20.673'E`, `51.0752, 11.3446` (also with decimal comma, letters N/S/E/O/W before or after). The pin is set at once, no internet needed.
+- The coordinates of the pin are shown under the map (to copy).
+
 ## 0.10.18 – 2026-11-13 – Bigger map
 - The map on the places page uses the height that is left, so that it and two rows of photos fit on the screen (at least 300 px high). It follows the window size.
 
