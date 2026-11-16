@@ -74,3 +74,21 @@ Plan when the places page is finished: re-take all with the invented demo data (
 - Intended flow: on the places page, select some photos of a place, "To Gramps …". At that moment Grimmich asks: does the place exist in Gramps? (suggest, link) or create it (preview, optional parent). If the photo is already in Gramps (earlier sent for an event), the existing media is attached to the place instead of uploaded again. To check: does Grimmich remember the Gramps media handle per photo?
 - **Linking an own place with a Gramps place belongs to this moment**, not to the normal places page. The hint "Own place, only in Grimmich" with the link box (0.10.21–0.10.23) is to be removed from the places page; "Same name / within 150 m" suggestions only when sending to Gramps. A place only in Grimmich is a normal state.
 - Not yet decided: whether the place for Gramps is always the photo's place, or can differ from it when a photo is attached to an event.
+
+## 8. Place hierarchy view (tree + map), discussed 16.11.2026 (nothing built)
+
+**Idea:** a place overview with a Gramps-like hierarchy, e.g. Germany › Thuringia › Ilmenau › Market square / Town hall. Tree in the (collapsible) left sidebar, the map in parallel.
+
+**Decisions**
+- **Levels come from Gramps** (parent links and types), not from Immich. **Immich delivers only coordinates, no names.**
+- Immich points appear **automatically in the tree** under the nearest suitable Gramps place (type-based preference). No sorting by hand needed.
+- Points that fit nowhere go to a group **"Not sorted"** (no hierarchy, no "Oberort" wording: the word "Oberort" is replaced; the place window uses a selection "Belongs to", optional).
+- Many Gramps places have no coordinates; to be judged on real data. A first rule for automatic placement ("nearest suitable Gramps place" vs. cautious) is decided after trying it on the real library.
+- **Click on a tree node** (e.g. "Thuringia"): the map fits all points below the node (zooms out), other points are dimmed; photos of the whole branch appear below the map in two rows with "Show all … photos". A breadcrumb above the map (Germany › Thuringia › Ilmenau) jumps up a level. If nothing below has coordinates, the map stays where it is, the photos still show.
+- Clicking "Ilmenau" zooms in again; "Germany" shows everything.
+
+**Still open**
+- Whether the Gramps place may differ from the photo's place when attached to an event.
+- Whether Grimmich stores the Gramps media handle per photo.
+- Photo markers on the map (drawing `fotokarte.png`), waiting for "los".
+- Build only after an explicit "los".
