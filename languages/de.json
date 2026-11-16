@@ -1281,10 +1281,14 @@
   "Pin:": "Pin:",
   "set pin here": "Pin hier setzen",
   "{n} places on the same spot": "{n} Orte an derselben Stelle",
-  "This is your own place. Load the Gramps places to link it.": "Das ist dein eigener Ort. Lade die Gramps-Orte, um ihn zu verknüpfen.",
-  "This is it": "Das ist er",
-  "This is your own place, it is not linked with Gramps yet.": "Das ist dein eigener Ort, er ist noch nicht mit Gramps verknüpft.",
   "Link with a Gramps place …": "Mit einem Gramps-Ort verknüpfen …",
-  "own place, linked": "eigener Ort, verknüpft"
+  "own place, linked": "eigener Ort, verknüpft",
+  "Own place, only in Grimmich.": "Eigener Ort, nur in Grimmich.",
+  "Loading the Gramps places …": "Gramps-Orte werden geladen …",
+  "same name": "gleicher Name",
+  "Link": "Verknüpfen",
+  "Only if it is the same place: the photos then get the Gramps place and its name.": "Nur wenn es derselbe Ort ist: Die Fotos bekommen dann den Gramps-Ort mit seinem Namen.",
+  "No matching Gramps place nearby.": "Kein passender Gramps-Ort in der Nähe.",
+  "Search a Gramps place …": "Gramps-Ort suchen …"
  }
 }

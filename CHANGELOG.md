@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.23 – 2026-11-16 – Own places: no pushing to link with Gramps
+- An own place now shows only a quiet line "Own place, only in Grimmich." with a link "Link with a Gramps place …". The suggestions (same name first, then within 150 m) open only when you ask, with the hint "Only if it is the same place". The button is called "Link". Before, a big box suggested e.g. the town for a town hall.
+
 ## 0.10.22 – 2026-11-16 – Fix: places page froze
 - Opening an own place before the Gramps places were loaded made the page redraw itself endlessly (page frozen, laptop fan running). The Gramps places are now loaded once and the page draws when they have arrived. A test covers this case.
 
