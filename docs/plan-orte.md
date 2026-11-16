@@ -42,3 +42,14 @@ Ideen für die Liste, noch zu sortieren:
 - Der Nutzer hat keine Programmiererfahrung: Schritte einzeln, nichts voraussetzen, nicht viele Fragen auf einmal.
 - Gebaut wird erst nach seinem „los“. Vor Design-Änderungen gern eine Zeichnung.
 - Deploy immer in dieser Reihenfolge nennen: GitHub Actions „Docker image“ → Run workflow (Branch `main`); ZimaOS „Aktualisieren“ (nicht während ein Job läuft); Strg+Shift+R; in Grimmich „Aktualisieren“.
+
+## 5. Decisions of 16.11.2026 (place structure; nothing built yet)
+
+- **GOV and GEDCOM are out** (no GOV lookups, no GEDCOM export considered).
+- **Model like Gramps:** an own place stores only its name plus a link to a parent place (a Gramps place or another own place). The long name ("Marienkirche, Zwickau, Sachsen") is assembled by Grimmich. "Gehört zu" in the place window becomes a selection from existing places (with "create new"), no free text.
+- **Parent is optional.** Places without a parent show up under "To do".
+- **Every photo can have a place**, not every photo will get one. **Every place entry must be visible to Immich.** Only few photos go to Gramps; but any photo in Grimmich could become one.
+- **Gramps side:** read parent handle, type and dates of each place (small change, then reload places once). Link own places to Gramps places by handle. Create a place in Gramps (with parent link) only after a preview, when a photo goes to Gramps.
+- **Later:** use the photo year for dated names/parents (Posen/Poznań). Link to open a place in Gramps Web (check URL pattern first).
+- **Parent suggestions (idea):** many Gramps places have no parent. Grimmich could suggest parents in "To do → places without parent": (1) larger Gramps places close by / the parent that neighbours use, (2) OSM reverse lookup (today's borders only, 1 request/s, cache), (3) Wikidata maybe later. Always with source, never automatic.
+- **Open:** how exactly does a place name reach Immich? Immich has no free place-name field per photo (only city/state/country from coordinates, plus the description). Candidates: coordinates + name in the GRM block.
