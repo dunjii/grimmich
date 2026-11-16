@@ -133,7 +133,7 @@ export function grampsCandidates(id) {
 }
 export function ownLinkBlock(x) {
   if (!ownReg(x.id)) return "";
-  if (!S.grPlaces || !S.grPlaces.list) { Promise.resolve(loadGrampsPlaces()).then(() => draw()); return `<div class="quiet" style="margin:6px 14px">${tr("This is your own place. Load the Gramps places to link it.")}</div>`; }
+  if (!S.grPlaces || !S.grPlaces.list) { loadGrampsPlaces(); return `<div class="quiet" style="margin:6px 14px">${tr("This is your own place. Load the Gramps places to link it.")}</div>`; }
   const rows = grampsCandidates(x.id).map(({o, km}) => `<div class="ez-row" style="align-items:center"><span style="flex:1"><b>${esc(o.t)}</b> <span class="quiet">${esc(o.ty || "")}${km !== null ? " · " + kmText(km) : ""}</span></span>
     <button class="small" data-a="own-link" data-id="${esc(x.id)}" data-h="${esc(o.h)}">${tr("This is it")}</button></div>`).join("");
   return `<div class="card" style="margin:6px 14px;padding:10px 12px"><div class="quiet">${tr("This is your own place, it is not linked with Gramps yet.")}</div>${rows}

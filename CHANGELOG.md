@@ -3,6 +3,9 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.22 – 2026-11-16 – Fix: places page froze
+- Opening an own place before the Gramps places were loaded made the page redraw itself endlessly (page frozen, laptop fan running). The Gramps places are now loaded once and the page draws when they have arrived. A test covers this case.
+
 ## 0.10.21 – 2026-11-16 – Places: read the Gramps hierarchy, link own places with Gramps places
 - **Gramps places are read more fully**: higher-level place (with the date of the link), type and the chain of names. Nothing visible changes yet; this is the base for the hierarchy. The place list is loaded again once after the update.
 - **Own places can be linked with Gramps places**: on the page of an own place Grimmich offers Gramps places with the same name or within 150 m ("This is it"), or you search one ("Link with a Gramps place …"). All photos of the own place then get the Gramps place; a linked own place is no longer offered in the place window.
