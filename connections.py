@@ -595,40 +595,73 @@ def _page_through(g, path_, keys, size_=500):
     return everyone
 
 
+PLACE_TYPES = {1: "Country", 2: "State", 3: "County", 4: "City", 5: "Parish", 6: "Locality", 7: "Street", 8: "Province", 9: "Region", 10: "Department",
+               11: "Neighborhood", 12: "District", 13: "Borough", 14: "Municipality", 15: "Town", 16: "Village", 17: "Hamlet", 18: "Farm", 19: "Building", 20: "Number"}
+
+
+def _place_type_text(t):
+    """Type of a Gramps place as text: Gramps Web delivers a number, a name or {"string": ..., "value": ...}."""
+    if isinstance(t, dict):
+        t = t.get("string") or t.get("value")
+    if isinstance(t, int):
+        return PLACE_TYPES.get(t, "")
+    return str(t or "").strip()
+
+
+def _ref_date(d):
+    """Date of a link to a higher-level place as text ('' if none)."""
+    if isinstance(d, dict):
+        return str(d.get("text") or "").strip()
+    return ""
+
+
+def places_from_raw(raw):
+    """Gramps places (raw list from the API) -> list with name, full name (chain), coordinates, higher-level place (p: handle, pd: its date text) and type (ty)."""
+    after = {p["handle"]: p for p in raw if isinstance(p, dict) and p.get("handle")}
+
+    def name(p):
+        n = p.get("name")
+        n = n.get("value") if isinstance(n, dict) else n
+        return str(n or "").strip()
+
+    def parent(p):
+        refs = [r for r in (p.get("placeref_list") or []) if isinstance(r, dict) and r.get("ref")]
+        return refs[0] if refs else None
+
+    def chain(h):
+        parts, seen = [], set()
+        while h and h in after and h not in seen and len(parts) < 4:
+            seen.add(h)
+            t = name(after[h])
+            if t:
+                parts.append(t)
+            r = parent(after[h])
+            h = r.get("ref") if r else None
+        return parts
+
+    items_list = []
+    for h, p in after.items():
+        parts = chain(h)
+        if not parts:
+            continue
+        r = parent(p)
+        items_list.append({"h": h, "id": p.get("gramps_id", ""), "n": parts[0], "t": ", ".join(parts),
+                           "lat": _coordinate(p.get("lat")), "lon": _coordinate(p.get("long")),
+                           "p": r["ref"] if r and r["ref"] in after else "", "pd": _ref_date(r.get("date")) if r else "", "ty": _place_type_text(p.get("place_type"))})
+    items_list.sort(key=lambda o: o["t"].lower())
+    return items_list
+
+
 def gramps_orte(new_=False):
-    """All places from Gramps with names including higher-level places and coordinates (from the cache, 'new' loads fresh)."""
+    """All places from Gramps with names including higher-level places, type and coordinates (from the cache, 'new' loads fresh).
+    A cache from before 0.10.21 has no higher-level places yet: it is loaded again once."""
     c = _read_cache()
-    if c.get("places_list") and not new_:
+    if c.get("places_list") and not new_ and all("p" in o for o in c["places_list"][:5]):
         return {"ok": True, "places": c["places_list"], "without": sum(1 for o in c["places_list"] if o.get("lat") is None)}
     try:
         g = Gramps()
-        raw = _page_through(g, "/places/", "handle,gramps_id,name,lat,long,placeref_list")
-        after = {p["handle"]: p for p in raw if isinstance(p, dict) and p.get("handle")}
-
-        def name(p):
-            n = p.get("name")
-            n = n.get("value") if isinstance(n, dict) else n
-            return str(n or "").strip()
-
-        def chain(h):
-            parts, seen = [], set()
-            while h and h in after and h not in seen and len(parts) < 4:
-                seen.add(h)
-                t = name(after[h])
-                if t:
-                    parts.append(t)
-                refs = after[h].get("placeref_list") or []
-                h = refs[0].get("ref") if refs and isinstance(refs[0], dict) else None
-            return parts
-
-        items_list = []
-        for h, p in after.items():
-            parts = chain(h)
-            if not parts:
-                continue
-            items_list.append({"h": h, "id": p.get("gramps_id", ""), "n": parts[0], "t": ", ".join(parts),
-                          "lat": _coordinate(p.get("lat")), "lon": _coordinate(p.get("long"))})
-        items_list.sort(key=lambda o: o["t"].lower())
+        raw = _page_through(g, "/places/", "handle,gramps_id,name,lat,long,placeref_list,place_type")
+        items_list = places_from_raw(raw)
         c["places_list"] = items_list
         c["event_place"] = {e["handle"]: e.get("place") or "" for e in _page_through(g, "/events/", "handle,place") if isinstance(e, dict) and e.get("handle")}
         _write_cache(c)

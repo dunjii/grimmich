@@ -8,6 +8,7 @@ import {geoOf, geoId, geoMapped, geoText, geoOpen, geoConflicts, nearestGramps, 
 import {tr} from "../language.js";
 import {createMap} from "../map.js";
 import {openPlacePicker} from "./placepicker.js";
+import {ownLinkBlock} from "./places.js";
 
 export function placeState() {
   const m = new Map(), add = (id, name, key, extra) => { const x = m.get(id) || {id, name, keys: [], ...extra}; x.keys.push(key); m.set(id, x); };
@@ -130,7 +131,7 @@ export function placeHtml() {
         <div>${x.multi ? x.multi.map((y) => `<button class="small" data-a="go-place" data-id="${esc(y.id)}">${esc(y.name)} (${y.keys.length})</button>`).join(" ") : (x.immich ? placeButtons(x) + " " : "") + `<button class="small" data-a="place-edit" data-id="${esc(x.id)}">${x.lat == null ? tr("Set on map …") : tr("Edit …")}</button>`}</div></div>`
     : `<div class="person-head"><div><h1>${tr("Places")}</h1><div class="quiet">${pts.length ? tr("{n} {n:photo|photos} at {p} {p:point|points}. Click a point to see its photos.", {n: total, p: pts.length}) : tr("No place with coordinates yet.")}</div></div></div>`;
   const grid = x ? tileGrid(x.unitList.slice().sort((a, b) => (a.decimal_year || a.year || 0) - (b.decimal_year || b.year || 0))) : "";
-  return `${head}<div id="orte-map" class="orte-karte"></div><div style="margin-top:10px" id="orte-fotos">${grid}</div><div id="orte-mehr" style="margin-top:8px" hidden></div>`;
+  return `${head}${x && !x.multi ? ownLinkBlock(x) : ""}<div id="orte-map" class="orte-karte"></div><div style="margin-top:10px" id="orte-fotos">${grid}</div><div id="orte-mehr" style="margin-top:8px" hidden></div>`;
 }
 
 export const actions = {

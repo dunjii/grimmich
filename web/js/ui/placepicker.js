@@ -10,7 +10,7 @@ import {distKm, geoOf, parseCoords} from "../geo.js";
 import {tr} from "../language.js";
 
 const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
-const myPlaces = () => Object.entries((S.ord && S.ord._myplaces) || {}).map(([id, p]) => ({id, n: p.name, t: p.parent ? `${p.name}, ${p.parent}` : p.name, lat: p.lat, lon: p.lon, parent: p.parent || "", own: true}));
+const myPlaces = () => Object.entries((S.ord && S.ord._myplaces) || {}).filter(([, p]) => !p.gh).map(([id, p]) => ({id, n: p.name, t: p.parent ? `${p.name}, ${p.parent}` : p.name, lat: p.lat, lon: p.lon, parent: p.parent || "", own: true}));
 export const knownPlaces = () => [...myPlaces(), ...(((S.grPlaces && S.grPlaces.list) || []).filter((o) => o.lat != null && o.lon != null).map((o) => ({...o, parent: o.t.slice(o.n.length).replace(/^,\s*/, ""), gramps: true})))];
 const tag = (o) => (o.gramps ? tr("in Gramps") : o.own ? tr("in Grimmich") : "OpenStreetMap");
 

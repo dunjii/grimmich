@@ -9,7 +9,7 @@ import {albumNeighbors} from "../provenance.js";
 import {peopleOn} from "./event.js";
 import {placeAnswers} from "../refine.js";
 import {openPlacePicker} from "./placepicker.js";
-import {geoOf, geoId, geoMapped, geoText, geoGroups, geoConflict, nearestGramps, kmText} from "../geo.js";
+import {geoOf, geoId, geoMapped, geoText, geoGroups, geoConflict, nearestGramps, kmText, distKm} from "../geo.js";
 import {tr} from "../language.js";
 
 export const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/ß/g, "ss");
@@ -121,6 +121,33 @@ async function equate(id, o) {
   S.ord._geo[id] = {h: o.h, id: o.id, name: o.t, lat: o.lat, lon: o.lon};
   mark(); await saveOrd(); draw();
 }
+// ---- an own place (only in Grimmich) and the same place in Gramps: link them. All photos of the own place get the Gramps place.
+const ownReg = (id) => (S.ord && S.ord._myplaces && S.ord._myplaces[id]) || null;
+export function grampsCandidates(id) {
+  const r = ownReg(id);
+  if (!r || !S.grPlaces || !S.grPlaces.list) return [];
+  const own = r.lat != null && r.lon != null ? {lat: r.lat, lon: r.lon} : null;
+  return S.grPlaces.list.map((o) => ({o, km: own && o.lat != null ? distKm(own, o) : null}))
+    .filter(({o, km}) => norm(o.n) === norm(r.name) || (km !== null && km <= 0.15))
+    .sort((a, b) => (a.km === null ? 1e9 : a.km) - (b.km === null ? 1e9 : b.km)).slice(0, 6);
+}
+export function ownLinkBlock(x) {
+  if (!ownReg(x.id)) return "";
+  if (!S.grPlaces || !S.grPlaces.list) { Promise.resolve(loadGrampsPlaces()).then(() => draw()); return `<div class="quiet" style="margin:6px 14px">${tr("This is your own place. Load the Gramps places to link it.")}</div>`; }
+  const rows = grampsCandidates(x.id).map(({o, km}) => `<div class="ez-row" style="align-items:center"><span style="flex:1"><b>${esc(o.t)}</b> <span class="quiet">${esc(o.ty || "")}${km !== null ? " · " + kmText(km) : ""}</span></span>
+    <button class="small" data-a="own-link" data-id="${esc(x.id)}" data-h="${esc(o.h)}">${tr("This is it")}</button></div>`).join("");
+  return `<div class="card" style="margin:6px 14px;padding:10px 12px"><div class="quiet">${tr("This is your own place, it is not linked with Gramps yet.")}</div>${rows}
+    <div class="actions"><button class="small" data-a="own-link-pick" data-id="${esc(x.id)}">${tr("Link with a Gramps place …")}</button></div></div>`;
+}
+async function linkOwn(id, o) {
+  const r = ownReg(id);
+  if (!r || !o) return;
+  const entry = {h: o.h, id: o.id, name: o.t, lat: o.lat != null ? o.lat : r.lat, lon: o.lon != null ? o.lon : r.lon, source: tr("own place, linked")};
+  Object.entries(S.places || {}).forEach(([k, p]) => { if (p && p.id === id) S.places[k] = {...entry}; });
+  r.gh = o.h; r.gid = o.id;
+  mark(); await saveOrd(); await savePlaces();
+  ui.placeId = o.id; draw();
+}
 // Immich place of the photo, equation with Gramps, and the decision when Grimmich and Immich differ
 export function geoBlock(key) {
   const g = geoOf(key);
@@ -136,6 +163,8 @@ export function geoBlock(key) {
 
 const keysFor = (el) => { const e = unitOf(el.dataset.uid); return !e ? [] : !ui.placeOnly || e.keys.length < 2 ? e.keys : [el.dataset.key]; };
 export const actions = {
+  "own-link": (el) => linkOwn(el.dataset.id, S.grPlaces && S.grPlaces.byHandle[el.dataset.h]),
+  "own-link-pick": (el) => pickPlace(tr("Link with a Gramps place …"), (o) => linkOwn(el.dataset.id, o)),
   "place-open": (el) => openPlacePicker({keys: keysFor(el)}),
   "geo-equate": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id), n = x && nearestGramps(x.g); if (n) return equate(x.id, n.o); },
   "geo-pick": (el) => { const x = geoGroups().find((y) => y.id === el.dataset.id) || {id: el.dataset.id}; return pickPlace(tr("Equate with Gramps place …"), (o) => equate(x.id, o)); },

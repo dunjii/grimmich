@@ -3,6 +3,12 @@
 Grimmich (Gramps + Immich) dates scanned old photos from AI age estimates and known birth dates
 and puts the results back into Immich and Gramps. This log is reconstructed from the working history; the assignment of single points to days is partly approximate.
 
+## 0.10.21 – 2026-11-16 – Places: read the Gramps hierarchy, link own places with Gramps places
+- **Gramps places are read more fully**: higher-level place (with the date of the link), type and the chain of names. Nothing visible changes yet; this is the base for the hierarchy. The place list is loaded again once after the update.
+- **Own places can be linked with Gramps places**: on the page of an own place Grimmich offers Gramps places with the same name or within 150 m ("This is it"), or you search one ("Link with a Gramps place …"). All photos of the own place then get the Gramps place; a linked own place is no longer offered in the place window.
+- Places that photos already have from Gramps need no change: they are Gramps places already.
+- Next: "Belongs to" as a selection, creating a place in Gramps (with preview).
+
 ## 0.10.20 – 2026-11-15 – Fix: circles on the places map that would not open
 - A circle of several places on (almost) the same spot could not be opened: zooming in never pulled it apart. Now a click zooms so that the places fall apart; if they lie on the same spot, they open together ("n places on the same spot") with all their photos and one button per place.
 
