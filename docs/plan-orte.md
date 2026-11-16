@@ -53,3 +53,8 @@ Ideen für die Liste, noch zu sortieren:
 - **Later:** use the photo year for dated names/parents (Posen/Poznań). Link to open a place in Gramps Web (check URL pattern first).
 - **Parent suggestions (idea):** many Gramps places have no parent. Grimmich could suggest parents in "To do → places without parent": (1) larger Gramps places close by / the parent that neighbours use, (2) OSM reverse lookup (today's borders only, 1 request/s, cache), (3) Wikidata maybe later. Always with source, never automatic.
 - **Open:** how exactly does a place name reach Immich? Immich has no free place-name field per photo (only city/state/country from coordinates, plus the description). Candidates: coordinates + name in the GRM block.
+
+## 6. Parked: README screenshots (16.11.2026)
+
+The five screenshots in `docs/screenshots/` are from 2 Nov (state 0.9.44) and outdated: menu bar, header (Refresh, Game), sort tile and button "Sort in automatically", settings (AI models, game for several players, version). Missing: places map, game on the phone.
+Plan when the places page is finished: re-take all with the invented demo data (English UI), add places map (needs invented demo places with coordinates) and the game (narrow), update captions in `README.md` and `README.de.md`, add `tools/screenshots.py` to re-create them with one command. The Gramps life line needs the Gramps imitation from the tests.
